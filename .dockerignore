@@ -1,0 +1,26 @@
+# deps + build outputs (rebuilt inside the image)
+node_modules
+**/node_modules
+**/.next
+**/.turbo
+.turbo
+packages/tokens/dist
+packages/tokens/src/generated.ts
+
+# vcs / tooling / ci — not part of the app build
+.git
+.github
+.husky
+.claude
+supabase
+
+# tests & artifacts
+apps/web/e2e
+apps/web/playwright.config.ts
+**/playwright-report
+**/test-results
+coverage
+
+# docs the app never reads at runtime (legal .md files ARE read — keep docs/)
+docs/design
+docs/epharmatica-prd.pdf
