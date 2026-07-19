@@ -12,7 +12,7 @@
  *              hard-killed terminal still leaves an up-to-date summary from the
  *              last Stop, and a clean close stamps it "Session closed".
  *
- * Logs: .claude/logs/tasks/YYYY-MM-DD.md (gitignored — personal work journal).
+ * Logs: .claude/logs/tasks/YYYY-MM-DD.md (tracked in git — work journal).
  * State: .claude/logs/tasks/.state.json (subject map + per-day dedup).
  * A hook must never break the session: every path exits 0.
  */
