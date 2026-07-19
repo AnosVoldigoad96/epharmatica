@@ -23,6 +23,9 @@ test-results/
 supabase/.temp/
 supabase/.branches/
 
+# claude code — local overrides (hooks/settings/task logs stay tracked)
+.claude/settings.local.json
+
 # misc
 .DS_Store
 *.log
