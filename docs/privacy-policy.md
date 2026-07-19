@@ -29,12 +29,15 @@ This policy explains what we collect on **epharmatica.com**, why, and your choic
 **Waitlist & support.** Email addresses you submit for feature waitlists, and correspondence you send us.
 
 ## 2. Cookies & Analytics
+
 We use only **essential cookies**: authentication/session cookies and a theme preference. We run **self-hosted, cookieless analytics (Umami)** that aggregates page views and feature-usage events without cross-site tracking, and **we use no advertising or third-party tracking pixels**. Embedded YouTube videos load only after you click play and use YouTube's privacy-enhanced mode (`youtube-nocookie.com`); once playing, Google/YouTube processes data under its own policy.
 
 ## 3. How We Use Data
+
 To provide and secure the service (accounts, content access, study tools, community, jobs, resume builder); to review verification and writer applications; to moderate and enforce our policies; to respond to support requests; to measure aggregate product usage; to send transactional email (verification, password reset, essential service notices) via our email provider; and to comply with legal obligations. **We do not sell personal data and we do not use it for advertising.** Marketing communications, if ever introduced, will be opt-in.
 
 ## 4. Sharing & Processors
+
 We share data only with service providers acting on our instructions, and only what each needs:
 
 - **Hetzner (Germany/Finland)** — server hosting; all application data resides in the EU.
@@ -48,19 +51,25 @@ We share data only with service providers acting on our instructions, and only w
 We may disclose data where required by law or to protect users, the public, or the Platform, and in any merger/transfer of the service (with notice).
 
 ## 5. International Transfers
+
 Our servers are in the EU; our users are worldwide, including Pakistan. Providers above may process limited data in other jurisdictions under their published safeguards. By using the Platform you understand your data is processed on EU-based infrastructure.
 
 ## 6. Retention
+
 Account, profile, study, and resume data: for the life of your account. Verification documents: 90 days post-decision. WhatsApp logs: 90 days. Encrypted backups: rolling ~30 days. Server logs: short-term. On **account deletion** (available in Settings): personal data, study data, resumes, and AI keys are erased; public forum/blog contributions are either deleted or anonymized ("deleted user") to preserve thread coherence — you may request full deletion of your public posts; residual copies clear from backups within the backup cycle.
 
 ## 7. Your Rights & Choices
+
 Regardless of where you live, you can: access and update your profile in Settings; **export your notes, highlights, and progress** (Settings → Data); delete individual content; switch or delete AI keys at any time; and delete your account entirely. You may also contact **privacy@epharmatica.com** to exercise access, correction, deletion, or objection rights available under applicable law (including Pakistani data-protection law and, where it applies, the GDPR). We will verify identity before acting and respond within a reasonable period [target: 30 days].
 
 ## 8. Security
+
 TLS everywhere; row-level security isolating each user's private data at the database layer; encrypted storage of synced AI keys; private buckets for sensitive documents; least-privilege staff access with audit logging; hardened, patched servers; and encrypted offsite backups with restore testing. No system is perfectly secure; we will notify affected users and authorities of any breach as required by applicable law.
 
 ## 9. Children
+
 The Platform is not directed to children under 13, and we do not knowingly collect their data. If you believe a child under 13 has an account, contact us and we will delete it.
 
 ## 10. Changes & Contact
+
 We will post updates here with a new effective date and announce material changes on the Platform. Questions or requests: **privacy@epharmatica.com**.

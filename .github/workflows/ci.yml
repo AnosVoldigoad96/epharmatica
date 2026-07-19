@@ -118,14 +118,12 @@ jobs:
         run: git diff --exit-code packages/database/src/types.ts
 
   # ---------------------------------------------------------------------------
-  # Playwright smoke — PLACEHOLDER, INACTIVE (rules.md §9.1–9.2 · PRD §13.4)
-  # TODO(Phase-0 exit): flip the `if:` below to true once apps/web/e2e exists with
-  # the smoke specs (auth both paths, reader, anon preview gate verified at the
-  # network layer, AI against the mock adapter — plan §5 1.G).
+  # Playwright smoke — Phase-0 scope: landing + legal, desktop + mobile
+  # (apps/web/e2e). Phase 1 grows this into the full smoke set (auth both
+  # paths, reader, anon preview gate at the network layer, AI mock — plan 1.G).
   # ---------------------------------------------------------------------------
   playwright-smoke:
-    name: Playwright smoke (placeholder — inactive)
-    if: false # TODO(Phase-0 exit): activate when apps/web/e2e smoke specs exist
+    name: Playwright smoke
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -141,11 +139,38 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      - name: Cache Turborepo task outputs
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build (turbo)
+        run: pnpm turbo run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
 
       - name: Install Playwright browsers
         run: pnpm --filter @epharmatica/web exec playwright install --with-deps chromium
 
       - name: Run smoke suite
-        run: pnpm --filter @epharmatica/web exec playwright test
+        run: pnpm --filter @epharmatica/web run e2e
+        env:
+          # Runtime env for `next start` (the waitlist server action reads these;
+          # unreachable placeholders exercise the graceful-degrade path).
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7

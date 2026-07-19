@@ -1,28 +1,28 @@
 # Module PRD 04 — CMS / Admin
 
-| | |
-|---|---|
-| **Module** | CMS / Admin — the shell, content operations, media, users, settings, audit; plug-in contracts for every later module's surface |
-| **Version** | 1.0 · 18 Jul 2026 |
-| **Parents** | Master PRD v1.5 (§7.10, §12) · ARCHITECTURE.md v1.1 (I2, I8) · M1 (content contract) · M2 (user admin contract) · M3 (registry) |
-| **Decisions** | M4-1 … M4-5 + in-doc defaults D-a/D-b — see §2 |
-| **Phase** | Built progressively; this doc specifies the Phase-1 build in full and the shell contracts later phases plug into |
+|               |                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Module**    | CMS / Admin — the shell, content operations, media, users, settings, audit; plug-in contracts for every later module's surface  |
+| **Version**   | 1.0 · 18 Jul 2026                                                                                                               |
+| **Parents**   | Master PRD v1.5 (§7.10, §12) · ARCHITECTURE.md v1.1 (I2, I8) · M1 (content contract) · M2 (user admin contract) · M3 (registry) |
+| **Decisions** | M4-1 … M4-5 + in-doc defaults D-a/D-b — see §2                                                                                  |
+| **Phase**     | Built progressively; this doc specifies the Phase-1 build in full and the shell contracts later phases plug into                |
 
 ## 1. Scope
 
-**In:** the `/admin` shell (navigation, permissions, density, audit conventions), full Phase-1 surfaces — content tree & editors, editorial workflow & review queue, draft preview links, media library, user administration, settings (flags, AI-model registry, site metadata), audit log — and the **surface contracts** that M5/M6/M8 admin panels must plug into. **Out:** the queue *logic* of later modules (moderation, jobs review, verifications, WhatsApp console — their module PRDs own behavior; this doc owns where they live and the conventions they inherit) and the public reading experience (M1).
+**In:** the `/admin` shell (navigation, permissions, density, audit conventions), full Phase-1 surfaces — content tree & editors, editorial workflow & review queue, draft preview links, media library, user administration, settings (flags, AI-model registry, site metadata), audit log — and the **surface contracts** that M5/M6/M8 admin panels must plug into. **Out:** the queue _logic_ of later modules (moderation, jobs review, verifications, WhatsApp console — their module PRDs own behavior; this doc owns where they live and the conventions they inherit) and the public reading experience (M1).
 
 ## 2. Module Decision Log
 
-| # | Decision | Choice | Consequence |
-|---|---|---|---|
-| M4-1 | Tree management | **Per-level list editors + read-only tree rail** (B+C) | Deliberate **Move…** flow hosts the heavyweight-move confirmations (§5.3); full DnD deferred as a luxury. |
-| M4-2 | Review routing | **Open queue — any reviewer claims** | `review_claims` table; claim/release semantics (§5.6). |
-| M4-3 | Media | **Global searchable library with reuse** | Assets are first-class with usage tracking; delete-blocked-while-used (§6). |
-| M4-4 | Draft preview links | **Yes** — 7-day expiry, revocable, watermarked | Tokenized anon read path via security-definer RPC (§5.7). |
-| M4-5 | Staff 2FA | **Optional for everyone** | TOTP support ships; enforcement stays off. Recorded as accepted risk **R-M4a** with revisit triggers (§13, §16). |
-| D-a | Scheduled publishing (study content) | **Not in v1** (in-doc default) | Publish is immediate; blog keeps its scheduler (master §7.6.2). Revisit if the content calendar demands it. |
-| D-b | Audit retention | **12 months hot → yearly export to R2 → prune** (in-doc default) | §9. |
+| #    | Decision                             | Choice                                                           | Consequence                                                                                                      |
+| ---- | ------------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| M4-1 | Tree management                      | **Per-level list editors + read-only tree rail** (B+C)           | Deliberate **Move…** flow hosts the heavyweight-move confirmations (§5.3); full DnD deferred as a luxury.        |
+| M4-2 | Review routing                       | **Open queue — any reviewer claims**                             | `review_claims` table; claim/release semantics (§5.6).                                                           |
+| M4-3 | Media                                | **Global searchable library with reuse**                         | Assets are first-class with usage tracking; delete-blocked-while-used (§6).                                      |
+| M4-4 | Draft preview links                  | **Yes** — 7-day expiry, revocable, watermarked                   | Tokenized anon read path via security-definer RPC (§5.7).                                                        |
+| M4-5 | Staff 2FA                            | **Optional for everyone**                                        | TOTP support ships; enforcement stays off. Recorded as accepted risk **R-M4a** with revisit triggers (§13, §16). |
+| D-a  | Scheduled publishing (study content) | **Not in v1** (in-doc default)                                   | Publish is immediate; blog keeps its scheduler (master §7.6.2). Revisit if the content calendar demands it.      |
+| D-b  | Audit retention                      | **12 months hot → yearly export to R2 → prune** (in-doc default) | §9.                                                                                                              |
 
 ## 3. User Stories (staff)
 
@@ -42,24 +42,31 @@
 ## 5. Content Management
 
 ### 5.1 Navigation (M4-1)
+
 Persistent **read-only tree rail**: collapsible Subject → Chapter → Topic nodes with status dots (any-draft amber / all-published teal) and published-count chips; clicking a node opens that level's **list editor** in the main pane. List editors show: name, slug, status roll-up, order (up/down + flat drag within the list), semester (topic level), updated-at, actions (Edit · Move… · Open children).
 
 ### 5.2 Metadata create/edit (per level)
+
 Name → auto-slug (editable while nothing beneath is published; afterwards, renaming triggers the `slug_history` consequence sheet). Topic form adds `semester` and the 280-char description (M1 §5.1); subject form adds icon + default semester. Validation mirrors public constraints exactly (shared Zod schemas).
 
 ### 5.3 Move… (the deliberate cross-parent flow)
+
 Destination picker (the same tree, legal targets only) → **consequence sheet**: old→new URL with 301 note, "N highlights will re-anchor," cache scope, sitemap effect → for published nodes, typed confirmation (`move`). Executes atomically: reparent + `slug_history` rows + tag invalidations + enqueue re-anchor job (M1 §5.5). Draft nodes move without ceremony.
 
 ### 5.4 Subtopic editor
+
 Full Plate configuration per the M1 contract (headings, marks, lists, tables, all five callouts, image via the media picker §6, video embed with URL validation, TOC block, **Drug Card**). **Autosave** every 30s + on blur into the draft; **revisions snapshot** on submit-for-review and on publish (not every autosave). Right rail: status card, `preview_block_count` control with a live "what anonymous sees" toggle, derived read-outs (reading time, `primary_video_url` — computed at publish), semester inheritance display, revision history entry point. A **Preview** toggle renders through the real reader renderer (I4) in a resizable pane incl. a 360px width preset.
 
 ### 5.5 Editorial workflow
-Statuses per master (`draft → in_review → changes_requested → approved → published`, + `archived`). Role/action matrix: authors write & submit (own drafts); reviewers comment/suggest (Plate comments), **Approve** or **Request changes** (comment required); content managers publish, unpublish (M1 §5.10 semantics), archive, roll back. **Publish** = snapshot revision → derive fields → status flip → fire cache tags → audit. **Rollback** = pick any revision → rendered side-by-side diff (old/new through the reader renderer) → restore creates a *new* revision (never destructive) → republish path. Every transition writes `content_review_events` + `audit_log` (I8).
+
+Statuses per master (`draft → in_review → changes_requested → approved → published`, + `archived`). Role/action matrix: authors write & submit (own drafts); reviewers comment/suggest (Plate comments), **Approve** or **Request changes** (comment required); content managers publish, unpublish (M1 §5.10 semantics), archive, roll back. **Publish** = snapshot revision → derive fields → status flip → fire cache tags → audit. **Rollback** = pick any revision → rendered side-by-side diff (old/new through the reader renderer) → restore creates a _new_ revision (never destructive) → republish path. Every transition writes `content_review_events` + `audit_log` (I8).
 
 ### 5.6 Review queue (M4-2)
-One open queue: all `in_review` subtopics, oldest first, subject filter, age chip (amber > 7 days — feeds the master's review-cycle metric). **Claim** assigns the reviewer (`review_claims`), shows "claimed by" everywhere, and is releasable (self anytime; others by content_manager+). Claiming is coordination, not permission — any reviewer *may* review, the claim just prevents collisions. Approve/Request-changes auto-release the claim.
+
+One open queue: all `in_review` subtopics, oldest first, subject filter, age chip (amber > 7 days — feeds the master's review-cycle metric). **Claim** assigns the reviewer (`review_claims`), shows "claimed by" everywhere, and is releasable (self anytime; others by content_manager+). Claiming is coordination, not permission — any reviewer _may_ review, the claim just prevents collisions. Approve/Request-changes auto-release the claim.
 
 ### 5.7 Draft preview links (M4-4)
+
 On any `draft`/`in_review`/`changes_requested` subtopic: **Create preview link** → 128-bit token, stored **hashed**, single-subtopic scope, `expires_at = now()+7d`. Per-subtopic list: token tail, creator, expiry countdown, opens count, **Revoke**. Public route `/preview/[token]` (anon-allowed): a `security definer` RPC validates hash + expiry + revocation, logs the open (`ip_hash`, UA) to `preview_link_opens`, and returns the full content JSON → rendered read-only through the real renderer with a fixed **`DRAFT — NOT PUBLISHED`** watermark bar, no study tools, `noindex, nofollow`, no site nav. Rate limit 30 opens/hr/IP; invalid/expired tokens render one neutral card ("This preview link is no longer active."). Publishing the subtopic auto-revokes its links.
 
 ## 6. Media Library (M4-3)
@@ -96,7 +103,7 @@ Each later module registers: a nav entry behind its flag · a permission-map blo
 
 ## 12. RLS & Access
 
-All admin tables: `has_role()`-gated per the §4 permission map; `preview_links` readable only by staff (the public path is the RPC, which never exposes the table). `media_assets` public-read for published paths (CDN), staff-write. `audit_log`: staff-read (admin+ for cross-actor queries), **no update/delete for any role**. CI adds: *reviewer cannot publish*, *author cannot approve own draft*, *audit rows immutable*, *anon preview RPC honors expiry/revocation*, *role assignment respects rank rules*.
+All admin tables: `has_role()`-gated per the §4 permission map; `preview_links` readable only by staff (the public path is the RPC, which never exposes the table). `media_assets` public-read for published paths (CDN), staff-write. `audit_log`: staff-read (admin+ for cross-actor queries), **no update/delete for any role**. CI adds: _reviewer cannot publish_, _author cannot approve own draft_, _audit rows immutable_, _anon preview RPC honors expiry/revocation_, _role assignment respects rank rules_.
 
 ## 13. Security Posture
 
@@ -114,15 +121,18 @@ Admin behind role gate + per-page map + RLS (three layers). **2FA (M4-5): TOTP f
 8. Audit immutability proven (update/delete attempts fail under every role); yearly-export cron produces a valid R2 object on a seeded aged year.
 
 ## 15. Analytics
+
 None in admin — the **audit log is the record**; Umami stays public-side only (privacy posture + signal cleanliness).
 
 ## 16. Module Risks
+
 - **R-M4a — optional 2FA (accepted, M4-5):** a phished staff password is the worst realistic breach; mitigations + revisit triggers per §13. Owner: founder; review quarterly.
-- **R-M4b — media usage-scan drift** (drafts, race between edit and scan): usage is authoritative for *published* refs only; delete-block errs conservative (draft uses also block).
+- **R-M4b — media usage-scan drift** (drafts, race between edit and scan): usage is authoritative for _published_ refs only; delete-block errs conservative (draft uses also block).
 - **R-M4c — preview-link leakage:** bounded by scope/expiry/revocation/watermark; opens-log gives detection.
 - **R-M4d — shell fork risk:** later modules building bespoke admin patterns → contracts in §10 are review-gated; deviations require updating this PRD.
 
 ## 17. Open Items
+
 Sanction actions, verification decisioning, jobs/WhatsApp queue behaviors → M5/M6/M8 (shell slots reserved here). Study-content scheduling (D-a) revisits when the content calendar exists. Storybook stories for shared queue components land with S11 tooling.
 
-*End Module PRD 04 · decisions M4-1…M4-5 (+D-a/D-b) locked · next: M5 Community.*
+_End Module PRD 04 · decisions M4-1…M4-5 (+D-a/D-b) locked · next: M5 Community._

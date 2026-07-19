@@ -1,11 +1,11 @@
 # ePharmatica — Security Program
 
-| | |
-|---|---|
-| **Version** | 1.0 · 19 July 2026 |
-| **Scope** | Application, data, infrastructure, and operational security for the whole platform (M1–M8) |
+|                  |                                                                                                                                           |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Version**      | 1.0 · 19 July 2026                                                                                                                        |
+| **Scope**        | Application, data, infrastructure, and operational security for the whole platform (M1–M8)                                                |
 | **Derived from** | Master PRD §13.2/§10 · ARCHITECTURE.md invariants · module PRDs M1–M8 · Privacy Policy / ToS / Content Policy / Medical Disclaimer drafts |
-| **Companions** | `rules.md` (engineering rules) · `development-plan.md` (when each control lands) |
+| **Companions**   | `rules.md` (engineering rules) · `development-plan.md` (when each control lands)                                                          |
 
 This document is the single place where every security control, limit, retention window, and required CI probe lives. Numbers here are **contractual** — they come from the PRDs and the legal drafts the product publishes. If an implementation disagrees with this file, one of them is wrong; fix it in the same PR.
 
@@ -21,13 +21,13 @@ This document is the single place where every security control, limit, retention
 
 ## 2. Data classification
 
-| Class | Examples | Handling |
-|---|---|---|
-| Public | Published content, published blogs/jobs, opted-in public profiles | Public-read RLS on `status='published'` only; ISR/CDN cacheable. **Exception — `jobs`:** public select is *not* expiry-gated (expired rows stay selectable; routes gate presentation, enabling seeker-history joins per M6 §9/§4.3) |
-| Private user data | Highlights, notes, bookmarks, progress, resumes, saved jobs, prefs, email | Owner-only RLS; never public; in export + purge scope |
-| Sensitive | AI keys, verification documents, license numbers, phone numbers, anonymous authors' identities | Encrypted and/or private buckets; RPC-only access; retention-limited; masked in staff UIs |
-| Staff-only | Audit log, moderation reports, review queues, preview links | Role-gated; audit log append-only |
-| Secrets | `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `AI_KEYS_ENCRYPTION_KEY`, `WHATSAPP_APP_SECRET`/`WHATSAPP_TOKEN`, `CRON_SECRET`, SMTP/Sentry tokens | Coolify env store only; never in DB, repo, logs, or client bundles |
+| Class             | Examples                                                                                                                                                | Handling                                                                                                                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public            | Published content, published blogs/jobs, opted-in public profiles                                                                                       | Public-read RLS on `status='published'` only; ISR/CDN cacheable. **Exception — `jobs`:** public select is _not_ expiry-gated (expired rows stay selectable; routes gate presentation, enabling seeker-history joins per M6 §9/§4.3) |
+| Private user data | Highlights, notes, bookmarks, progress, resumes, saved jobs, prefs, email                                                                               | Owner-only RLS; never public; in export + purge scope                                                                                                                                                                               |
+| Sensitive         | AI keys, verification documents, license numbers, phone numbers, anonymous authors' identities                                                          | Encrypted and/or private buckets; RPC-only access; retention-limited; masked in staff UIs                                                                                                                                           |
+| Staff-only        | Audit log, moderation reports, review queues, preview links                                                                                             | Role-gated; audit log append-only                                                                                                                                                                                                   |
+| Secrets           | `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `AI_KEYS_ENCRYPTION_KEY`, `WHATSAPP_APP_SECRET`/`WHATSAPP_TOKEN`, `CRON_SECRET`, SMTP/Sentry tokens | Coolify env store only; never in DB, repo, logs, or client bundles                                                                                                                                                                  |
 
 ## 3. Non-negotiable security invariants
 
@@ -69,6 +69,7 @@ create policy author_insert on public.replies
 ```
 
 Special patterns beyond the archetypes (each defined in its module PRD):
+
 - **RPC-only tables:** `ai_keys` (no direct select even by owner; status RPC returns masked tail only), `job_submissions` (service-role only; public insert via RPC when flag on), all `wa_*` tables.
 - **`jobs` is not expiry-gated:** public select regardless of expiry (routes gate presentation; seeker-history joins depend on it — M6 §9/§4.3); writes `jobs_manager`+ only.
 - **Security-barrier views:** forum public reads (anonymity masking).
@@ -81,29 +82,34 @@ Special patterns beyond the archetypes (each defined in its module PRD):
 The RLS/security suite runs in CI against a migrated shadow DB. A feature is incomplete until its probes are in. Accumulated catalog:
 
 **Foundation / M2**
+
 - Anon cannot read unpublished subtopics; user A cannot read user B's notes/keys/prefs/email
 - User cannot self-elevate `role`; cannot self-set `is_verified_pharmacist`; cannot clear own `deletion_requested_at`
 - Username availability check works anonymously; auto-link is blocked when either email is unverified
 - CI fails if any table containing `user_id` is missing from `personal_data_registry`
 
 **M1**
+
 - Anon cannot select draft subtopics; owner isolation on all five study tables (highlights, user_notes, bookmarks, progress, last_visited)
 - No role below author can update `primary_video_url`
 - Preview truncation verified at the network layer (gated blocks absent from the anon payload)
 
 **M3**
+
 - `authenticated` cannot select `ai_keys`; status RPC returns masked data only; anon cannot invoke the AI proxy
 - User cannot edit another user's `profiles.prefs` (prefs write isolation)
 - Log-audit fixture proves zero key material or message content in pino/Sentry output
 - Sync→device-only switch deletes the server-side encrypted blob (DB-checked)
 
 **M4**
+
 - Reviewer cannot publish; author cannot approve their own draft
 - Audit rows immutable under every role; role assignment respects rank rules
 - Anon preview RPC honors expiry and revocation; publish auto-revokes preview links (network-verified)
 - Yearly audit-export cron produces a valid R2 object from a seeded aged year
 
 **M5 (five non-negotiables + extras)**
+
 - No non-staff query path returns an anonymous author's identity — PostgREST probing fixture including filters, ordering tricks, and embedded joins
 - Unverified email cannot insert; muted user cannot insert (RLS-level)
 - Anonymous OP can still mark an accepted answer via RPC
@@ -111,14 +117,17 @@ The RLS/security suite runs in CI against a migrated shadow DB. A feature is inc
 - Verification docs bucket: staff-only signed URLs; 90-day purge clock-tested
 
 **M6**
+
 - Non-manager cannot write jobs/orgs; owner isolation on `saved_jobs`
 - `job_submissions` unreachable while `employer_submissions` flag is off; staging flag-flip activates the full path
 
 **M7**
+
 - Resume owner isolation; cap-5 enforced via UI, RPC, **and** direct-insert attempt
 - Signed-URL scope: user B's token fails on user A's photo; purge-registry coverage clock-tested
 
 **M8**
+
 - Zero anon/authenticated access to any `wa_*` table (probed)
 - Phone unmask only via the audited RPC (writes `wa_phone_revealed`); webhook rejects bad `X-Hub-Signature-256`
 
@@ -131,7 +140,7 @@ The RLS/security suite runs in CI against a migrated shadow DB. A feature is inc
 - **Re-authentication required** for: account deletion, email change, sign-in-method removal.
 - **Sessions:** httpOnly/secure/SameSite=Lax cookies via `@supabase/ssr`; `proxy.ts` refreshes tokens and hard-blocks `/admin/**` without a staff role. "Sign out everywhere" revokes **all** refresh tokens (e2e-tested on a second live device).
 - **No account-existence leakage:** "If that account exists, we've emailed a link."
-- **Age gate:** required 13+ checkbox at signup. *(Legal delta to close: the ToS additionally requires parental consent for under-18s — the signup affirmation must cover both; under-13 accounts discovered on report are deleted.)*
+- **Age gate:** required 13+ checkbox at signup. _(Legal delta to close: the ToS additionally requires parental consent for under-18s — the signup affirmation must cover both; under-13 accounts discovered on report are deleted.)_
 - **Bot friction:** Cloudflare Turnstile on sign-up, password reset, waitlist, and the (flag-gated) employer form.
 - **Staff 2FA (M4-5):** TOTP fully built via GoTrue MFA (enroll/verify/recovery codes); enforcement off at launch (accepted risk R-M4a). Enforcement triggers: any staff-credential incident OR staff headcount > 5. Compensating controls: 12-char staff passwords, staff sign-in notifications, weekly admin-audit review habit.
 - **Auth events** append `audit_log` entries with hashed IP.
@@ -149,13 +158,13 @@ The RLS/security suite runs in CI against a migrated shadow DB. A feature is inc
 
 ## 8. Uploads & storage security
 
-| Bucket | Access | Constraints | Lifecycle |
-|---|---|---|---|
-| `content-media` | public-read via CDN | PNG/JPG/WebP, server type-sniff, auto-WebP, max edge 1920, ≤2 MB post-compress, **alt required** | permanent; replaced files retained 30 days |
-| `avatars` | public-read | client square-crop → WebP 512px, ≤1 MB, type-sniffed, write-then-swap | replaced on upload |
-| `covers` | public-read | blog covers / OG assets | permanent |
-| `verification-docs` | **private**; staff-only signed URLs | ≤5 MB, pdf/jpg/png, MIME-sniffed | **auto-purge 90 days after decision** (cron, clock-tested) |
-| `resume-photos` | **private**; owner-scoped path `{user_id}/{resume_id}.webp` | square-crop WebP; signed-URL client fetch at export | deleted with resume; weekly orphan-sweep |
+| Bucket              | Access                                                      | Constraints                                                                                      | Lifecycle                                                  |
+| ------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `content-media`     | public-read via CDN                                         | PNG/JPG/WebP, server type-sniff, auto-WebP, max edge 1920, ≤2 MB post-compress, **alt required** | permanent; replaced files retained 30 days                 |
+| `avatars`           | public-read                                                 | client square-crop → WebP 512px, ≤1 MB, type-sniffed, write-then-swap                            | replaced on upload                                         |
+| `covers`            | public-read                                                 | blog covers / OG assets                                                                          | permanent                                                  |
+| `verification-docs` | **private**; staff-only signed URLs                         | ≤5 MB, pdf/jpg/png, MIME-sniffed                                                                 | **auto-purge 90 days after decision** (cron, clock-tested) |
+| `resume-photos`     | **private**; owner-scoped path `{user_id}/{resume_id}.webp` | square-crop WebP; signed-URL client fetch at export                                              | deleted with resume; weekly orphan-sweep                   |
 
 All uploads: type/size sniffing server-side (extension is not trust), private buckets for anything sensitive, signed URLs scoped and expiring.
 
@@ -168,43 +177,43 @@ All uploads: type/size sniffing server-side (extension is not trust), private bu
 
 ## 10. Rate-limit catalog (table-backed sliding windows + Cloudflare outer layer)
 
-| Surface | Limit |
-|---|---|
-| Sign-up | 5 / hour / IP |
-| Sign-in | 10 / 15 min / IP, with backoff |
-| Password reset | 3 / hour / identifier |
-| Username availability | 30 / min / IP |
-| Data export | 3 / day / user |
-| AI proxy — burst | 30 requests / 5 min / user |
-| AI proxy — daily | default 100 / day (user-adjustable 20–500; no unlimited) |
-| AI output tokens | default 1,024 / response (user-adjustable 256–4,096) |
-| AI chat context guard | "whole topic" disabled above ~150k chars estimated context |
-| AI concurrency | one active stream per user |
-| New accounts (<24 h) | 2 threads + 10 replies / day |
-| Draft preview links | 30 opens / hour / IP |
-| Employer submissions | rate-limited + Turnstile (flag-gated) |
-| WhatsApp inbound | 30 messages / rolling hour / contact (one notice, then silence) |
-| Admin routes | stricter than public equivalents (M4) |
+| Surface               | Limit                                                           |
+| --------------------- | --------------------------------------------------------------- |
+| Sign-up               | 5 / hour / IP                                                   |
+| Sign-in               | 10 / 15 min / IP, with backoff                                  |
+| Password reset        | 3 / hour / identifier                                           |
+| Username availability | 30 / min / IP                                                   |
+| Data export           | 3 / day / user                                                  |
+| AI proxy — burst      | 30 requests / 5 min / user                                      |
+| AI proxy — daily      | default 100 / day (user-adjustable 20–500; no unlimited)        |
+| AI output tokens      | default 1,024 / response (user-adjustable 256–4,096)            |
+| AI chat context guard | "whole topic" disabled above ~150k chars estimated context      |
+| AI concurrency        | one active stream per user                                      |
+| New accounts (<24 h)  | 2 threads + 10 replies / day                                    |
+| Draft preview links   | 30 opens / hour / IP                                            |
+| Employer submissions  | rate-limited + Turnstile (flag-gated)                           |
+| WhatsApp inbound      | 30 messages / rolling hour / contact (one notice, then silence) |
+| Admin routes          | stricter than public equivalents (M4)                           |
 
 ## 11. Data retention & purge catalog
 
-| Data | Window / rule |
-|---|---|
-| Account deletion grace | **14 days**, sign-in auto-cancels; then `purge-deleted-accounts` cron runs the contractual order: (1) ai_keys → (2) study data → (3) module personal rows (resumes, saved jobs, verification docs) → (4) waitlist by email → (5) storage objects → (6) public contributions → "deleted user" sentinel → (7) profiles + GoTrue user. Idempotent; writes PII-free `deletion_receipts` |
-| Backups | Rolling **30 days**, encrypted, offsite (R2/B2); deleted data ages out with the cycle |
-| Verification documents | Auto-delete **90 days** after decision; decision + license reference retained for badge integrity |
-| WhatsApp message logs | **90 days**; the same cycle nulls `phone_encrypted` for contacts with no activity in 90 days and no active alert opt-in (Privacy Policy scopes the encrypted copy "solely for reply routing"). `phone_hash` + opt-in/do-not-contact flags persist to honor STOP |
-| Draft preview links | 128-bit token, hashed at rest, single-subtopic scope; `expires_at = now()+7d`; revocable; auto-revoked on publish |
-| Unverified accounts | Cleanup-eligible after **7 days** with zero activity |
-| Handle quarantine (force-rename) | **90 days** |
-| Audit log | **12 months** hot in Postgres → yearly encrypted export to R2 (immutable) → prune |
-| Media replaced files / unused soft-delete | **30 days** each |
-| Server logs (IP, UA) | Brief/short-term only |
-| AI conversations | **Not stored** (session-only; sessionStorage client-side) |
-| Search queries | Never stored per-user (aggregate Umami events only) |
-| Study/profile/resume data | Life of the account |
-| Appeals window | 14 days (different-staff review where feasible) |
-| Writer/verification reapply | 30 days after rejection |
+| Data                                      | Window / rule                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Account deletion grace                    | **14 days**, sign-in auto-cancels; then `purge-deleted-accounts` cron runs the contractual order: (1) ai_keys → (2) study data → (3) module personal rows (resumes, saved jobs, verification docs) → (4) waitlist by email → (5) storage objects → (6) public contributions → "deleted user" sentinel → (7) profiles + GoTrue user. Idempotent; writes PII-free `deletion_receipts` |
+| Backups                                   | Rolling **30 days**, encrypted, offsite (R2/B2); deleted data ages out with the cycle                                                                                                                                                                                                                                                                                               |
+| Verification documents                    | Auto-delete **90 days** after decision; decision + license reference retained for badge integrity                                                                                                                                                                                                                                                                                   |
+| WhatsApp message logs                     | **90 days**; the same cycle nulls `phone_encrypted` for contacts with no activity in 90 days and no active alert opt-in (Privacy Policy scopes the encrypted copy "solely for reply routing"). `phone_hash` + opt-in/do-not-contact flags persist to honor STOP                                                                                                                     |
+| Draft preview links                       | 128-bit token, hashed at rest, single-subtopic scope; `expires_at = now()+7d`; revocable; auto-revoked on publish                                                                                                                                                                                                                                                                   |
+| Unverified accounts                       | Cleanup-eligible after **7 days** with zero activity                                                                                                                                                                                                                                                                                                                                |
+| Handle quarantine (force-rename)          | **90 days**                                                                                                                                                                                                                                                                                                                                                                         |
+| Audit log                                 | **12 months** hot in Postgres → yearly encrypted export to R2 (immutable) → prune                                                                                                                                                                                                                                                                                                   |
+| Media replaced files / unused soft-delete | **30 days** each                                                                                                                                                                                                                                                                                                                                                                    |
+| Server logs (IP, UA)                      | Brief/short-term only                                                                                                                                                                                                                                                                                                                                                               |
+| AI conversations                          | **Not stored** (session-only; sessionStorage client-side)                                                                                                                                                                                                                                                                                                                           |
+| Search queries                            | Never stored per-user (aggregate Umami events only)                                                                                                                                                                                                                                                                                                                                 |
+| Study/profile/resume data                 | Life of the account                                                                                                                                                                                                                                                                                                                                                                 |
+| Appeals window                            | 14 days (different-staff review where feasible)                                                                                                                                                                                                                                                                                                                                     |
+| Writer/verification reapply               | 30 days after rejection                                                                                                                                                                                                                                                                                                                                                             |
 
 Privacy-rights requests (access, correction, deletion, objection) via privacy@epharmatica.com: verify identity first, respond within the target 30 days.
 
@@ -267,13 +276,13 @@ Before public launch, every policy promise must be a shipped feature — shippin
 
 ## 17. Review cadence
 
-| What | When |
-|---|---|
-| RLS/security probe suite | Every PR (CI) |
-| Dependency audit (`pnpm audit` + Renovate) | Weekly |
-| Admin audit-log review | Weekly habit (dashboard tile) |
-| Restore drill | Monthly |
-| Docker/OS patch window | Monthly |
-| Staff-2FA enforcement decision (R-M4a) | Quarterly, or immediately on incident / headcount > 5 |
-| Business-model / entitlement review (R8) | Quarterly |
-| This document | Every phase gate, and in any PR that changes a control |
+| What                                       | When                                                   |
+| ------------------------------------------ | ------------------------------------------------------ |
+| RLS/security probe suite                   | Every PR (CI)                                          |
+| Dependency audit (`pnpm audit` + Renovate) | Weekly                                                 |
+| Admin audit-log review                     | Weekly habit (dashboard tile)                          |
+| Restore drill                              | Monthly                                                |
+| Docker/OS patch window                     | Monthly                                                |
+| Staff-2FA enforcement decision (R-M4a)     | Quarterly, or immediately on incident / headcount > 5  |
+| Business-model / entitlement review (R8)   | Quarterly                                              |
+| This document                              | Every phase gate, and in any PR that changes a control |

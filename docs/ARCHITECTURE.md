@@ -1,7 +1,7 @@
 # ARCHITECTURE.md — ePharmatica
 
 > **Audience:** engineers contributing to this codebase. Read this before your first PR.
-> **Version:** 1.1 · aligned to **PRD v1.2** (18 Jul 2026). The PRD defines *what and why*; this document defines *how and where*. When they conflict, the PRD's Decision Log (PRD §5) wins — update both in the same PR.
+> **Version:** 1.1 · aligned to **PRD v1.2** (18 Jul 2026). The PRD defines _what and why_; this document defines _how and where_. When they conflict, the PRD's Decision Log (PRD §5) wins — update both in the same PR.
 > **Pending amendment (PRD v1.7, 19 Jul 2026):** the repo is re-scoped to a **pnpm + Turborepo monorepo** — `apps/web` plus `@epharmatica/tokens`/`ui`/`editor`/`database`/`config` packages; §3.2's codemap will be rewritten as **v1.2** in the Phase-0 scaffolding PR. Invariants, data-access layers, and deployment topology (one Next.js container) are unchanged; `lib/editor` becomes the `@epharmatica/editor` package (I4 unchanged in intent, now a package boundary). See `development-plan.md` §2 for the interim layout.
 
 ---
@@ -35,18 +35,18 @@ Everything app-to-Supabase happens on the **internal Docker network**; only Trae
 
 These are the rules the architecture depends on. Breaking one is an architectural change, not a refactor — it needs a PRD/ARCHITECTURE update in the same PR.
 
-| # | Invariant |
-|---|-----------|
-| **I1** | **Every table has RLS enabled, deny-by-default.** Policies live in SQL migrations (never hand-edited in Studio) and are covered by the CI RLS test suite. |
-| **I2** | `SUPABASE_SERVICE_ROLE_KEY` is imported in exactly one module — `lib/supabase/admin.ts` — and that module is only imported from server-only admin/job code. Enforced by an ESLint `no-restricted-imports` rule + `server-only` package. |
-| **I3** | **Gated content never leaves the server for anonymous sessions.** Preview truncation happens in the data layer (`features/content/queries.ts`), not in CSS or client code. |
-| **I4** | Product code never imports `slate*`, `@udecode/*`, or Plate internals directly. All editor/render access goes through **`lib/editor`** (the `@epharmatica/editor` wrapper). This is our blast-shield for editor upgrades (PRD R6). |
-| **I5** | Any feature that could ever be premium calls **`can(user, feature)`** from `lib/entitlements` on the server. No client-side entitlement trust (PRD §7.11). |
-| **I6** | **AI keys and prompts never touch logs.** No `console.log` in the AI path; pino redaction + Sentry `beforeSend` scrub `authorization`, `x-api-key`, `apiKey`, prompt bodies, phone numbers, and emails. |
-| **I7** | Migrations are **forward-only**, in-repo (`supabase/migrations`), each paired with regenerated types (CI drift check) and RLS tests where relevant. Rollback = new forward migration. |
-| **I8** | Every mutating `/admin` action writes to `audit_log` via the `withAudit()` helper. |
-| **I9** | **One rich-text serialization: Plate JSON (`jsonb`).** Study content, blog posts, forum posts, job descriptions, and private notes all use it. Renderers vary; the format does not. |
-| **I10** | Outbound side effects (email, WhatsApp sends, future payments) go through `lib/integrations/*` server modules only — never called from components or client code. |
+| #       | Invariant                                                                                                                                                                                                                               |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **I1**  | **Every table has RLS enabled, deny-by-default.** Policies live in SQL migrations (never hand-edited in Studio) and are covered by the CI RLS test suite.                                                                               |
+| **I2**  | `SUPABASE_SERVICE_ROLE_KEY` is imported in exactly one module — `lib/supabase/admin.ts` — and that module is only imported from server-only admin/job code. Enforced by an ESLint `no-restricted-imports` rule + `server-only` package. |
+| **I3**  | **Gated content never leaves the server for anonymous sessions.** Preview truncation happens in the data layer (`features/content/queries.ts`), not in CSS or client code.                                                              |
+| **I4**  | Product code never imports `slate*`, `@udecode/*`, or Plate internals directly. All editor/render access goes through **`lib/editor`** (the `@epharmatica/editor` wrapper). This is our blast-shield for editor upgrades (PRD R6).      |
+| **I5**  | Any feature that could ever be premium calls **`can(user, feature)`** from `lib/entitlements` on the server. No client-side entitlement trust (PRD §7.11).                                                                              |
+| **I6**  | **AI keys and prompts never touch logs.** No `console.log` in the AI path; pino redaction + Sentry `beforeSend` scrub `authorization`, `x-api-key`, `apiKey`, prompt bodies, phone numbers, and emails.                                 |
+| **I7**  | Migrations are **forward-only**, in-repo (`supabase/migrations`), each paired with regenerated types (CI drift check) and RLS tests where relevant. Rollback = new forward migration.                                                   |
+| **I8**  | Every mutating `/admin` action writes to `audit_log` via the `withAudit()` helper.                                                                                                                                                      |
+| **I9**  | **One rich-text serialization: Plate JSON (`jsonb`).** Study content, blog posts, forum posts, job descriptions, and private notes all use it. Renderers vary; the format does not.                                                     |
+| **I10** | Outbound side effects (email, WhatsApp sends, future payments) go through `lib/integrations/*` server modules only — never called from components or client code.                                                                       |
 
 ---
 
@@ -107,11 +107,11 @@ epharmatica/
 
 ### 3.3 Data-access layers (three Supabase clients, never mixed)
 
-| Client | File | Key | Runs | Use for |
-|---|---|---|---|---|
-| Browser | `lib/supabase/client.ts` | anon | client components | user-owned reads/writes under RLS (highlights, votes, notes) |
-| Server (user) | `lib/supabase/server.ts` | anon + user cookie JWT (`@supabase/ssr`) | RSC, server actions | anything on behalf of the signed-in user — still RLS-bound |
-| Admin | `lib/supabase/admin.ts` | service-role | trusted server modules only (I2) | publish pipeline, cron jobs, webhook handlers, moderation |
+| Client        | File                     | Key                                      | Runs                             | Use for                                                      |
+| ------------- | ------------------------ | ---------------------------------------- | -------------------------------- | ------------------------------------------------------------ |
+| Browser       | `lib/supabase/client.ts` | anon                                     | client components                | user-owned reads/writes under RLS (highlights, votes, notes) |
+| Server (user) | `lib/supabase/server.ts` | anon + user cookie JWT (`@supabase/ssr`) | RSC, server actions              | anything on behalf of the signed-in user — still RLS-bound   |
+| Admin         | `lib/supabase/admin.ts`  | service-role                             | trusted server modules only (I2) | publish pipeline, cron jobs, webhook handlers, moderation    |
 
 Client-side server state uses **TanStack Query v5** with query keys namespaced per feature (`['study','progress',subjectId]`); RSC data is fetched directly and passed down — no double-fetching. Realtime is used **sparingly** (admin queues badge counts); nothing user-facing depends on it in v1.
 
@@ -148,16 +148,16 @@ create policy author_insert on public.replies
 
 - `subtopics.content` (Plate JSON) is the source of truth. On every save, a trigger refreshes `plain_text` (block-walk extraction) → `search_vector` (`tsvector`, weighted title A / headings B / body C).
 - **Publishing** snapshots into `content_revisions` before flipping `status`; rollback = copy a revision back (new revision, never destructive) (I7 spirit).
-- Search = Postgres FTS with `websearch_to_tsquery`, filtered by subject/semester. Meilisearch is a *drop-in future container*, not a v1 dependency — the query layer isolates this behind `features/content/search.ts`.
+- Search = Postgres FTS with `websearch_to_tsquery`, filtered by subject/semester. Meilisearch is a _drop-in future container_, not a v1 dependency — the query layer isolates this behind `features/content/search.ts`.
 
 ### 4.3 Storage buckets
 
-| Bucket | Access | Contents | Lifecycle |
-|---|---|---|---|
-| `content-media` | public-read via CDN | study/blog images (imgproxy-resized) | permanent |
-| `avatars` | public-read | user avatars | replaced on upload |
-| `verification-docs` | **private**, staff-only signed URLs | license/degree scans | cron purge 90 days post-decision |
-| `covers` | public-read | blog covers, OG assets | permanent |
+| Bucket              | Access                              | Contents                             | Lifecycle                        |
+| ------------------- | ----------------------------------- | ------------------------------------ | -------------------------------- |
+| `content-media`     | public-read via CDN                 | study/blog images (imgproxy-resized) | permanent                        |
+| `avatars`           | public-read                         | user avatars                         | replaced on upload               |
+| `verification-docs` | **private**, staff-only signed URLs | license/degree scans                 | cron purge 90 days post-decision |
+| `covers`            | public-read                         | blog covers, OG assets               | permanent                        |
 
 ---
 
@@ -171,7 +171,7 @@ create policy author_insert on public.replies
 
 **Publish (CMS).** Editor (Plate via `lib/editor`) → server action `publishSubtopic()` [admin client]: workflow-state check → revision snapshot → `status='published'` → `revalidateTag` cascade (§6) → `audit_log` via `withAudit()` (I8).
 
-**AI request (BYOK).** Client sends prompt + key reference → `POST /api/ai` route handler: (1) session check, (2) sliding-window rate limit in Postgres (`ai_rate_limits`), (3) resolve key — from request header (*device-only* mode) or decrypt `ai_keys.encrypted_key` with `AI_KEYS_ENCRYPTION_KEY` (*sync* mode; libsodium sealed-box), (4) build grounded prompt from topic Markdown serialization, (5) stream via Vercel AI SDK adapter (OpenAI/Anthropic/Gemini/OpenRouter/Groq) as SSE, (6) nothing persisted; key held in request scope only (I6). Output is rendered as markdown text — never executed, no tools (PRD §13.2).
+**AI request (BYOK).** Client sends prompt + key reference → `POST /api/ai` route handler: (1) session check, (2) sliding-window rate limit in Postgres (`ai_rate_limits`), (3) resolve key — from request header (_device-only_ mode) or decrypt `ai_keys.encrypted_key` with `AI_KEYS_ENCRYPTION_KEY` (_sync_ mode; libsodium sealed-box), (4) build grounded prompt from topic Markdown serialization, (5) stream via Vercel AI SDK adapter (OpenAI/Anthropic/Gemini/OpenRouter/Groq) as SSE, (6) nothing persisted; key held in request scope only (I6). Output is rendered as markdown text — never executed, no tools (PRD §13.2).
 
 **WhatsApp webhook (Phase 4).** Meta → `POST /api/whatsapp/webhook` → signature verify (`WHATSAPP_APP_SECRET`) → intent router (menu state machine + FTS topic lookup, **no LLM**) → reply via Graph API through `lib/integrations/whatsapp.ts` (I10) → log to `wa_messages` (90-day cron purge). Inbound-only; a kill-switch feature flag short-circuits the router.
 
@@ -181,13 +181,13 @@ create policy author_insert on public.replies
 
 ## 6. Caching & Revalidation Map
 
-| Tag | Invalidated by | Pages affected |
-|---|---|---|
-| `subtopic:{id}` | publish/rollback of that subtopic | its reader page |
-| `topic:{id}` / `subject:{slug}` | child publish, reorder, rename | topic page, chapter list, subject index, sitemap |
-| `blog` / `blog:{slug}` | blog publish/schedule fire | blog index, post, author page |
-| `jobs` | listing publish/expiry cron | jobs index, job page, jobs sitemap |
-| `flags` | admin settings change | landing (Coming-Soon states), nav |
+| Tag                             | Invalidated by                    | Pages affected                                   |
+| ------------------------------- | --------------------------------- | ------------------------------------------------ |
+| `subtopic:{id}`                 | publish/rollback of that subtopic | its reader page                                  |
+| `topic:{id}` / `subject:{slug}` | child publish, reorder, rename    | topic page, chapter list, subject index, sitemap |
+| `blog` / `blog:{slug}`          | blog publish/schedule fire        | blog index, post, author page                    |
+| `jobs`                          | listing publish/expiry cron       | jobs index, job page, jobs sitemap               |
+| `flags`                         | admin settings change             | landing (Coming-Soon states), nav                |
 
 Cloudflare: cache-everything for anon on public routes with `Bypass on cookie: sb-*`; HTML respects Next's revalidation; images/fonts long-max-age immutable. Rule of thumb: **Next tags are the source of truth; Cloudflare only shortens the path to them.** Next 16's Cache Components (`"use cache"`, `cacheTag`, `cacheLife`) may be adopted per surface where profiling justifies it — the tag map above remains the invalidation contract either way.
 
@@ -213,13 +213,13 @@ Cloudflare: cache-everything for anon on public routes with `Bypass on cookie: s
 
 ## 9. Evolution Points (designed-in, not built)
 
-| Future need | Plug-in point | Nothing else changes |
-|---|---|---|
-| Cross-topic RAG | `pgvector` migration + retrieval step in `features/ai/prompts.ts` | provider adapters, proxy route |
-| Better search relevance | Meilisearch container behind `features/content/search.ts` | callers |
-| Payments/monetization | gateway module in `lib/integrations` writing `entitlements` | every `can()` call site (I5) |
-| Scale-out | Postgres to its own VPS → 2nd `next-app` node behind Cloudflare LB | app code (stateless; rate limits already in PG) |
-| Assessments (P5) | new `assessment` feature slice + tables | reader integration via existing subtopic IDs |
+| Future need             | Plug-in point                                                      | Nothing else changes                            |
+| ----------------------- | ------------------------------------------------------------------ | ----------------------------------------------- |
+| Cross-topic RAG         | `pgvector` migration + retrieval step in `features/ai/prompts.ts`  | provider adapters, proxy route                  |
+| Better search relevance | Meilisearch container behind `features/content/search.ts`          | callers                                         |
+| Payments/monetization   | gateway module in `lib/integrations` writing `entitlements`        | every `can()` call site (I5)                    |
+| Scale-out               | Postgres to its own VPS → 2nd `next-app` node behind Cloudflare LB | app code (stateless; rate limits already in PG) |
+| Assessments (P5)        | new `assessment` feature slice + tables                            | reader integration via existing subtopic IDs    |
 
 ---
 
@@ -227,4 +227,4 @@ Cloudflare: cache-everything for anon on public routes with `Bypass on cookie: s
 
 Architecture changes ride the PR that implements them: update the relevant section here, reference the PRD decision (or add one to its Decision Log), and note breaking invariant changes in the PR description. Small clarifications are fair game anytime — a stale ARCHITECTURE.md is worse than none.
 
-*Companions: `docs/epharmatica-prd.md` (v1.1) · ops runbook (PRD §10) · legal drafts.*
+_Companions: `docs/epharmatica-prd.md` (v1.1) · ops runbook (PRD §10) · legal drafts._

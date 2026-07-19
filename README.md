@@ -4,14 +4,14 @@ Learning & community platform for pharmacy — structured Pharm-D study material
 
 ## Start here
 
-| Doc | What |
-|---|---|
-| [`docs/epharmatica-docs-index.md`](docs/epharmatica-docs-index.md) | Reading order for the whole doc set |
-| [`docs/development-plan.md`](docs/development-plan.md) | Phased build plan (you are in **Phase 0**) |
-| [`docs/rules.md`](docs/rules.md) | Engineering ground rules — read before your first PR |
-| [`docs/securities.md`](docs/securities.md) | Security program: RLS conventions, CI probes, limits, retention |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System topology + the ten load-bearing invariants |
-| [`docs/STYLE.md`](docs/STYLE.md) | Design system v1.3 (locked) — Pharmacopoeia, 0px contract |
+| Doc                                                                | What                                                            |
+| ------------------------------------------------------------------ | --------------------------------------------------------------- |
+| [`docs/epharmatica-docs-index.md`](docs/epharmatica-docs-index.md) | Reading order for the whole doc set                             |
+| [`docs/development-plan.md`](docs/development-plan.md)             | Phased build plan (you are in **Phase 0**)                      |
+| [`docs/rules.md`](docs/rules.md)                                   | Engineering ground rules — read before your first PR            |
+| [`docs/securities.md`](docs/securities.md)                         | Security program: RLS conventions, CI probes, limits, retention |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)                     | System topology + the ten load-bearing invariants               |
+| [`docs/STYLE.md`](docs/STYLE.md)                                   | Design system v1.3 (locked) — Pharmacopoeia, 0px contract       |
 
 ## Monorepo layout
 

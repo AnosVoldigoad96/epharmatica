@@ -1,13 +1,13 @@
 # ePharmatica — Product Requirements Document (PRD)
 
-| | |
-|---|---|
-| **Product** | ePharmatica — Learning & Community Platform for Pharmacy |
-| **Version** | 1.7 (Foundation) |
-| **Status** | Approved for build — Phase 0/1 |
-| **Date** | 19 July 2026 |
-| **Owner** | Founder / Product Lead |
-| **Decision method** | Structured MCQ elicitation rounds (see §5 Decision Log) |
+|                     |                                                          |
+| ------------------- | -------------------------------------------------------- |
+| **Product**         | ePharmatica — Learning & Community Platform for Pharmacy |
+| **Version**         | 1.7 (Foundation)                                         |
+| **Status**          | Approved for build — Phase 0/1                           |
+| **Date**            | 19 July 2026                                             |
+| **Owner**           | Founder / Product Lead                                   |
+| **Decision method** | Structured MCQ elicitation rounds (see §5 Decision Log)  |
 
 > **Changelog — v1.7 (19 Jul 2026):** **Build-phase sync (founder decisions).** (1) **Monorepo:** repo re-scoped to pnpm + Turborepo — `apps/web` plus `@epharmatica/tokens` / `ui` / `editor` / `database` / `config` workspace packages; deployment topology unchanged (one Next.js container); ARCHITECTURE.md §3.2 codemap to be amended to v1.2 in the Phase-0 scaffolding PR. (2) **CMS stays in-app** at `/admin` per §7.10 (re-confirmed over a separate admin app); an optional Cloudflare Access / IP-allowlist layer on `/admin/*` is added as a fourth defense layer. (3) §7.1 waitlist **role labels superseded by locked STYLE S12**: Student / Professional / Other. (4) Formal record of the M6-2 amendment to D14: jobs launch curated-via-CMS only; employer form + aggregation ship dormant behind `employer_submissions`; interim employer intake = `jobs@epharmatica.com` on the Jobs surface, Content Policy wording updated to "employer submission channel on the Jobs page". (5) **Q2 resolved:** founder is the primary author with most launch content already written (pre-CMS material to be ported and reviewed); one additional author and one independent licensed reviewer will be recruited, satisfying the author≠approver workflow rule and G6; further authors added when volume demands (R1 path). (6) **Q4 updated:** legal counsel review **complete** (19 Jul 2026); bracketed operational fields to be filled and DRAFT headers removed at launch. Companion build docs: `development-plan.md`, `rules.md`, `securities.md`.
 >
@@ -47,9 +47,11 @@ Everything is managed through a role-based in-app CMS. The product ships in phas
 ## 2. Vision, Goals & Non-Goals
 
 ### 2.1 Vision
+
 Become the default study companion for Pharm-D students in Pakistan and a credible professional home for its pharmacists — the place where a student learns pharmacology in first year and, five years later, finds their first industry job.
 
 ### 2.2 Product Goals
+
 - **G1 — Learning quality:** Every published topic must be genuinely easier to learn from than the textbook chapter it maps to (structured, visual, exam-aware, video-paired).
 - **G2 — Habit formation:** Students return because their progress, highlights, and notes live here.
 - **G3 — Zero-marginal-cost AI:** AI study features at full quality with no inference cost to the platform (BYOK).
@@ -58,6 +60,7 @@ Become the default study companion for Pharm-D students in Pakistan and a credib
 - **G6 — Editorial integrity:** All study and blog content passes a review workflow before publication; medical-education accuracy is a hard requirement.
 
 ### 2.3 Non-Goals (explicitly out of scope for v1.x)
+
 - Native mobile apps (the web app is fully responsive; PWA-ready architecture only).
 - Live classes, webinars, or cohort courses.
 - Hosting video files (all video is embedded from YouTube).
@@ -98,26 +101,26 @@ Become the default study companion for Pharm-D students in Pakistan and a credib
 
 ## 5. Decision Log (from MCQ elicitation rounds)
 
-| # | Decision | Choice | Notes / Rationale |
-|---|----------|--------|-------------------|
-| D1 | Backend platform | **Supabase, self-hosted** | Delegated to PRD; full justification in §11.2. |
-| D2 | Rich-text editor | **Plate** | MIT license end-to-end (incl. AI), shadcn-native component distribution, 50+ plugins, comments/suggestions for editorial review. Runner-up: BlockNote (XL/AI packages are GPL-3.0 or paid). Yoopta rejected on maintainer bus-factor; Novel rejected as too thin/slow-moving. |
-| D3 | Business model | **Deferred — design for flexibility** | No paywall at launch. Entitlement + feature-flag layer built from day one (§7.11, §16). |
-| D4 | Content hierarchy | **Subject → Chapter → Topic → Subtopic**, HEC semester as a subtle tag | Keeps content usable worldwide; Pakistani students filter by semester when they want to. |
-| D5 | Progress tracking | **Manual "Mark as complete" only** | At subtopic level; rolls up to topic/chapter/subject percentages. |
-| D6 | Self-assessment (MCQ practice) | **Later phase** | Scheduled Phase 5 (§6); can be pulled forward — flagged assumption A3. |
-| D7 | Auth methods | **Email + password, and Google OAuth** | Via Supabase Auth (GoTrue). HTTPS termination prerequisite noted in §13. |
-| D8 | Content access | **Public previews; login for full content + all features** | Preview = first section(s) of each topic, fully indexable. |
-| D9 | BYOK providers | **OpenAI, Anthropic, Google Gemini, OpenRouter, Groq** | Unified through a provider-adapter layer (§7.5). |
-| D10 | AI feature scope | **Explain selection + Summarize topic + Chat-with-topic Q&A** | Grounded strictly in ePharmatica content; ships in Phase 1. |
-| D11 | Pharmacist verification | **Optional "Verified Pharmacist" badge, manual review** | Submission of credentials → admin review queue (§7.6.4). |
-| D12 | Forum model | **Hybrid** | Categories + threads backbone; two thread types (Discussion / Question); reply upvotes; accepted answers on Questions. Discourse-style; works at low volume. |
-| D13 | Blog publishing | **Approved writers only** | Writer application flow; editorial review before publish. |
-| D14 | Jobs sourcing | **Admin-curated + employer submissions (reviewed) + external aggregation later**, run by a dedicated **Jobs Manager** CMS role | Aggregation is Phase 3.5+, manual-first. |
-| D15 | WhatsApp system | **User-initiated content bot first** (free service-conversation window); paid outbound (alerts/marketing templates) only after funding/scale | Bot answers: topic lookup, latest blogs, new jobs — replying with content summaries + links. Pricing re-verification note in §7.9. |
-| D16 | Deployment | **Option A — self-host everything on one VPS, Hetzner EU** | 4 vCPU / 8 GB RAM / 80–160 GB NVMe (CX33-class, Falkenstein/Nuremberg); Coolify + Docker; Cloudflare in front; offsite backups. Full runbook §10. |
-| D17 | Phase 1 scope | **Learning system + accounts + AI (BYOK) + landing page** | |
-| D18 | Post-Phase-1 order | **Community → Jobs + Resume → WhatsApp bot** | User ranked AI first, but AI was absorbed into Phase 1 (D17), so remaining ranking defines Phases 2–4. |
+| #   | Decision                       | Choice                                                                                                                                       | Notes / Rationale                                                                                                                                                                                                                                                             |
+| --- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Backend platform               | **Supabase, self-hosted**                                                                                                                    | Delegated to PRD; full justification in §11.2.                                                                                                                                                                                                                                |
+| D2  | Rich-text editor               | **Plate**                                                                                                                                    | MIT license end-to-end (incl. AI), shadcn-native component distribution, 50+ plugins, comments/suggestions for editorial review. Runner-up: BlockNote (XL/AI packages are GPL-3.0 or paid). Yoopta rejected on maintainer bus-factor; Novel rejected as too thin/slow-moving. |
+| D3  | Business model                 | **Deferred — design for flexibility**                                                                                                        | No paywall at launch. Entitlement + feature-flag layer built from day one (§7.11, §16).                                                                                                                                                                                       |
+| D4  | Content hierarchy              | **Subject → Chapter → Topic → Subtopic**, HEC semester as a subtle tag                                                                       | Keeps content usable worldwide; Pakistani students filter by semester when they want to.                                                                                                                                                                                      |
+| D5  | Progress tracking              | **Manual "Mark as complete" only**                                                                                                           | At subtopic level; rolls up to topic/chapter/subject percentages.                                                                                                                                                                                                             |
+| D6  | Self-assessment (MCQ practice) | **Later phase**                                                                                                                              | Scheduled Phase 5 (§6); can be pulled forward — flagged assumption A3.                                                                                                                                                                                                        |
+| D7  | Auth methods                   | **Email + password, and Google OAuth**                                                                                                       | Via Supabase Auth (GoTrue). HTTPS termination prerequisite noted in §13.                                                                                                                                                                                                      |
+| D8  | Content access                 | **Public previews; login for full content + all features**                                                                                   | Preview = first section(s) of each topic, fully indexable.                                                                                                                                                                                                                    |
+| D9  | BYOK providers                 | **OpenAI, Anthropic, Google Gemini, OpenRouter, Groq**                                                                                       | Unified through a provider-adapter layer (§7.5).                                                                                                                                                                                                                              |
+| D10 | AI feature scope               | **Explain selection + Summarize topic + Chat-with-topic Q&A**                                                                                | Grounded strictly in ePharmatica content; ships in Phase 1.                                                                                                                                                                                                                   |
+| D11 | Pharmacist verification        | **Optional "Verified Pharmacist" badge, manual review**                                                                                      | Submission of credentials → admin review queue (§7.6.4).                                                                                                                                                                                                                      |
+| D12 | Forum model                    | **Hybrid**                                                                                                                                   | Categories + threads backbone; two thread types (Discussion / Question); reply upvotes; accepted answers on Questions. Discourse-style; works at low volume.                                                                                                                  |
+| D13 | Blog publishing                | **Approved writers only**                                                                                                                    | Writer application flow; editorial review before publish.                                                                                                                                                                                                                     |
+| D14 | Jobs sourcing                  | **Admin-curated + employer submissions (reviewed) + external aggregation later**, run by a dedicated **Jobs Manager** CMS role               | Aggregation is Phase 3.5+, manual-first.                                                                                                                                                                                                                                      |
+| D15 | WhatsApp system                | **User-initiated content bot first** (free service-conversation window); paid outbound (alerts/marketing templates) only after funding/scale | Bot answers: topic lookup, latest blogs, new jobs — replying with content summaries + links. Pricing re-verification note in §7.9.                                                                                                                                            |
+| D16 | Deployment                     | **Option A — self-host everything on one VPS, Hetzner EU**                                                                                   | 4 vCPU / 8 GB RAM / 80–160 GB NVMe (CX33-class, Falkenstein/Nuremberg); Coolify + Docker; Cloudflare in front; offsite backups. Full runbook §10.                                                                                                                             |
+| D17 | Phase 1 scope                  | **Learning system + accounts + AI (BYOK) + landing page**                                                                                    |                                                                                                                                                                                                                                                                               |
+| D18 | Post-Phase-1 order             | **Community → Jobs + Resume → WhatsApp bot**                                                                                                 | User ranked AI first, but AI was absorbed into Phase 1 (D17), so remaining ranking defines Phases 2–4.                                                                                                                                                                        |
 
 ---
 
@@ -126,29 +129,36 @@ Become the default study companion for Pharm-D students in Pakistan and a credib
 Each phase has a hard gate: **acceptance criteria must pass before the next phase starts.** Timeboxes are planning estimates for a 1–2 developer team, not commitments.
 
 ### Phase 0 — Foundation (2–3 weeks)
+
 Infra + skeleton. VPS provisioned with Coolify; self-hosted Supabase running with HTTPS; Cloudflare DNS/CDN; CI/CD green (lint, typecheck, test, build, deploy); Next.js app scaffolded with Tailwind v4 + shadcn/ui, design tokens, light/dark themes; Supabase migrations + type codegen wired; Sentry, Umami analytics, Uptime Kuma, nightly backups operational; **landing page live** with brand, feature overview, Coming Soon modules, and segmented waitlist capture (email + module + role); system tooling online — `/dev/system` primitives page, Storybook initialized, Style Dictionary token pipeline (single source for the CSS `@theme` and Figma tokens), RTL-safe conventions from the first component.
 **Acceptance:** deploy-on-merge works; backup restore drill passes on a scratch database; landing scores ≥90 Lighthouse performance/SEO/accessibility on mobile.
 
 ### Phase 1 — Learning Platform MVP (6–10 weeks)
+
 Content model + CMS authoring (Plate) + review workflow; public learn pages with previews; accounts (email + Google); reader features: highlights, bookmarks, personal notes, mark-as-complete progress + dashboard; embedded short/long YouTube videos; site search (Postgres FTS); AI study suite (BYOK: explain / summarize / chat-with-topic); settings incl. AI key management.
 **Acceptance:** ≥2 subjects with ≥25 published subtopics end-to-end through the review workflow; a signed-in user can highlight, note, bookmark, complete, and use all three AI features with at least 2 providers; preview gating verified logged-out; RLS test suite passes.
 
 ### Phase 2 — Community (4–6 weeks)
+
 Hybrid forum (categories, Discussion/Question threads, reply upvotes, accepted answers, reporting, moderation queue); blog module (approved writers, Plate editor, editorial workflow, public blog); Verified Pharmacist application + badge; user public profiles.
 **Acceptance:** full moderation loop demonstrable (report → queue → action → audit log); a writer application → approval → draft → review → publish loop completes; badges render across forum/blog/profile.
 
 ### Phase 3 — Jobs Portal + Resume Builder (4–6 weeks)
+
 Jobs listings (curated + employer submission form with review), filters/search, expiry automation, Jobs Manager CMS surface; resume builder: guided profile-driven data entry, ATS-safe default template + 2–3 styled templates, live preview, client-side PDF export, multiple saved resumes.
 **Acceptance:** an employer submission reaches publication only via Jobs Manager approval; expired jobs auto-hide; exported PDF passes a text-extraction check (selectable text, correct reading order) on the ATS template.
 
 ### Phase 4 — WhatsApp Content Bot (3–4 weeks)
+
 Meta WhatsApp Business Cloud API webhook; menu-driven intents (Topics / Blogs / Jobs); topic search → summary + link (+ video link); latest blogs list; newest jobs list; session/message logging; admin visibility.
 **Acceptance:** end-to-end user-initiated conversation on a production number; zero business-initiated sends; logs visible in CMS.
 
 ### Phase 5 — Assessment Engine (deferred, scope TBD)
+
 Practice MCQs per topic, attempt history, weak-area surfacing. Re-scope at Phase 3 planning (Assumption A3 — may be pulled earlier if learning-retention metrics demand it).
 
 ### Continuous tracks (all phases)
+
 Content production pipeline **and YouTube channel creation + publishing cadence** (the true critical path — see Risk R1; the channel does not yet exist and must be live with initial videos before Phase 1 launch), SEO, accessibility, performance budgets, security patching, and monthly restore drills.
 
 ---
@@ -156,6 +166,7 @@ Content production pipeline **and YouTube channel creation + publishing cadence*
 ## 7. Feature Specifications
 
 ### 7.1 Landing Page (Phase 0)
+
 - Hero (S4, v1.5): **split composition** — statement block (value proposition, brand mark, primary CTA "Start learning free" + ghost "Join waitlist") beside a live demo of real system primitives; stacks statement-first on mobile.
 - Feature sections for all six modules (Learning, AI Study Tools, Community, Blog, Jobs, Resume Builder); unreleased ones carry a **Coming Soon** ribbon and a waitlist form — **email + module of interest + role (student / pharmacist / other)** — stored in `waitlist_signups` (S12, v1.5).
 - Social proof placeholder, YouTube channel strip, FAQ, footer (About, Contact, Privacy, Terms, Content Policy).
@@ -174,6 +185,7 @@ Content production pipeline **and YouTube channel creation + publishing cadence*
 **7.2.5 Access gating (D8).** Logged-out users see the first N blocks (per-subtopic `preview_block_count`, default ≈ first section) followed by a fade-out and sign-in CTA. Full JSON for gated content is **never sent to the client** for anonymous sessions (server-side truncation, not CSS hiding). All interactive study tools require login.
 
 **7.2.6 Study tools (signed-in).**
+
 - **Highlights:** text-selection highlighting in 4 colors; stored as `{subtopic_id, block_id, anchor_offsets, text_snapshot, color}`; re-anchoring on content edits falls back to snapshot text search; orphaned highlights surface in "My Highlights" rather than silently vanishing.
 - **Bookmarks:** any subtopic/topic; organized list in dashboard.
 - **Personal notes:** a lightweight Plate instance attached per subtopic (private, RLS-enforced), plus notes attachable to a specific highlight.
@@ -183,6 +195,7 @@ Content production pipeline **and YouTube channel creation + publishing cadence*
 **7.2.7 Search.** Postgres full-text search (`tsvector` over title + extracted plain text of published content), weighted (title > headings > body), with subject/semester filters. Upgrade path: Meilisearch/Typesense container when FTS relevance becomes limiting (not before).
 
 ### 7.3 Accounts & Profiles (Phase 1)
+
 - Supabase Auth: email+password (with verification email) and Google OAuth (D7). Password reset, session management, account deletion (GDPR-style erasure incl. content anonymization rules).
 - Profile: username (unique, URL-safe), display name, avatar, user type (`student | pharmacist | other`), institution (optional), country, bio. Public profile pages activate in Phase 2.
 - Settings: profile, appearance (light/dark/system), AI keys (§7.5.4), data export (JSON of notes/highlights), delete account.
@@ -194,6 +207,7 @@ Content production pipeline **and YouTube channel creation + publishing cadence*
 **7.5.1 Providers (D9).** OpenAI, Anthropic, Google Gemini, OpenRouter, Groq — implemented via the Vercel AI SDK's provider abstraction behind a single internal `AiProvider` interface (streamText, model listing, error normalization). Users select provider + model; sensible defaults per provider. Provider docs are linked in-app (e.g., Anthropic's official API docs at https://docs.claude.com/en/api/overview) with short "how to get a key" guides — Groq and Gemini are surfaced first for students since they offer generous free tiers (verify current terms at build time).
 
 **7.5.2 Features (D10).**
+
 - **Explain:** select any text in a subtopic → "Explain with AI" → popover with explanation grounded in the surrounding section; follow-up "simpler / example / mnemonic" quick actions.
 - **Summarize:** one-click structured summary of the current subtopic (key points, must-know terms, common exam angles).
 - **Chat with topic:** side-panel chat whose context is the current topic's full content (serialized to Markdown). Strict grounding: the system prompt instructs answering from provided content, saying so when the answer isn't in it. Single-topic context fits comfortably in modern context windows; cross-topic RAG with `pgvector` is a future enhancement, not v1.
@@ -202,13 +216,15 @@ Content production pipeline **and YouTube channel creation + publishing cadence*
 **7.5.3 Architecture.** All calls go through a Next.js route handler that streams responses (SSE). The server injects the user's key per-request, never logs prompts/keys, and enforces per-user rate limits (e.g., 30 requests/5 min) to protect users from key-burning bugs. No conversation storage in v1 (session-only), keeping privacy posture simple; optional saved chats are a later enhancement.
 
 **7.5.4 Key management & security.** Two storage modes, user-selectable:
+
 - **This device only (default):** key kept in the browser (IndexedDB), sent per-request over TLS to the proxy route, held in memory only.
 - **Sync across devices:** key encrypted server-side (libsodium sealed-box / AES-256-GCM) with an app-level encryption key held only in server env (never in the database); decrypted transiently per request.
-Keys are write-only in the UI (masked after save), validated with a 1-token test call on save, revocable instantly, and excluded from logs/Sentry scrubbing rules. The data-deletion flow purges keys first.
+  Keys are write-only in the UI (masked after save), validated with a 1-token test call on save, revocable instantly, and excluded from logs/Sentry scrubbing rules. The data-deletion flow purges keys first.
 
 ### 7.6 Community Platform (Phase 2)
 
 **7.6.1 Forum — hybrid model (D12).**
+
 - **Structure:** fixed admin-managed categories (initial set: Study Help, Clinical Practice, Industry & Regulatory Affairs, Careers & Licensing, General Lounge, Platform Feedback), each holding threads.
 - **Thread types:** `discussion` (open-ended) and `question`. Question threads display an answer count and allow the thread author (or a moderator) to mark one reply as the **Accepted Answer**, which pins to the top with a distinct style.
 - **Votes:** upvotes on replies only (no downvotes — protects beginners; D12 rationale). Default reply sort: accepted answer → most upvoted → chronological; user-switchable to pure chronological.
@@ -218,6 +234,7 @@ Keys are write-only in the UI (masked after save), validated with a 1-token test
 - **Verified Pharmacist badge (D11):** rendered beside the username in forum, blog, and profiles.
 
 **7.6.2 Blog (D13).**
+
 - Public blog with categories/tags, author pages, related posts, and full SEO treatment (OG images, structured data).
 - **Approved writers only:** users apply via a form (motivation, sample, credentials) → application queue → approval grants the `blog_writer` role.
 - Workflow mirrors study content: `draft → in_review → published` with Blog Editor review, revisions, scheduling (publish-at datetime), and cover images.
@@ -245,7 +262,7 @@ Keys are write-only in the UI (masked after save), validated with a 1-token test
 
 ### 7.9 WhatsApp Content Bot (Phase 4) — user-initiated (D15)
 
-- **Model:** inbound-only assistant on the Meta WhatsApp Business Cloud API. Users message first; the bot replies within the customer-service window. Business-initiated template messaging (job alerts, content notifications, marketing) is explicitly **out of scope until funded** — the system stores opt-ins from day one so the upgrade is a switch-flip. *Note: Meta's WhatsApp pricing model has changed before (conversation-based → per-message); re-verify current free-tier mechanics for user-initiated service conversations at build time.*
+- **Model:** inbound-only assistant on the Meta WhatsApp Business Cloud API. Users message first; the bot replies within the customer-service window. Business-initiated template messaging (job alerts, content notifications, marketing) is explicitly **out of scope until funded** — the system stores opt-ins from day one so the upgrade is a switch-flip. _Note: Meta's WhatsApp pricing model has changed before (conversation-based → per-message); re-verify current free-tier mechanics for user-initiated service conversations at build time._
 - **Interaction design:** greeting → interactive list menu: **1) Find a topic 2) Latest blogs 3) New jobs 4) About ePharmatica.** Topic flow: user sends keywords → Postgres FTS lookup → top 3 matches as buttons → selected topic returns a short summary, the study link, and the short-form video link. Blogs/jobs flows return the latest 3–5 items with links. Unrecognized input → gentle fallback to menu. **No LLM in v1** (menus + FTS keep cost zero and behavior predictable); optional AI-assisted parsing later.
 - **Architecture:** `/api/whatsapp/webhook` (signature-verified) → intent router → reply via Graph API. `wa_contacts` (phone hash, opt-in flags) + `wa_messages` log (retention 90 days). CMS surface: conversation log viewer, canned-response editor, kill-switch.
 - **Compliance:** respond only to inbound; honor STOP; publish a WhatsApp privacy note; phone numbers stored hashed except where reply routing requires the raw number (encrypted at rest).
@@ -284,6 +301,7 @@ A protected `/admin` area inside the same Next.js app (no separate deployment). 
 /about · /contact · /privacy · /terms · /content-policy
 /api/ai/* · /api/whatsapp/webhook · /api/og/* (OG image gen)
 ```
+
 Slugs are stable, lowercase, hyphenated; renames create redirects (`slug_history`).
 
 ## 9. Data Model (entity overview)
@@ -330,6 +348,7 @@ Users ──▶ Cloudflare (DNS, CDN, TLS, WAF/rate rules, R2 backups)
 **Sizing rationale (researched July 2026):** the self-hosted Supabase stack runs ~12 containers and is memory-bound; community/production guidance converges on 8 GB RAM + 4 cores + NVMe, with 4 GB viable only when optional services are disabled. Reference cost: Hetzner CX33 (4 vCPU/8 GB) ≈ €6.49/mo post-April-2026 pricing, 20 TB traffic included in EU regions; comparable specs elsewhere run ~$12–25/mo. Region (decided, v1.1): **Hetzner EU — Falkenstein or Nuremberg** — best price-per-spec with 20 TB included traffic; the ~120–150 ms path to Pakistan is mitigated by Cloudflare edge caching of public pages. Revisit only if interactive-latency metrics later demand it. Video bandwidth is entirely on YouTube.
 
 **Ops runbook (musts):**
+
 - **Backups:** nightly `pg_dump` (custom format) + weekly base backup + Storage bucket sync → encrypted upload to Cloudflare R2/Backblaze B2; 30-day retention; **monthly restore drill** into a scratch container (calendar-enforced). Targets: RPO ≤ 24 h, RTO ≤ 4 h.
 - **Security baseline:** SSH keys only + fail2ban; UFW default-deny (80/443 + SSH); unattended-upgrades; Docker images pinned + monthly patch window; secrets only in Coolify env store; HTTPS everywhere (hard requirement for Google OAuth); Supabase JWT secret + keys rotated on any suspicion.
 - **Upgrades:** self-hosted Supabase upgrades are manual — test on a scratch clone first, snapshot before, maintenance window announced in-app.
@@ -338,27 +357,30 @@ Users ──▶ Cloudflare (DNS, CDN, TLS, WAF/rate rules, R2 backups)
 ## 11. Technology Stack — Decisions & Justification
 
 ### 11.1 Stack summary
-| Layer | Choice |
-|---|---|
-| Framework | **Next.js 16 (latest 16.2.x — App Router, RSC, Turbopack default)**, TypeScript 5 strict, Node 22 LTS, pnpm |
-| UI | **Tailwind CSS v4 + shadcn/ui** (components owned in-repo), lucide icons, dark/light via next-themes |
-| Editor | **Plate** (installed via shadcn registry) — one editor family across study content, blog, forum, notes |
-| Backend | **Supabase (self-hosted)**: Postgres, GoTrue Auth, PostgREST, Storage(+imgproxy), Realtime (used sparingly) |
-| Data layer | supabase-js + TanStack Query v5; Server Actions/route handlers for privileged mutations |
-| Forms/validation | react-hook-form + Zod (schemas shared client/server) |
-| AI | Vercel AI SDK provider adapters (OpenAI · Anthropic · Gemini · OpenRouter · Groq), SSE streaming proxy |
-| PDF | @react-pdf/renderer (client-side) |
-| Search | Postgres FTS (tsvector + websearch_to_tsquery) |
-| Quality | ESLint (flat) + **Prettier** + TypeScript strict + Husky/lint-staged + Conventional Commits |
-| Testing | Vitest + Testing Library (unit), Playwright (e2e smoke), **pgTAP-style RLS policy tests** |
-| Codegen | `supabase gen types typescript` on every migration (CI-enforced drift check); Zod schema inference |
-| Observability | Sentry (client+server, PII scrubbed), Umami, Uptime Kuma, structured pino logs |
-| CI/CD & hosting | GitHub Actions → Coolify webhook deploy on VPS (§10, §13.4) |
+
+| Layer            | Choice                                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| Framework        | **Next.js 16 (latest 16.2.x — App Router, RSC, Turbopack default)**, TypeScript 5 strict, Node 22 LTS, pnpm |
+| UI               | **Tailwind CSS v4 + shadcn/ui** (components owned in-repo), lucide icons, dark/light via next-themes        |
+| Editor           | **Plate** (installed via shadcn registry) — one editor family across study content, blog, forum, notes      |
+| Backend          | **Supabase (self-hosted)**: Postgres, GoTrue Auth, PostgREST, Storage(+imgproxy), Realtime (used sparingly) |
+| Data layer       | supabase-js + TanStack Query v5; Server Actions/route handlers for privileged mutations                     |
+| Forms/validation | react-hook-form + Zod (schemas shared client/server)                                                        |
+| AI               | Vercel AI SDK provider adapters (OpenAI · Anthropic · Gemini · OpenRouter · Groq), SSE streaming proxy      |
+| PDF              | @react-pdf/renderer (client-side)                                                                           |
+| Search           | Postgres FTS (tsvector + websearch_to_tsquery)                                                              |
+| Quality          | ESLint (flat) + **Prettier** + TypeScript strict + Husky/lint-staged + Conventional Commits                 |
+| Testing          | Vitest + Testing Library (unit), Playwright (e2e smoke), **pgTAP-style RLS policy tests**                   |
+| Codegen          | `supabase gen types typescript` on every migration (CI-enforced drift check); Zod schema inference          |
+| Observability    | Sentry (client+server, PII scrubbed), Umami, Uptime Kuma, structured pino logs                              |
+| CI/CD & hosting  | GitHub Actions → Coolify webhook deploy on VPS (§10, §13.4)                                                 |
 
 ### 11.2 Why Supabase over Nhost (D1)
+
 Both are open-source BaaS with Postgres, auth, storage, and functions, and both self-host via Docker. Supabase wins for ePharmatica on five grounds: **(1) Ecosystem & longevity** — a far larger community, documentation base, and third-party tooling, which matters when one small team owns ops for years and hires later. **(2) Access-model fit** — the app is a straightforward CRUD + RLS system; PostgREST + supabase-js serves it directly, whereas Nhost's core value (Hasura GraphQL) adds a GraphQL layer, permission DSL, and an extra always-on service we don't need — meaningful RAM on an 8 GB box. **(3) Codegen requirement** — `supabase gen types typescript` yields end-to-end typed queries with zero schema drift, integrating natively with TanStack Query; achieving the same via GraphQL codegen is possible but heavier. **(4) Postgres-native security** — RLS policies live in migrations as reviewable SQL and are testable in CI (§13.2), rather than in Hasura metadata. **(5) Team gravity** — Supabase knowledge is dramatically easier to hire/contract for in 2026. Nhost remains a respectable alternative if the product ever becomes GraphQL-first; nothing in the schema precludes migration since both are plain Postgres underneath.
 
 ### 11.3 Why Plate (D2 — recap)
+
 MIT across everything used (including AI integration — no copyleft/paid tiers on the critical path, unlike BlockNote XL); components installed via the shadcn CLI so the editor is owned, restyled, and versioned inside the repo exactly like the rest of the design system; the largest plugin surface for the custom blocks this product needs (Drug Cards, callout taxonomy, embeds); built-in comments/suggestions powering the editorial review workflow; a single serialization (Plate JSON) for study content, blogs, forum posts, and private notes. Accepted trade-off: steeper learning curve (Slate concepts, serialization discipline) — mitigated by pinning versions, snapshot tests on renderers, and building a thin internal `@epharmatica/editor` wrapper so product code never touches Slate directly.
 
 ---
@@ -367,19 +389,19 @@ MIT across everything used (including AI integration — no copyleft/paid tiers 
 
 Application roles live in `profiles.role` (single primary role) enforced by RLS + a server-side policy map; one account may additionally hold the `blog_writer` capability and the Verified Pharmacist badge (orthogonal flags).
 
-| Role | Can do (summary) |
-|---|---|
-| **user** (default) | All learner features; forum participation; blog reading; job saving; resume builder; verification & writer applications |
-| **blog_writer** (capability) | + create/edit own blog drafts, submit for review |
-| **author** | + create/edit study content drafts, submit for review, view own revision history |
-| **reviewer** | + review queues: comment/suggest, approve or request changes on study content |
-| **content_manager** | + publish/unpublish/archive study content, manage taxonomy & media, rollback revisions |
-| **blog_editor** | + review/publish blog posts, manage blog categories, decide writer applications |
-| **moderator** | + moderation queue, hide/delete community content, warn/mute/ban users, manage forum categories/tags |
-| **jobs_manager** | + full jobs CRUD, approve/reject employer submissions, expiry overrides |
-| **support** | + read-only user lookup, resolve verification queue (approve/reject badges) |
-| **admin** | + user role assignment (below admin), feature flags & settings, WhatsApp console, full audit log |
-| **super_admin** | + everything, incl. admin management and destructive operations (protected by confirmation + audit) |
+| Role                         | Can do (summary)                                                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **user** (default)           | All learner features; forum participation; blog reading; job saving; resume builder; verification & writer applications |
+| **blog_writer** (capability) | + create/edit own blog drafts, submit for review                                                                        |
+| **author**                   | + create/edit study content drafts, submit for review, view own revision history                                        |
+| **reviewer**                 | + review queues: comment/suggest, approve or request changes on study content                                           |
+| **content_manager**          | + publish/unpublish/archive study content, manage taxonomy & media, rollback revisions                                  |
+| **blog_editor**              | + review/publish blog posts, manage blog categories, decide writer applications                                         |
+| **moderator**                | + moderation queue, hide/delete community content, warn/mute/ban users, manage forum categories/tags                    |
+| **jobs_manager**             | + full jobs CRUD, approve/reject employer submissions, expiry overrides                                                 |
+| **support**                  | + read-only user lookup, resolve verification queue (approve/reject badges)                                             |
+| **admin**                    | + user role assignment (below admin), feature flags & settings, WhatsApp console, full audit log                        |
+| **super_admin**              | + everything, incl. admin management and destructive operations (protected by confirmation + audit)                     |
 
 Rules: least-privilege defaults; no role can edit published study content without a new revision; all admin mutations audit-logged; role changes require `admin`+ and are themselves audited.
 
@@ -388,6 +410,7 @@ Rules: least-privilege defaults; no role can edit published study content withou
 **13.1 Performance.** Budgets on mid-range Android over throttled 4G (the realistic Pakistani baseline): topic pages LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1; JS ≤ 200 KB gz on reader routes (editor/admin bundles code-split away from public routes). Techniques: ISR for all public content (revalidate on publish via tag invalidation), Cloudflare edge caching, `next/image` with sharp, lite-YouTube facades, font subsetting, streaming RSC. Lighthouse CI check on landing + one reader page in the pipeline (warn <90).
 
 **13.2 Security.**
+
 - **RLS on every table, deny-by-default**, with policy conventions: owner-only for study data/keys/resumes; published-only public reads for content; role-checked admin access via a `has_role()` SQL helper. **CI runs an RLS test suite** (SQL tests executed against a migrated shadow DB asserting e.g. "anon cannot read unpublished subtopics", "user A cannot read user B's notes/keys").
 - Service-role key **never** leaves server context; privileged mutations only via route handlers/server actions with Zod-validated input.
 - Standard headers (CSP allowing YouTube embeds, HSTS, frame-ancestors), CSRF-safe patterns, upload constraints (type/size sniffing; private buckets for verification docs), per-route rate limiting (auth, AI proxy, submissions, webhook) + Cloudflare rules.
@@ -397,6 +420,7 @@ Rules: least-privilege defaults; no role can edit published study content withou
 **13.3 SEO, accessibility, i18n.** Semantic HTML + schema.org (`Article`, `JobPosting`, `BreadcrumbList`), per-route metadata + OG image generation, sitemaps (content, blog, jobs) + robots, canonical URLs, `slug_history` redirects. WCAG 2.1 AA: full keyboard support (incl. editor fallbacks), visible focus, contrast-checked tokens in both themes, reduced-motion respect, alt-text required on CMS image upload. i18n: English-only UI at launch but all strings routed through next-intl from day one; Urdu (RTL-aware layout audit) is the designated second locale (Assumption A2).
 
 **13.4 Environments, CI/CD, codegen.**
+
 - **Environments:** `local` (Supabase CLI stack + seed script with demo content/users per role) → `staging` (separate Supabase project/compose on the same VPS, basic-auth-gated, deploys from `develop`) → `production` (deploys from `main`).
 - **Pipeline (GitHub Actions):** PR → install (pnpm cache) → Prettier check → ESLint → `tsc --noEmit` → **type-drift check** (regenerate Supabase types; fail on diff) → Vitest → build → Playwright smoke (auth, reader, gating) → preview note. Merge to `main` → build + push image → Coolify deploy webhook → post-deploy: run `supabase db push`-equivalent migration step (gated, with automatic pre-migration dump) → smoke ping → Sentry release + sourcemaps.
 - **Migrations:** Supabase CLI migration files in-repo; forward-only; every migration paired with regenerated types and, where relevant, RLS tests. **Branching:** trunk-based (`main` protected, short-lived feature branches, Conventional Commits, squash merge).
@@ -404,30 +428,32 @@ Rules: least-privilege defaults; no role can edit published study content withou
 ## 14. Success Metrics (first 6 months post-Phase-1; targets are directional)
 
 **North star: Weekly Active Learners** (users completing ≥1 subtopic or creating ≥1 highlight/note in a week).
+
 - Acquisition: 5,000 registered accounts; ≥40% of new sign-ups from organic search/YouTube referral.
 - Activation: ≥50% of new accounts mark ≥3 subtopics complete in week 1.
 - Retention: ≥25% W4 retention among activated learners.
 - Content: ≥150 published subtopics across ≥6 subjects; median review-cycle < 7 days.
 - AI adoption: ≥20% of WAL configure a BYOK key; explain/summarize/chat usage tracked per feature (Umami events).
 - Later phases add: threads/week & accepted-answer rate (P2), published posts/month (P2), live listings & apply-outs (P3), resumes exported (P3), WA sessions/week (P4).
-All measured via self-hosted Umami events + SQL dashboards; no third-party trackers.
+  All measured via self-hosted Umami events + SQL dashboards; no third-party trackers.
 
 ## 15. Risks & Mitigations
 
-| # | Risk | Impact | Mitigation |
-|---|---|---|---|
-| R1 | **Content production bottleneck** — engineering outpaces authored, reviewed syllabus content | Empty product | Treat content as a parallel workstream with its own pipeline metrics (§14); seed 2 complete subjects before public launch; recruit student authors under reviewer supervision; Phase 1 acceptance gates on content, not just code |
-| R2 | Single-VPS/single-operator failure (outage, upgrade gone wrong, bus factor) | Downtime, data loss | §10 runbook: tested backups + monthly restore drills, snapshots before upgrades, Uptime Kuma alerts, documented recovery playbook; accept modest HA gap consciously at this stage |
-| R3 | BYOK friction — students won't fetch API keys | AI features unused | First-run wizard with screenshots per provider; order Groq/Gemini (free tiers) first; product remains fully valuable without AI |
-| R4 | Medical-education accuracy errors (authored or AI) | Trust/harm | Mandatory reviewer approval before publish (G6); source-citation norms in the content style guide; persistent AI disclaimers + strict grounding (§7.5.2); error-report button on every subtopic |
-| R5 | Moderation load / spam as community opens | Quality decay | New-account rate limits, report→queue→sanction loop from day one of Phase 2, category-scoped moderators, content policy published before launch |
-| R6 | Plate editor complexity (serialization bugs, upgrades) | Content corruption | Version-pinned editor wrapper package, JSON schema validation on save, renderer snapshot tests, revisions provide rollback |
-| R7 | Platform dependencies shift (YouTube embed policies, Meta WhatsApp pricing) | Feature/cost break | Video URLs stored abstractly (player swap possible); WA phase gated on pricing re-verification (§7.9); no business logic depends on either being free forever |
-| R8 | Monetization deferred too long / retrofit pain | Runway | Entitlement gate (§7.11) wired through all premium-candidate surfaces from Phase 1; quarterly business-model review checkpoint |
+| #   | Risk                                                                                         | Impact              | Mitigation                                                                                                                                                                                                                        |
+| --- | -------------------------------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | **Content production bottleneck** — engineering outpaces authored, reviewed syllabus content | Empty product       | Treat content as a parallel workstream with its own pipeline metrics (§14); seed 2 complete subjects before public launch; recruit student authors under reviewer supervision; Phase 1 acceptance gates on content, not just code |
+| R2  | Single-VPS/single-operator failure (outage, upgrade gone wrong, bus factor)                  | Downtime, data loss | §10 runbook: tested backups + monthly restore drills, snapshots before upgrades, Uptime Kuma alerts, documented recovery playbook; accept modest HA gap consciously at this stage                                                 |
+| R3  | BYOK friction — students won't fetch API keys                                                | AI features unused  | First-run wizard with screenshots per provider; order Groq/Gemini (free tiers) first; product remains fully valuable without AI                                                                                                   |
+| R4  | Medical-education accuracy errors (authored or AI)                                           | Trust/harm          | Mandatory reviewer approval before publish (G6); source-citation norms in the content style guide; persistent AI disclaimers + strict grounding (§7.5.2); error-report button on every subtopic                                   |
+| R5  | Moderation load / spam as community opens                                                    | Quality decay       | New-account rate limits, report→queue→sanction loop from day one of Phase 2, category-scoped moderators, content policy published before launch                                                                                   |
+| R6  | Plate editor complexity (serialization bugs, upgrades)                                       | Content corruption  | Version-pinned editor wrapper package, JSON schema validation on save, renderer snapshot tests, revisions provide rollback                                                                                                        |
+| R7  | Platform dependencies shift (YouTube embed policies, Meta WhatsApp pricing)                  | Feature/cost break  | Video URLs stored abstractly (player swap possible); WA phase gated on pricing re-verification (§7.9); no business logic depends on either being free forever                                                                     |
+| R8  | Monetization deferred too long / retrofit pain                                               | Runway              | Entitlement gate (§7.11) wired through all premium-candidate surfaces from Phase 1; quarterly business-model review checkpoint                                                                                                    |
 
 ## 16. Assumptions & Open Questions
 
 **Assumptions (proceed unless overridden):**
+
 - **A1:** Web-only responsive app; PWA-ready but no install campaign in v1.
 - **A2:** English UI at launch; next-intl wiring from day one; Urdu is locale #2 (timing open).
 - **A3:** Assessment engine sits at Phase 5; revisit at Phase 3 planning (D6).
@@ -438,6 +464,7 @@ All measured via self-hosted Umami events + SQL dashboards; no third-party track
 - **A8:** Initial launch subjects: Pharmacology + Pharmaceutics (highest-demand, video-friendly) — confirm with content team.
 
 **Open questions (status as of v1.6):**
+
 - **Q1 — RESOLVED:** Domain is **epharmatica.com**. The YouTube channel does not yet exist; channel creation, branding, and an initial video pipeline are a Phase 0–1 content-track deliverable (see §6 continuous tracks). Release cadence commitment still to be defined by the content team.
 - **Q2 — RESOLVED (v1.7):** Founder is the primary author, with most launch content already written before the build — Phase-1 content work is porting into the CMS + review, not greenfield authoring. Team at launch: founder (author/publisher) + 1 recruited author + **≥1 external licensed reviewer** (required before the first publish — the workflow forbids self-approval, M4: "author cannot approve own draft"; G6 requires independent review). Further authors under reviewer supervision are the scale-up path (R1).
 - **Q3 — RESOLVED:** **Hetzner EU** (Falkenstein/Nuremberg, CX33-class). See §10.
@@ -448,9 +475,10 @@ All measured via self-hosted Umami events + SQL dashboards; no third-party track
 
 **A. Environment variables (initial set).** `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server-only), `SUPABASE_JWT_SECRET`, `DATABASE_URL` (migrations), `AI_KEYS_ENCRYPTION_KEY` (server-only, libsodium), `SMTP_*` / `RESEND_API_KEY`, `SENTRY_DSN` + `SENTRY_AUTH_TOKEN`, `UMAMI_*`, `GOOGLE_OAUTH_CLIENT_ID/SECRET` (in GoTrue config), `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `WHATSAPP_WEBHOOK_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` (Phase 4), `CRON_SECRET` (expiry/cleanup jobs).
 
-**B. Glossary.** *Subtopic* — atomic learning unit owning one Plate document. *Preview* — the public, indexable head of a subtopic. *BYOK* — bring-your-own-key; user-supplied AI provider credentials. *Accepted Answer* — reply marked as resolving a Question thread. *Entitlement* — server-checked capability grant, monetization-ready. *Verified Pharmacist* — manually reviewed credential badge.
+**B. Glossary.** _Subtopic_ — atomic learning unit owning one Plate document. _Preview_ — the public, indexable head of a subtopic. _BYOK_ — bring-your-own-key; user-supplied AI provider credentials. _Accepted Answer_ — reply marked as resolving a Question thread. _Entitlement_ — server-checked capability grant, monetization-ready. _Verified Pharmacist_ — manually reviewed credential badge.
 
 **C. Migration order (Phase 0/1 outline).** 001 extensions (pgcrypto, pg_trgm) + helpers (`has_role()`) → 002 profiles + auth trigger → 003 plans/entitlements/feature_flags → 004 content tree (subjects…subtopics) → 005 revisions + review events + slug_history → 006 study data (highlights, bookmarks, notes, progress) → 007 ai_keys + rate limits → 008 waitlist + audit_log → 009 FTS columns/indexes/triggers → 010 storage buckets + policies. Community/jobs/resume/WA migrations land in their phases. Every migration ships with RLS policies + tests + regenerated types (§13.4).
 
 ---
-*End of PRD v1.0 — living document; amend via PRs with changelog entries above §1.*
+
+_End of PRD v1.0 — living document; amend via PRs with changelog entries above §1._

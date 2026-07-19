@@ -1,9 +1,9 @@
 # ePharmatica — Engineering Rules
 
-| | |
-|---|---|
-| **Version** | 1.0 · 19 July 2026 |
-| **Audience** | Everyone writing code in this repo — human or AI |
+|                |                                                                                                                                                |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Version**    | 1.0 · 19 July 2026                                                                                                                             |
+| **Audience**   | Everyone writing code in this repo — human or AI                                                                                               |
 | **Companions** | `development-plan.md` (sequencing) · `securities.md` (security program) · `ARCHITECTURE.md` (how & where) · `STYLE.md` (design system, locked) |
 
 These are the working rules that keep the project coherent across phases and contributors. They compress the PRDs, ARCHITECTURE.md, and STYLE.md into enforceable practice. **When a rule here conflicts with a PRD, the PRD wins — and this file gets fixed in the same PR.**
@@ -20,18 +20,18 @@ These are the working rules that keep the project coherent across phases and con
 
 ## 2. Load-bearing invariants (memorize these)
 
-| # | Rule |
-|---|---|
-| I1 | Every table has RLS enabled, deny-by-default. Policies live in SQL migrations (never hand-edited in Studio), covered by the CI RLS suite |
-| I2 | `SUPABASE_SERVICE_ROLE_KEY` is imported in exactly one module — `apps/web/lib/supabase/admin.ts` — server-only, enforced by ESLint `no-restricted-imports` + the `server-only` package. It never appears in `packages/*` |
-| I3 | Gated content never leaves the server for anonymous sessions. Preview truncation happens in the data layer (`features/content/queries.ts`), never in CSS or client code |
-| I4 | Product code never imports `slate*`, `@udecode/*`, or Plate internals. All editor access goes through `@epharmatica/editor` — the only workspace package allowed to depend on them |
-| I5 | Any feature that could ever be premium calls `can(user, feature)` on the server. No client-side entitlement trust |
-| I6 | AI keys and prompts never touch logs. No `console.log` in the AI path; pino redaction + Sentry `beforeSend` scrub keys, prompt bodies, phones, emails |
-| I7 | Migrations are forward-only, in-repo, each paired with regenerated types (CI drift check) and RLS tests. Rollback = a new forward migration |
-| I8 | Every mutating `/admin` action writes to `audit_log` via `withAudit()` |
-| I9 | One rich-text serialization: Plate JSON (`jsonb`) — study content, blog, forum, job descriptions, notes. Renderers vary; the format does not |
-| I10 | Outbound side effects (email, WhatsApp, future payments) go through `lib/integrations/*` server modules only — never from components or client code |
+| #   | Rule                                                                                                                                                                                                                     |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| I1  | Every table has RLS enabled, deny-by-default. Policies live in SQL migrations (never hand-edited in Studio), covered by the CI RLS suite                                                                                 |
+| I2  | `SUPABASE_SERVICE_ROLE_KEY` is imported in exactly one module — `apps/web/lib/supabase/admin.ts` — server-only, enforced by ESLint `no-restricted-imports` + the `server-only` package. It never appears in `packages/*` |
+| I3  | Gated content never leaves the server for anonymous sessions. Preview truncation happens in the data layer (`features/content/queries.ts`), never in CSS or client code                                                  |
+| I4  | Product code never imports `slate*`, `@udecode/*`, or Plate internals. All editor access goes through `@epharmatica/editor` — the only workspace package allowed to depend on them                                       |
+| I5  | Any feature that could ever be premium calls `can(user, feature)` on the server. No client-side entitlement trust                                                                                                        |
+| I6  | AI keys and prompts never touch logs. No `console.log` in the AI path; pino redaction + Sentry `beforeSend` scrub keys, prompt bodies, phones, emails                                                                    |
+| I7  | Migrations are forward-only, in-repo, each paired with regenerated types (CI drift check) and RLS tests. Rollback = a new forward migration                                                                              |
+| I8  | Every mutating `/admin` action writes to `audit_log` via `withAudit()`                                                                                                                                                   |
+| I9  | One rich-text serialization: Plate JSON (`jsonb`) — study content, blog, forum, job descriptions, notes. Renderers vary; the format does not                                                                             |
+| I10 | Outbound side effects (email, WhatsApp, future payments) go through `lib/integrations/*` server modules only — never from components or client code                                                                      |
 
 ## 3. Monorepo rules
 

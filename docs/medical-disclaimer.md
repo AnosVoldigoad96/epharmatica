@@ -9,6 +9,7 @@
 All content on epharmatica.com and its associated channels — study notes, videos, AI-generated explanations and summaries, forum discussions, blog articles, and messages from our WhatsApp assistant — is provided **for educational and informational purposes only**, primarily to support pharmacy students and professionals in their studies.
 
 **It is not:**
+
 - medical, pharmaceutical, clinical, diagnostic, or treatment advice;
 - a substitute for the professional judgment of qualified, licensed healthcare practitioners;
 - a substitute for official prescribing information, product monographs, pharmacopoeias, institutional protocols, or current clinical guidelines;
@@ -24,4 +25,4 @@ All content on epharmatica.com and its associated channels — study notes, vide
 
 To the maximum extent permitted by law, ePharmatica accepts no liability for any loss or harm arising from reliance on Platform content. See our [Terms of Service](/terms) §§4, 14–15.
 
-*Found an error in our study material? Use the "Report an issue" button on the page or email support@epharmatica.com — corrections make the platform better for everyone.*
+_Found an error in our study material? Use the "Report an issue" button on the page or email support@epharmatica.com — corrections make the platform better for everyone._
