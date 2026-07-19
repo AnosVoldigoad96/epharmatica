@@ -1,1 +1,1 @@
-{ "subjects": { "9": "Set up task-completion logging hooks" }, "logged": { "2026-07-19": ["9"] } }
+{"subjects":{"7":"CI/CD workflows + Husky + Playwright smoke + verify build green","9":"Set up task-completion logging hooks","10":"Apply migrations 001-010 to self-hosted Supabase on Hetzner"},"logged":{"2026-07-19":["9","7","10"]}}
