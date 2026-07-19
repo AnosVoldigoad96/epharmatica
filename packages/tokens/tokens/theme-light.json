@@ -1,0 +1,32 @@
+{
+  "color": {
+    "paper": { "value": "#FBFBF9" },
+    "surface": { "value": "#FFFFFF" },
+    "ink": { "value": "#0C1418" },
+    "ink-2": { "value": "#51606A" },
+    "line": { "value": "#E3E7E8" },
+    "primary": {
+      "value": "#0E6B63",
+      "comment": "primary on paper = 6.3:1 — punctuation, not wallpaper"
+    },
+    "primary-strong": { "value": "#0A5750" },
+    "primary-tint": { "value": "#EAF4F2" },
+    "on-primary": { "value": "#FFFFFF" },
+    "ok": { "value": "#1E7A46", "comment": "status colors are functional only, never decorative" },
+    "warn": { "value": "#9A6700" },
+    "danger": { "value": "#B3261E" },
+    "hl-amber": {
+      "value": "#FDE68A",
+      "comment": "highlighters are the user's layer, never product emphasis"
+    },
+    "hl-mint": { "value": "#BBEFDD" },
+    "hl-lilac": { "value": "#DDD6FE" },
+    "hl-rose": { "value": "#FBCFE8" }
+  },
+  "shadow": {
+    "overlay": {
+      "value": "0 8px 24px rgba(12, 20, 24, 0.10)",
+      "comment": "the ONE shadow — overlays only, never cards"
+    }
+  }
+}

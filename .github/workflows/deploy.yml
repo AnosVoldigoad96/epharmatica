@@ -1,0 +1,153 @@
+# ePharmatica — production deploy on merge to main
+# Spec: PRD §13.4 · development-plan.md §4 (0.B) · ARCHITECTURE.md §8
+#
+# Target pipeline (PRD §13.4): merge to main → build (+ image) → Coolify webhook deploy
+# → gated migration step (automatic pre-migration dump) → smoke ping → Sentry release
+# + sourcemaps. Steps whose infrastructure does not exist yet are explicit TODOs below,
+# and the webhook trigger is skipped honestly (with a notice) until its secret exists —
+# nothing here fakes success.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # One production deploy at a time; never cancel an in-flight deploy.
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  TURBO_TELEMETRY_DISABLED: '1'
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  build:
+    name: Verify + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        # Version resolved from the root package.json "packageManager" field.
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache Turborepo task outputs
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting (Prettier)
+        run: pnpm prettier --check .
+
+      - name: Lint (turbo)
+        run: pnpm turbo run lint
+
+      - name: Typecheck (turbo)
+        run: pnpm turbo run typecheck
+
+      - name: Build (turbo)
+        run: pnpm turbo run build
+        env:
+          # Placeholder values so `next build` can run in CI without a live Supabase
+          # stack — the production build with real values happens on the VPS via
+          # Coolify (env from the Coolify store only, PRD Appendix A).
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
+
+      - name: Test (turbo)
+        run: pnpm turbo run test
+
+  deploy:
+    name: Deploy to production (Coolify)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Detect Coolify webhook secret
+        id: coolify
+        # The secrets context is not available in `if:` expressions, so presence is
+        # detected here and the trigger step gates on this output.
+        env:
+          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+        run: |
+          if [ -n "$COOLIFY_WEBHOOK_URL" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger Coolify deploy webhook
+        if: steps.coolify.outputs.configured == 'true'
+        env:
+          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+        run: |
+          # Coolify deploy webhooks accept a bare POST; newer Coolify versions expect
+          # an Authorization bearer token — set COOLIFY_API_TOKEN when required.
+          if [ -n "$COOLIFY_API_TOKEN" ]; then
+            curl --fail --silent --show-error --retry 3 --retry-delay 5 \
+              -H "Authorization: Bearer $COOLIFY_API_TOKEN" \
+              -X POST "$COOLIFY_WEBHOOK_URL"
+          else
+            curl --fail --silent --show-error --retry 3 --retry-delay 5 \
+              -X POST "$COOLIFY_WEBHOOK_URL"
+          fi
+
+      - name: Deploy skipped — webhook secret not configured
+        if: steps.coolify.outputs.configured != 'true'
+        run: |
+          echo "::notice::COOLIFY_WEBHOOK_URL secret is not configured — deploy trigger skipped."
+          echo "::notice::Add the deploy webhook URL from the Coolify app settings as a repository secret to enable deploys (development-plan.md §4 0.A/0.B)."
+
+      # TODO(0.A/0.B — CI-built container image, optional): Coolify currently builds
+      # the image itself from the repo (apps/web standalone output). If CI-built images
+      # are preferred later, add a GHCR build+push here and point Coolify at the image:
+      #   - uses: docker/setup-buildx-action@v3
+      #   - uses: docker/login-action@v3        # ghcr.io with GITHUB_TOKEN
+      #   - uses: docker/build-push-action@v6
+      # This is a deliberate deferral, not an omission.
+
+      # TODO(PRD §13.4 — GATED MIGRATION STEP; activate when supabase/ migrations and
+      # production DB access exist). Contract, in order:
+      #   1. AUTOMATIC PRE-MIGRATION DUMP first: pg_dump -Fc (custom format) of the
+      #      production database to the encrypted backup store (R2/B2, 30-day
+      #      retention). The migration step never runs without a fresh dump.
+      #   2. Run the gated `supabase db push`-equivalent against production
+      #      (forward-only in-repo migrations — rules.md I7; rollback = new forward
+      #      migration, never a down-migration).
+      #   3. Abort the pipeline if the dump fails — do not apply migrations.
+      # - name: Pre-migration dump + gated migration
+      #   run: ...
+
+      # TODO(0.A — activate when production is reachable): post-deploy smoke ping.
+      # - name: Smoke ping
+      #   run: curl --fail --retry 5 --retry-delay 10 https://epharmatica.com/
+
+      # TODO(0.A — activate when the Sentry project exists): Sentry release +
+      # sourcemaps, release tagging from CI (rules.md §11.4; PII scrubbing per
+      # securities.md §13).
+      # - name: Create Sentry release
+      #   uses: getsentry/action-release@v1
+      #   env:
+      #     SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      #     SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      #     SENTRY_PROJECT: epharmatica-web
+      #   with:
+      #     environment: production

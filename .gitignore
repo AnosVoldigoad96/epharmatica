@@ -7,6 +7,7 @@ out/
 dist/
 .turbo/
 *.tsbuildinfo
+packages/tokens/src/generated.ts
 
 # testing
 coverage/

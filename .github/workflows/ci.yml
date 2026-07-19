@@ -1,0 +1,151 @@
+# ePharmatica — PR / branch verification pipeline
+# Spec: PRD §13.4 · development-plan.md §4 (0.B) · ARCHITECTURE.md §8 · rules.md §9
+#
+# Target PR gate (rules.md §9.2): Prettier → ESLint → tsc --noEmit → type-drift check
+# → Vitest → build → Playwright smoke. Red pipeline = no merge. Never skip hooks.
+# The type-drift and Playwright jobs below are inactive skeletons with explicit TODOs —
+# they are gated off until their prerequisites exist, never faked as successes.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+concurrency:
+  # Cancel superseded runs on PRs and feature branches; never cancel in-flight on main.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  TURBO_TELEMETRY_DISABLED: '1'
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  verify:
+    name: Format, lint, typecheck, build, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        # Version resolved from the root package.json "packageManager" field.
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache Turborepo task outputs
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting (Prettier)
+        run: pnpm prettier --check .
+
+      - name: Lint (turbo)
+        run: pnpm turbo run lint
+
+      - name: Typecheck (turbo)
+        run: pnpm turbo run typecheck
+
+      - name: Build (turbo)
+        run: pnpm turbo run build
+        env:
+          # Placeholder values so `next build` can run in CI without a live Supabase
+          # stack. Real values live only in the Coolify env store (PRD Appendix A);
+          # repo/org Actions *variables* override these when set. Never commit real keys.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
+
+      - name: Test (turbo)
+        run: pnpm turbo run test
+
+  # ---------------------------------------------------------------------------
+  # Type-drift check — SKELETON, INACTIVE (rules.md I7 · PRD §13.4 · plan 0.B/0.D)
+  # TODO('activate when local Supabase stack exists'): flip the `if:` below to true
+  # once `supabase/` (CLI config + migrations, plan §4 0.D) is committed. Contract:
+  # supabase start → gen types → `git diff --exit-code packages/database/src/types.ts`
+  # (generated types are never hand-edited; any drift fails the PR).
+  # ---------------------------------------------------------------------------
+  type-drift:
+    name: Type drift (skeleton — inactive)
+    if: false # TODO: activate when the local Supabase stack exists (see note above)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          # TODO: pin to the exact CLI version used by the local dev stack once
+          # supabase/ lands, so generated output is byte-identical across machines.
+          version: latest
+
+      - name: Start local Supabase stack (applies in-repo migrations)
+        run: supabase start
+
+      - name: Regenerate database types
+        run: supabase gen types typescript --local > packages/database/src/types.ts
+
+      - name: Fail on type drift (generated types must be committed)
+        run: git diff --exit-code packages/database/src/types.ts
+
+  # ---------------------------------------------------------------------------
+  # Playwright smoke — PLACEHOLDER, INACTIVE (rules.md §9.1–9.2 · PRD §13.4)
+  # TODO(Phase-0 exit): flip the `if:` below to true once apps/web/e2e exists with
+  # the smoke specs (auth both paths, reader, anon preview gate verified at the
+  # network layer, AI against the mock adapter — plan §5 1.G).
+  # ---------------------------------------------------------------------------
+  playwright-smoke:
+    name: Playwright smoke (placeholder — inactive)
+    if: false # TODO(Phase-0 exit): activate when apps/web/e2e smoke specs exist
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @epharmatica/web exec playwright install --with-deps chromium
+
+      - name: Run smoke suite
+        run: pnpm --filter @epharmatica/web exec playwright test

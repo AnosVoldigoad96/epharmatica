@@ -1,0 +1,26 @@
+{
+  "color": {
+    "paper": { "value": "#0C1113" },
+    "surface": { "value": "#121A1C" },
+    "ink": { "value": "#E7ECEC" },
+    "ink-2": { "value": "#93A4A8" },
+    "line": { "value": "#263135" },
+    "primary": { "value": "#4FB8AC" },
+    "primary-strong": { "value": "#6BCBC0" },
+    "primary-tint": { "value": "#12302C" },
+    "on-primary": { "value": "#0C1113" },
+    "ok": { "value": "#4CB878" },
+    "warn": { "value": "#D9A521" },
+    "danger": { "value": "#E0655C" },
+    "hl-amber": {
+      "value": "rgba(253, 230, 138, 0.26)",
+      "comment": "dark-mode highlighters are alpha overlays; text on highlights stays ink, always AA"
+    },
+    "hl-mint": { "value": "rgba(187, 239, 221, 0.26)" },
+    "hl-lilac": { "value": "rgba(221, 214, 254, 0.26)" },
+    "hl-rose": { "value": "rgba(251, 207, 232, 0.26)" }
+  },
+  "shadow": {
+    "overlay": { "value": "0 8px 24px rgba(12, 20, 24, 0.35)" }
+  }
+}

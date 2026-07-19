@@ -1,0 +1,58 @@
+@import 'tailwindcss';
+@import '@epharmatica/tokens/css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source '../../../packages/ui/src';
+
+/*
+ * Base layer per STYLE.md §16 — locked Pharmacopoeia system.
+ * Semantic tokens only; raw hexes exist exactly once, in the generated @theme.
+ * Content-link underline defaults live in components, not here (S6).
+ */
+@layer base {
+  html {
+    /* We draw our own pressed states (primary-tint via :active) — STYLE §6.3 */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.65;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+  }
+
+  /* Visible square focus — no glow, no radius (WCAG AA; the 0px contract) */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  ::selection {
+    background-color: var(--color-primary-tint);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

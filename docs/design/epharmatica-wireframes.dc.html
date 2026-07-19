@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&amp;family=Instrument+Sans:wght@400;500&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Caveat:wght@500&amp;display=swap">
+<style>
+body{margin:0;background:#EDEBE4;font-family:'Instrument Sans',sans-serif;color:#0C1418}
+a{color:#0E6B63}a:hover{color:#0A5750}
+.dv-turn{padding:34px 44px 26px;border-bottom:1px solid rgba(0,0,0,.12);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 4px}
+.dv-tid{font:600 10px 'IBM Plex Mono',monospace;padding:3px 7px;background:#0C1418;color:#fff;text-decoration:none}
+.dv-tname{font:700 15px 'Archivo',sans-serif;letter-spacing:.01em}
+.dv-sub{font:11px/1.5 'Instrument Sans',sans-serif;color:#51606A;margin:0 0 20px;max-width:78ch}
+.dv-opts{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:8px;scroll-margin-top:16px}
+.dv-oid{font:600 10px 'IBM Plex Mono',monospace;padding:2px 6px;background:rgba(12,20,24,.09);color:#0C1418;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:500 11px 'Instrument Sans',sans-serif;color:#0C1418}
+.dv-olabel em{font-style:normal;color:#51606A;font-weight:400}
+.dv-opt:target .dv-oid{background:#0E6B63;color:#fff}
+.dv-next{margin:20px 0 0;font:12px 'Instrument Sans',sans-serif;color:#51606A}
+.f{background:#FBFBF9;border:1px solid #B4B8B4;box-shadow:0 1px 0 rgba(12,20,24,.1);font-size:10px;line-height:1.4;color:#0C1418}
+.lbl{font:500 8px/1.2 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#51606A}
+.lblr{display:block;font:500 8px/1.2 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:#0C1418;border-bottom:1px solid #0C1418;padding-bottom:3px;margin-bottom:6px}
+.m{font-family:'IBM Plex Mono',monospace}
+.k{color:#51606A}
+.h1{font:700 14px/1.2 'Archivo',sans-serif;margin:0}
+.h2{font:700 11px/1.2 'Archivo',sans-serif;margin:0}
+.p i{display:block;background:#DDE1E0;height:6px;margin:4px 0}
+.bar{background:#DDE1E0;height:7px}
+.b{display:inline-flex;align-items:center;gap:4px;border:1px solid #0C1418;padding:4px 8px;font:500 8px 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;background:#FFF;color:#0C1418;white-space:nowrap}
+.bp{background:#0E6B63;border-color:#0E6B63;color:#FFF}
+.bg{border-color:transparent;background:transparent;color:#0A5750}
+.bd{opacity:.45}
+.chip{display:inline-block;border:1px solid #C6CCCB;padding:1px 5px;font:500 7.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#51606A;background:#FFF;white-space:nowrap}
+.chipt{background:#EAF4F2;border-color:#8FBFB9;color:#0A5750}
+.chipw{background:#FBF3E2;border-color:#C9A96A;color:#9A6700}
+.chipd{background:#F9E9E8;border-color:#D69B97;color:#B3261E}
+.gl0,.gl1,.gl2{width:9px;height:9px;border:1px solid #9AA5A4;flex:none;display:inline-block}
+.gl1{background:linear-gradient(90deg,#0E6B63 50%,#FFF 50%);border-color:#0E6B63}
+.gl2{background:#0E6B63;border-color:#0E6B63}
+.ps{display:flex;gap:2px}
+.stamp{display:inline-block;border:1px solid #0E6B63;background:#EAF4F2;color:#0A5750;font:500 7px 'IBM Plex Mono',monospace;letter-spacing:.08em;padding:1px 5px;white-space:nowrap}
+.tb{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #0C1418;background:#FFF}
+.mk{width:12px;height:12px;background:#0C1418;position:relative;flex:none}
+.mk::after{content:'';position:absolute;inset:3.5px 2.5px;background:#FFF;border-radius:4px;transform:rotate(45deg)}
+.wm{font:700 9px 'Archivo',sans-serif;letter-spacing:.08em}
+.av{width:14px;height:14px;background:#DDE1E0;border:1px solid #C6CCCB;font:600 7px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center;color:#51606A;flex:none}
+.row{display:flex;gap:8px;align-items:center}
+.col{display:flex;flex-direction:column;gap:6px}
+.sp{justify-content:space-between}
+.pad{padding:12px}
+.sec{padding:10px 12px;border-bottom:1px solid #E3E7E8}
+.bl{display:grid;border:1px solid #C6CCCB;background:#C6CCCB;gap:1px}
+.bl>div{background:#FFF;padding:8px}
+.inp{border:1px solid #C6CCCB;background:#FFF;height:18px;padding:0 6px;display:flex;align-items:center;color:#9AA5A4;font-size:8.5px}
+.fld{display:flex;flex-direction:column;gap:3px}
+.callout{border-left:2px solid #0E6B63;background:#EAF4F2;padding:6px 8px}
+.rec{border-top:1px solid #0C1418;border-bottom:1px solid #0C1418}
+.rec>div{display:flex;gap:8px;border-bottom:1px solid #E3E7E8;padding:3px 0;align-items:baseline}
+.rec>div:last-child{border-bottom:0}
+.rec b{flex:0 0 86px;font:500 7px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:#51606A;font-weight:500}
+.vid{background:#E9EDEC;border:1px solid #C6CCCB;height:74px;display:flex;align-items:center;justify-content:center}
+.play{width:20px;height:20px;background:#0C1418;color:#FFF;display:flex;align-items:center;justify-content:center;font-size:8px}
+.ann{font:500 13px/1.1 'Caveat',cursive;color:#8A6100}
+.ni{padding:4px 10px;font-size:9px;color:#51606A}
+.nia{background:#EAF4F2;color:#0A5750;border-left:2px solid #0E6B63;font-weight:500}
+.rb{height:2px;background:#0E6B63}
+.ovl{background:#FFF;border:1px solid #0C1418;box-shadow:0 8px 24px rgba(12,20,24,.16)}
+.hlA{background:#FDE68A}.hlM{background:#BBEFDD}.hlL{background:#DDD6FE}.hlR{background:#FBCFE8}
+.thd{border-bottom:1px solid #0C1418;padding:4px 8px;display:grid;gap:8px;align-items:baseline}
+.tr{display:grid;gap:8px;padding:5px 8px;border-bottom:1px solid #E3E7E8;align-items:center}
+.env{background:#0E6B63;color:#FFF;font:500 7.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-align:center;padding:2px}
+.adm{display:grid;grid-template-columns:128px 1fr}
+.anav{border-right:1px solid #0C1418;background:#FFF;padding:6px 0}
+.vb{display:inline-flex;align-items:center;gap:3px;font:500 6.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:#0C1418}
+.vb::before{content:'';width:7px;height:7px;background:#0C1418}
+.dot{width:6px;height:6px;flex:none;display:inline-block}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t1" style="background:#E7E4DB">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">ePharmatica â€” full wireframe set Â· public site + CMS Â· all modules M1â€“M8</span></div>
+<p class="dv-sub">Lo-fi frames in the STYLE.md vocabulary (0px radius, monograph labels, hairlines, teal as punctuation). Desktop public + CMS, with mobile duplicates of the reader, topic and jobs screens. <span class="ann" style="font-size:14px">handwritten notes = PRD behavior annotations</span>. Groups: <a class="dv-oid" href="#ga">Landing</a> <a class="dv-oid" href="#gb">Learning</a> <a class="dv-oid" href="#gc">Accounts</a> <a class="dv-oid" href="#gd">AI suite</a> <a class="dv-oid" href="#ge">Community</a> <a class="dv-oid" href="#gf">Jobs</a> <a class="dv-oid" href="#gg">Resume</a> <a class="dv-oid" href="#gh">WhatsApp</a> <a class="dv-oid" href="#gi">CMS core</a> <a class="dv-oid" href="#gj">CMS module slots</a></p>
+<div class="row" style="gap:14px;flex-wrap:wrap">
+<span class="row" style="gap:4px"><span class="gl0"></span><span class="gl1"></span><span class="gl2"></span><span class="lbl">state glyphs: not started Â· in progress Â· complete</span></span>
+<span class="row" style="gap:4px"><span class="stamp">COMPLETED Â· 12 JUL</span><span class="lbl">stamp chip</span></span>
+<span class="row" style="gap:4px"><span class="chipt">SEM 04</span><span class="chipw">&gt; 7 DAYS</span><span class="chipd">EXPIRED</span><span class="lbl">tint / warn / danger chips</span></span>
+</div>
+</section>
+
+<section class="dv-turn" id="ga">
+<div class="dv-thd"><a class="dv-tid" href="#ga">1 Â· LANDING</a><span class="dv-tname">Phase 0 â€” landing page</span></div>
+<p class="dv-sub">Split hero over live system primitives (S4) Â· six module sections with Coming&nbsp;Soon Â· segmented waitlist (S12).</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Landing <em>Â· desktop Â· /</em></div>
+<div class="f" style="width:860px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="k" style="font-size:9px">Learn Â· Community Â· Blog Â· Jobs Â· Resume</span><span class="chip">âŒ˜K</span><span class="b" style="padding:2px 6px">Sign in</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:20px 24px;border-bottom:1px solid #0C1418">
+  <div class="col" style="gap:10px;padding-top:12px">
+    <span class="lbl">PHARM-D Â· LEARNING &amp; COMMUNITY</span>
+    <div style="font:700 22px/1.15 'Archivo',sans-serif">Study material that is<br>easier than the textbook</div>
+    <div class="p" style="max-width:280px"><i></i><i style="width:78%"></i></div>
+    <div class="row"><span class="b bp">Start learning free</span><span class="b bg">Join waitlist</span></div>
+    <span class="ann">flush-left, statement-first â€” stacks above demo on mobile</span>
+  </div>
+  <div class="col">
+    <span class="lbl">LIVE SYSTEM PRIMITIVES â€” NOT IMAGERY</span>
+    <div class="bl" style="grid-template-columns:1fr 1fr">
+      <div class="col" style="gap:4px"><span class="row" style="gap:4px"><span class="gl2"></span><span class="bar" style="width:70%"></span></span><span class="chip">12 MIN</span></div>
+      <div class="col" style="gap:4px"><span class="row" style="gap:4px"><span class="gl1"></span><span class="bar" style="width:60%"></span></span><span class="chip">8 MIN</span></div>
+      <div class="col" style="gap:4px"><span class="row" style="gap:4px"><span class="gl0"></span><span class="bar" style="width:66%"></span></span><span class="chip">15 MIN</span></div>
+      <div class="col" style="gap:4px"><span class="ps"><span class="gl2"></span><span class="gl2"></span><span class="gl1"></span><span class="gl0"></span><span class="gl0"></span></span><span class="stamp">COMPLETED Â· 12 JUL</span></div>
+    </div>
+    <div style="border:1px solid #C6CCCB;background:#FFF;padding:8px" class="col"><span class="lblr">TOPIC Â· SAMPLE UNIT</span><div class="p"><i></i><i style="width:84%"></i></div><div class="callout"><span class="lbl" style="color:#0A5750">CLINICAL PEARL</span><div class="p"><i style="width:88%"></i></div></div></div>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #E3E7E8">
+  <div class="sec" style="border-right:1px solid #E3E7E8"><span class="lblr">LEARNING</span><div class="p"><i></i><i style="width:70%"></i></div></div>
+  <div class="sec" style="border-right:1px solid #E3E7E8"><span class="lblr">AI STUDY TOOLS</span><div class="p"><i></i><i style="width:64%"></i></div><span class="chip">BYOK â€” YOUR KEY</span></div>
+  <div class="sec"><span class="lblr">COMMUNITY</span><div class="p"><i></i><i style="width:72%"></i></div><span class="chipw">COMING SOON</span></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #E3E7E8">
+  <div class="sec" style="border-right:1px solid #E3E7E8"><span class="lblr">BLOG</span><div class="p"><i style="width:88%"></i></div><span class="chipw">COMING SOON</span></div>
+  <div class="sec" style="border-right:1px solid #E3E7E8"><span class="lblr">JOBS</span><div class="p"><i style="width:82%"></i></div><span class="chipw">COMING SOON</span></div>
+  <div class="sec"><span class="lblr">RESUME BUILDER</span><div class="p"><i style="width:85%"></i></div><span class="chipw">COMING SOON</span></div>
+</div>
+<div class="sec" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+  <div class="col"><span class="lblr">JOIN THE WAITLIST</span>
+    <div class="fld"><span class="lbl">EMAIL</span><div class="inp">you@university.edu</div></div>
+    <div class="row"><div class="fld" style="flex:1"><span class="lbl">MODULE OF INTEREST</span><div class="inp">Community â–¾</div></div><div class="fld" style="flex:1"><span class="lbl">ROLE</span><div class="inp">Student â–¾</div></div></div>
+    <span class="b bp" style="align-self:flex-start">Join waitlist</span>
+    <span class="ann">success replaces form with stamp chip â€œON THE LIST Â· 18 JULâ€ (S12)</span>
+  </div>
+  <div class="col"><span class="lblr">FROM THE YOUTUBE CHANNEL</span>
+    <div class="row"><div class="vid" style="flex:1;height:52px"><span class="play">â–¶</span></div><div class="vid" style="flex:1;height:52px"><span class="play">â–¶</span></div><div class="vid" style="flex:1;height:52px"><span class="play">â–¶</span></div></div>
+    <span class="lblr" style="margin-top:8px">FAQ</span>
+    <div class="tr" style="grid-template-columns:1fr auto"><span class="bar" style="width:60%"></span><span class="k">+</span></div>
+    <div class="tr" style="grid-template-columns:1fr auto"><span class="bar" style="width:48%"></span><span class="k">+</span></div>
+  </div>
+</div>
+<div class="row sp" style="padding:8px 12px"><span class="row" style="gap:6px"><span class="mk"></span><span class="lbl">Â© EPHARMATICA</span></span><span class="lbl">ABOUT Â· CONTACT Â· PRIVACY Â· TERMS Â· CONTENT POLICY</span></div>
+</div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="gb">
+<div class="dv-thd"><a class="dv-tid" href="#gb">1 Â· M1</a><span class="dv-tname">Learning platform â€” public</span></div>
+<p class="dv-sub">Subject â†’ Chapter â†’ Topic â†’ Subtopic; topic overview always exists (M1-1). Reader gets two desktop variations (<a class="dv-oid" href="#1f">1f</a> reading, <a class="dv-oid" href="#1g">1g</a> study mode) plus mobile (<a class="dv-oid" href="#1h">1h</a>).</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1b"><div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Subject index <em>Â· /learn</em></div>
+<div class="f" style="width:560px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">âŒ˜K</span><span class="av">A</span></div>
+<div class="pad col" style="gap:10px">
+<div class="row sp"><span class="h1">Subjects</span><span class="chip">FILTER: SEM â–¾</span></div>
+<div class="bl" style="grid-template-columns:1fr 1fr">
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="av">Rx</span><b>Pharmacology</b></span><span class="ps"><span class="gl2"></span><span class="gl2"></span><span class="gl2"></span><span class="gl1"></span><span class="gl0"></span><span class="gl0"></span></span><span class="row sp"><span class="chip">SEM 04</span><span class="m k" style="font-size:8px">42%</span></span></div>
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="av">Ph</span><b>Pharmaceutics</b></span><span class="ps"><span class="gl2"></span><span class="gl1"></span><span class="gl0"></span><span class="gl0"></span><span class="gl0"></span><span class="gl0"></span></span><span class="row sp"><span class="chip">SEM 02</span><span class="m k" style="font-size:8px">18%</span></span></div>
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="av">Ch</span><b>Med. Chemistry</b></span><span class="ps"><span class="gl0"></span><span class="gl0"></span><span class="gl0"></span><span class="gl0"></span></span><span class="row sp"><span class="chip">SEM 03</span><span class="m k" style="font-size:8px">0%</span></span></div>
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="av">Cl</span><b>Clinical Pharmacy</b></span><span class="ps"><span class="gl0"></span><span class="gl0"></span><span class="gl0"></span></span><span class="row sp"><span class="chip">SEM 07</span><span class="m k" style="font-size:8px">0%</span></span></div>
+</div>
+<span class="ann">only subjects with â‰¥1 published chain are visible (M1-6) Â· progress strips signed-in only</span>
+</div></div></div>
+
+<div class="dv-opt" id="1c"><div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Subject â€” chapter list <em>Â· /learn/[subject]</em></div>
+<div class="f" style="width:560px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">âŒ˜K</span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<span class="lbl">LEARN / PHARMACOLOGY</span>
+<div class="row sp"><span class="h1">Pharmacology</span><span class="chip">DEFAULT SEM 04</span></div>
+<div class="p" style="max-width:340px"><i></i><i style="width:64%"></i></div>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:26px 1fr auto auto auto;border-bottom:1px solid #E3E7E8"><span class="m k">01</span><b>Autonomic nervous system</b><span class="ps"><span class="gl2"></span><span class="gl2"></span><span class="gl1"></span><span class="gl0"></span></span><span class="m k" style="font-size:8px">9/14</span><span class="k">â€º</span></div>
+  <div class="tr" style="grid-template-columns:26px 1fr auto auto auto;border-bottom:1px solid #E3E7E8"><span class="m k">02</span><b>Cardiovascular drugs</b><span class="ps"><span class="gl2"></span><span class="gl0"></span><span class="gl0"></span><span class="gl0"></span></span><span class="m k" style="font-size:8px">3/18</span><span class="k">â€º</span></div>
+  <div class="tr" style="grid-template-columns:26px 1fr auto auto auto;border-bottom:0"><span class="m k">03</span><b>CNS pharmacology</b><span class="ps"><span class="gl0"></span><span class="gl0"></span><span class="gl0"></span></span><span class="m k" style="font-size:8px">0/12</span><span class="k">â€º</span></div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1d"><div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Chapter â€” topic grid <em>Â· /learn/[subject]/[chapter]</em></div>
+<div class="f" style="width:560px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">âŒ˜K</span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<span class="lbl">LEARN / PHARMACOLOGY / CARDIOVASCULAR DRUGS</span>
+<span class="h1">Cardiovascular drugs</span>
+<div class="bl" style="grid-template-columns:1fr 1fr 1fr">
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="gl2"></span><b>Antihypertensives</b></span><span class="row"><span class="chip">SEM 04</span><span class="chip">â–¶ VIDEO</span></span></div>
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="gl1"></span><b>Diuretics</b></span><span class="row"><span class="chip">SEM 04</span><span class="chip">â–¶ VIDEO</span></span></div>
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="gl0"></span><b>Antiarrhythmics</b></span><span class="row"><span class="chip">SEM 04</span></span></div>
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="gl0"></span><b>Anticoagulants</b></span><span class="row"><span class="chip">SEM 05</span></span></div>
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="gl0"></span><b>Lipid-lowering</b></span><span class="row"><span class="chip">SEM 05</span></span></div>
+  <div class="col" style="gap:5px"><span class="row" style="gap:5px"><span class="gl0"></span><b>Heart failure drugs</b></span><span class="row"><span class="chip">SEM 05</span></span></div>
+</div>
+<span class="ann">blister grid â€” shared 1px borders, container-query columns (Â§5 blister)</span>
+</div></div></div>
+
+<div class="dv-opt" id="1e"><div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Topic overview <em>Â· /learn/â€¦/[topic]</em></div>
+<div class="f" style="width:560px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">âŒ˜K</span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<span class="lbl">LEARN / PHARMACOLOGY / CARDIOVASCULAR / DIURETICS</span>
+<div class="row sp"><span class="h1">Diuretics</span><span class="row"><span class="chip">SEM 04</span><span class="chip">â˜† BOOKMARK</span></span></div>
+<div class="ps"><span class="gl2"></span><span class="gl2"></span><span class="gl1"></span><span class="gl0"></span><span class="gl0"></span></div>
+<span class="ann">progress strip lives under the title only (S9) Â· one glyph per published subtopic</span>
+<div class="p" style="max-width:360px"><i></i><i style="width:82%"></i></div>
+<span class="b bp" style="align-self:flex-start">Continue â€” Loop diuretics</span>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:14px 1fr auto auto"><span class="gl2"></span><span>Overview of renal handling</span><span class="chip">6 MIN</span><span class="stamp">COMPLETED Â· 10 JUL</span></div>
+  <div class="tr" style="grid-template-columns:14px 1fr auto auto"><span class="gl2"></span><span>Thiazides</span><span class="chip">9 MIN</span><span class="stamp">COMPLETED Â· 11 JUL</span></div>
+  <div class="tr" style="grid-template-columns:14px 1fr auto auto"><span class="gl1"></span><span>Loop diuretics</span><span class="row"><span class="chip">12 MIN</span><span class="chip">â–¶</span></span><span></span></div>
+  <div class="tr" style="grid-template-columns:14px 1fr auto auto;border-bottom:0"><span class="gl0"></span><span>Kâº-sparing &amp; osmotic</span><span class="chip">8 MIN</span><span></span></div>
+</div>
+<span class="ann">drafts simply absent â€” list closes the gap (M1-6) Â· â€œContinueâ€ = first incomplete</span>
+</div></div></div>
+
+<div class="dv-opt" id="1f"><div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Reader â€” v1 reading layout <em>Â· /learn/â€¦/[subtopic] Â· desktop</em></div>
+<div class="f" style="width:860px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">Aâˆ’ A A+</span><span class="chip">âŒ˜K</span><span class="av">A</span></div>
+<div class="rb" style="width:38%"></div>
+<div style="display:grid;grid-template-columns:1fr 190px">
+<div style="padding:14px 20px;border-right:1px solid #E3E7E8" class="col">
+  <div class="row" style="gap:6px"><span class="chip">OVERVIEW</span><span class="chip">THIAZIDES</span><span class="chip chipt">LOOP DIURETICS</span><span class="chip">Kâº-SPARING</span></div>
+  <span class="lblr" style="margin-top:6px">TOPIC Â· DIURETICS</span>
+  <span class="h1" style="font-size:17px">Loop diuretics</span>
+  <div class="row"><span class="chip">12 MIN READ</span><span class="chip">UPDATED 12 JUL 2026</span><span class="chip">SEM 04</span></div>
+  <div class="p" style="margin-top:6px"><i></i><i style="width:94%"></i><i style="width:52%"></i></div>
+  <div class="p"><i style="width:97%"></i><i class="hlA" style="width:64%"></i><i style="width:88%"></i></div>
+  <div class="ovl" style="align-self:center;display:flex;gap:0;margin:2px 0">
+    <span class="b" style="border:0;border-right:1px solid #E3E7E8">HIGHLIGHT <span class="dot hlA"></span><span class="dot hlM"></span><span class="dot hlL"></span><span class="dot hlR"></span></span>
+    <span class="b" style="border:0;border-right:1px solid #E3E7E8">NOTE</span><span class="b" style="border:0;border-right:1px solid #E3E7E8">EXPLAIN</span><span class="b" style="border:0">ASK AI</span>
+  </div>
+  <span class="ann" style="align-self:center">selection popover â€” caret-anchored on desktop, never covers selection Â· Explain only when a key exists</span>
+  <div class="callout"><span class="lbl" style="color:#0A5750">CLINICAL PEARL</span><div class="p"><i style="width:92%"></i><i style="width:70%"></i></div></div>
+  <div class="rec">
+    <div><b>DRUG</b><span>Furosemide</span></div>
+    <div><b>CLASS</b><span class="bar" style="width:110px"></span></div>
+    <div><b>MOA</b><span class="bar" style="width:190px"></span></div>
+    <div><b>ADVERSE</b><span class="bar hlM" style="width:150px"></span> <span class="row" style="display:inline-flex"><span class="gl0" style="width:7px;height:7px;border-color:#0E6B63"></span></span></div>
+    <div><b>CONTRA</b><span class="bar" style="width:130px"></span></div>
+  </div>
+  <span class="ann">Drug Card block â€” highlights anchor to any block kind incl. fields &amp; table cells (M1-4); note glyph at anchor end</span>
+  <div class="vid"><span class="play">â–¶</span></div>
+  <span class="lbl">FIG 02 Â· LOOP OF HENLE â€” VIDEO (YOUTUBE-NOCOOKIE, LOADS ON CLICK)</span>
+  <div class="p"><i></i><i style="width:90%"></i><i style="width:44%"></i></div>
+  <div class="row" style="gap:0;border:1px solid #C6CCCB;margin-top:6px">
+    <div class="col" style="flex:1;padding:8px;border-right:1px solid #C6CCCB;gap:2px"><span class="lbl">â† PREV</span><span>Thiazides</span></div>
+    <div class="col" style="flex:1;padding:8px;gap:2px;text-align:right"><span class="lbl">NEXT â†’</span><span>Kâº-sparing &amp; osmotic</span></div>
+  </div>
+  <span class="ann">prev/next traverses published only â€” topic â†’ next topic â†’ next chapter (M1 Â§5.2)</span>
+</div>
+<div style="padding:14px 12px" class="col">
+  <span class="lblr">ON THIS PAGE</span>
+  <span class="k">Mechanism</span><span style="color:#0A5750;border-left:2px solid #0E6B63;padding-left:6px">Pharmacokinetics</span><span class="k">Adverse effects</span><span class="k">Exam angles</span>
+  <span class="lblr" style="margin-top:8px">ACTIONS</span>
+  <span class="b">âœ“ Mark complete</span><span class="b">âœŽ Notes</span><span class="b">âœ¦ Assist</span><span class="b">â˜† Bookmark</span>
+  <span class="ann">keyboard: C complete Â· N note Â· H highlight Â· [ ] prev/next</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1g"><div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Reader â€” v2 study mode <em>Â· notes drawer + AI chat deployed</em></div>
+<div class="f" style="width:860px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">Aâˆ’ A A+</span><span class="av">A</span></div>
+<div class="rb" style="width:62%"></div>
+<div style="display:grid;grid-template-columns:200px 1fr 230px">
+<div style="border-right:1px solid #0C1418;padding:10px" class="col">
+  <span class="lblr">NOTES â€” ON THIS PAGE</span>
+  <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:4px"><span class="row" style="gap:4px"><span class="dot hlA"></span><span class="k m" style="font-size:7.5px">â€œâ€¦inhibits NKCC2â€¦â€</span></span><div class="p"><i style="width:90%"></i><i style="width:60%"></i></div><span class="lbl">JUMP TO ANCHOR â†—</span></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:4px"><span class="row" style="gap:4px"><span class="dot hlM"></span><span class="chip">AI</span></span><div class="p"><i style="width:86%"></i></div></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:4px"><span class="row sp"><span class="chipw">ORPHANED</span></span><span class="k m" style="font-size:7.5px">â€œsnapshot textâ€¦â€</span><span class="lbl">RESTORE BY RE-SELECTING</span></div>
+  <span class="b" style="align-self:flex-start">+ Add note</span>
+  <span class="ann">orphans surface here â€” never silently vanish (M1 Â§5.5)</span>
+</div>
+<div style="padding:12px 16px;border-right:1px solid #0C1418" class="col">
+  <span class="lblr">TOPIC Â· DIURETICS</span>
+  <span class="h1">Loop diuretics</span>
+  <div class="p"><i></i><i class="hlA" style="width:58%"></i><i style="width:91%"></i></div>
+  <div class="p"><i style="width:96%"></i><i class="hlM" style="width:71%"></i><i style="width:83%"></i></div>
+  <div class="callout"><span class="lbl" style="color:#0A5750">MNEMONIC</span><div class="p"><i style="width:76%"></i></div></div>
+  <div class="p"><i></i><i style="width:87%"></i><i style="width:64%"></i></div>
+  <div class="row"><span class="b bp">âœ“ Mark complete</span><span class="stamp" style="visibility:hidden">.</span></div>
+  <span class="ann">on complete: glyph fills + stamp fades in 200ms, once, no confetti (Â§7.3)</span>
+</div>
+<div class="col" style="padding:10px">
+  <div class="row sp"><span class="lblr" style="flex:1">ASSIST â€” CHAT</span></div>
+  <div class="row sp"><span class="chip chipt">GROQ Â· LLAMA-4</span><span class="lbl">SWITCH â–¾</span></div>
+  <div class="row sp" style="border:1px solid #E3E7E8;padding:4px 6px"><span class="lbl">INCLUDE WHOLE TOPIC</span><span class="chip">OFF</span></div>
+  <span class="ann">toggle shows â‰ˆ token estimate first â€” user pays, user chooses (M3-2)</span>
+  <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:3px;background:#FFF"><span class="lbl">YOU</span><div class="p"><i style="width:80%"></i></div></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:3px;background:#EAF4F2"><span class="lbl">ASSISTANT</span><div class="p"><i></i><i style="width:88%"></i><i style="width:52%"></i></div><div class="row"><span class="chip">SAVE TO NOTES</span><span class="chip">â–  STOP</span></div></div>
+  <div class="inp">Ask about this subtopicâ€¦</div>
+  <span class="lbl" style="color:#9A6700">EDUCATIONAL AID â€” MAY CONTAIN ERRORS. NOT MEDICAL ADVICE.</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1h"><div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Reader â€” mobile 360 <em>Â· action bar + docked selection sheet</em></div>
+<div class="f" style="width:270px">
+<div class="tb" style="padding:6px 10px"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="k">â˜°</span></div>
+<div class="rb" style="width:45%"></div>
+<div style="padding:10px" class="col">
+  <div class="row" style="gap:4px;overflow:hidden"><span class="chip">THIAZIDES</span><span class="chip chipt">LOOP DIURETICS</span><span class="chip">Kâº-SPARâ€¦</span></div>
+  <span class="ann">chip row scrolls, edge-faded (Â§6.5)</span>
+  <span class="lblr">TOPIC Â· DIURETICS</span>
+  <span class="h1">Loop diuretics</span>
+  <div class="row"><span class="chip">12 MIN</span><span class="chip">SEM 04</span></div>
+  <div class="row sp" style="border:1px solid #E3E7E8;padding:4px 6px"><span class="lbl">ON THIS PAGE</span><span class="k">â–¾</span></div>
+  <div class="p"><i></i><i style="width:92%"></i><i class="hlA" style="width:66%"></i><i style="width:85%"></i></div>
+  <div class="vid" style="height:56px"><span class="play">â–¶</span></div>
+  <span class="lbl">FIG 01 Â· CAPTION</span>
+  <div class="p"><i></i><i style="width:78%"></i></div>
+</div>
+<div class="ovl" style="display:flex;margin:0 6px"><span class="b" style="border:0;flex:1;justify-content:center">HIGHLIGHT</span><span class="b" style="border:0;flex:1;justify-content:center">NOTE</span><span class="b" style="border:0;flex:1;justify-content:center">EXPLAIN</span></div>
+<div style="display:flex;border-top:1px solid #0C1418;background:#FFF">
+  <div class="col" style="flex:1;align-items:center;padding:6px;gap:2px"><span class="gl2"></span><span class="lbl">COMPLETE</span></div>
+  <div class="col" style="flex:1;align-items:center;padding:6px;gap:2px;border-left:1px solid #E3E7E8"><span>âœŽ</span><span class="lbl">NOTE</span></div>
+  <div class="col" style="flex:1;align-items:center;padding:6px;gap:2px;border-left:1px solid #E3E7E8"><span>âœ¦</span><span class="lbl">ASSIST</span></div>
+</div>
+<div style="padding:4px 10px"><span class="ann">selection sheet docks above the 56px action bar â€” thumb-reachable, â‰¥44px targets (Â§6.8) Â· nothing floats</span></div>
+</div></div>
+
+<div class="dv-opt" id="1i"><div class="dv-olabel"><a class="dv-oid" href="#1i">1i</a>Preview gate <em>Â· logged-out state</em></div>
+<div class="f" style="width:380px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="b" style="padding:2px 6px">Sign in</span></div>
+<div style="padding:12px 16px" class="col">
+  <span class="lblr">TOPIC Â· DIURETICS</span>
+  <span class="h1">Loop diuretics</span>
+  <div class="p"><i></i><i style="width:93%"></i><i style="width:88%"></i></div>
+  <div class="p"><i style="width:96%"></i><i style="width:71%"></i></div>
+  <div style="height:44px;background:linear-gradient(180deg,rgba(251,251,249,0),#FBFBF9);margin-top:-30px"></div>
+  <div class="ovl" style="padding:12px" class="col">
+    <span class="lblr">CONTINUE READING FREE â€” SIGN IN</span>
+    <div class="col" style="gap:3px;margin:6px 0">
+      <span class="row" style="gap:5px"><span class="gl2" style="width:7px;height:7px"></span><span>Full content of every unit</span></span>
+      <span class="row" style="gap:5px"><span class="gl2" style="width:7px;height:7px"></span><span>Highlights, notes, bookmarks</span></span>
+      <span class="row" style="gap:5px"><span class="gl2" style="width:7px;height:7px"></span><span>Progress tracking + AI tools</span></span>
+    </div>
+    <div class="row"><span class="b bp">Sign in</span><span class="b">Create account</span></div>
+  </div>
+  <span class="ann">server-side truncation â€” gated JSON never sent to anon clients (D8) Â· default: blocks before first heading, cap 5 (M1 Â§5.4)</span>
+</div>
+</div></div>
+
+<div class="dv-opt" id="1j"><div class="dv-olabel"><a class="dv-oid" href="#1j">1j</a>Search <em>Â· /search + empty state</em></div>
+<div class="f" style="width:560px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<div class="inp" style="height:24px;font-size:10px;color:#0C1418">loop diuretics|</div>
+<div class="row"><span class="chip chipt">PHARMACOLOGY âœ•</span><span class="chip">+ SUBJECT</span><span class="chip">SEM: ANY â–¾</span></div>
+<span class="ann">Postgres FTS, websearch syntax Â· 300ms debounce Â· min 2 chars Â· top 20 (Â§5.9)</span>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="col" style="padding:8px;border-bottom:1px solid #E3E7E8;gap:3px"><span class="lbl">PHARMACOLOGY â€º CARDIOVASCULAR â€º DIURETICS</span><span class="row sp"><b>Loop diuretics</b><span class="row"><span class="chip">12 MIN</span><span class="gl1"></span></span></span><div class="p"><i style="width:94%"></i><i class="hlA" style="width:40%"></i></div></div>
+  <div class="col" style="padding:8px;border-bottom:1px solid #E3E7E8;gap:3px"><span class="lbl">PHARMACOLOGY â€º RENAL â€º â€¦</span><span class="row sp"><b>Thiazides</b><span class="row"><span class="chip">9 MIN</span><span class="gl2"></span></span></span><div class="p"><i style="width:88%"></i></div></div>
+  <div class="col" style="padding:8px;gap:3px"><span class="lbl">PHARMACEUTICS â€º â€¦</span><span class="row sp"><b>Osmotic agents</b><span class="chip">8 MIN</span></span><div class="p"><i style="width:80%"></i></div></div>
+</div>
+<div style="border:1px dashed #C6CCCB;padding:10px" class="col">
+  <span class="lbl">EMPTY STATE</span>
+  <span>No matches for â€œfrusemydeâ€. Try fewer words or a subject filter.</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1k"><div class="dv-olabel"><a class="dv-oid" href="#1k">1k</a>Learner dashboard <em>Â· /dashboard</em></div>
+<div class="f" style="width:700px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">âŒ˜K</span><span class="av">A</span></div>
+<div class="pad col" style="gap:10px">
+<span class="h1">My learning</span>
+<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:10px">
+  <div class="col" style="border:1px solid #0C1418;padding:10px;gap:5px">
+    <span class="lblr">CONTINUE WHERE YOU LEFT OFF</span>
+    <b>Loop diuretics</b><span class="lbl">PHARMACOLOGY â€º CARDIOVASCULAR â€º DIURETICS</span>
+    <span class="b bp" style="align-self:flex-start">Resume reading</span>
+    <span class="ann">= last-opened subtopic (last_visited upsert, M1 Â§5.2)</span>
+  </div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:10px;gap:6px">
+    <span class="lblr">PROGRESS BY SUBJECT</span>
+    <div class="row sp"><span>Pharmacology</span><span class="row"><span class="ps"><span class="gl2"></span><span class="gl2"></span><span class="gl1"></span><span class="gl0"></span></span><span class="m k" style="font-size:8px">42%</span></span></div>
+    <div class="row sp"><span>Pharmaceutics</span><span class="row"><span class="ps"><span class="gl2"></span><span class="gl0"></span><span class="gl0"></span><span class="gl0"></span></span><span class="m k" style="font-size:8px">18%</span></span></div>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:5px"><span class="lblr">RECENT HIGHLIGHTS</span>
+    <span class="row" style="gap:4px"><span class="dot hlA"></span><span class="bar" style="width:80%"></span></span>
+    <span class="row" style="gap:4px"><span class="dot hlM"></span><span class="bar" style="width:64%"></span></span>
+    <span class="row" style="gap:4px"><span class="dot hlR"></span><span class="bar" style="width:72%"></span></span>
+    <span class="row" style="gap:4px"><span class="chipw">ORPHANED</span><span class="bar" style="width:40%"></span></span>
+  </div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:5px"><span class="lblr">NOTES</span>
+    <span class="row" style="gap:4px"><span class="bar" style="width:78%"></span></span>
+    <span class="row" style="gap:4px"><span class="chip">AI</span><span class="bar" style="width:58%"></span></span>
+    <span class="row" style="gap:4px"><span class="bar" style="width:66%"></span></span>
+  </div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:5px"><span class="lblr">BOOKMARKS</span>
+    <span class="row" style="gap:4px"><span class="gl1"></span><span class="bar" style="width:70%"></span></span>
+    <span class="row" style="gap:4px"><span class="gl0"></span><span class="bar" style="width:56%"></span></span>
+    <span class="lblr" style="margin-top:4px">MY JOBS</span>
+    <span class="row"><span class="chip">SAVED 4</span><span class="chip">APPLIED 2</span></span>
+  </div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1l"><div class="dv-olabel"><a class="dv-oid" href="#1l">1l</a>Topic overview â€” mobile 360</div>
+<div class="f" style="width:270px">
+<div class="tb" style="padding:6px 10px"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="k">â˜°</span></div>
+<div style="padding:10px" class="col">
+  <span class="lbl">PHARMACOLOGY / CARDIOVASCULAR</span>
+  <div class="row sp"><span class="h1">Diuretics</span><span class="chip">SEM 04</span></div>
+  <div class="ps"><span class="gl2"></span><span class="gl2"></span><span class="gl1"></span><span class="gl0"></span><span class="gl0"></span></div>
+  <div class="p"><i></i><i style="width:74%"></i></div>
+  <span class="b bp" style="justify-content:flex-start">Continue â€” Loop diuretics</span>
+  <div class="col" style="gap:0;border:1px solid #C6CCCB">
+    <div class="tr" style="grid-template-columns:12px 1fr auto"><span class="gl2"></span><span>Renal handling</span><span class="chip">6 MIN</span></div>
+    <div class="tr" style="grid-template-columns:12px 1fr auto"><span class="gl2"></span><span>Thiazides</span><span class="chip">9 MIN</span></div>
+    <div class="tr" style="grid-template-columns:12px 1fr auto"><span class="gl1"></span><span>Loop diuretics</span><span class="chip">12 MIN</span></div>
+    <div class="tr" style="grid-template-columns:12px 1fr auto;border-bottom:0"><span class="gl0"></span><span>Kâº-sparing</span><span class="chip">8 MIN</span></div>
+  </div>
+  <span class="ann">rows â‰¥48px on touch Â· full-width button, label still flush-left</span>
+</div>
+</div></div>
+
+</div>
+</section>
+
+
+<section class="dv-turn" id="gc">
+<div class="dv-thd"><a class="dv-tid" href="#gc">1 Â· M2</a><span class="dv-tname">Accounts &amp; profiles</span></div>
+<p class="dv-sub">Immutable username (M2-1) Â· Google completion step Â· settings IA Â· 14-day deletion state machine (M2-2) Â· export.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1m"><div class="dv-olabel"><a class="dv-oid" href="#1m">1m</a>Sign up â€” email <em>Â· /auth/sign-up</em></div>
+<div class="f" style="width:320px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span></div>
+<div class="pad col" style="gap:8px">
+<span class="h1">Create your account</span>
+<span class="b" style="justify-content:flex-start">G Â· Continue with Google</span>
+<div class="row" style="gap:6px"><span style="flex:1;border-top:1px solid #E3E7E8"></span><span class="lbl">OR</span><span style="flex:1;border-top:1px solid #E3E7E8"></span></div>
+<div class="fld"><span class="lbl">EMAIL</span><div class="inp">ayesha@uni.edu.pk</div></div>
+<div class="fld"><span class="lbl">PASSWORD</span><div class="inp">â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢</div><span class="lbl" style="letter-spacing:.04em;text-transform:none;font-size:7.5px">Min 10 characters â€” strength: <span style="color:#0A5750">good</span></span></div>
+<div class="fld"><span class="lbl">USERNAME</span><div class="inp" style="color:#0C1418">ayesha-k <span style="margin-left:auto;color:#0A5750">âœ“ available</span></div><span style="font-size:8px;color:#9A6700">Your username is permanent and can't be changed.</span></div>
+<div class="fld"><span class="lbl">DISPLAY NAME</span><div class="inp">Ayesha Khan</div></div>
+<span class="row" style="gap:5px;font-size:8.5px"><span class="gl0" style="width:8px;height:8px"></span><span>I'm 13 or older and accept the <a href="#1m">Terms</a> &amp; <a href="#1m">Privacy</a></span></span>
+<div style="border:1px dashed #C6CCCB;padding:4px;text-align:center" class="lbl">TURNSTILE</div>
+<span class="b bp" style="justify-content:flex-start">Create account</span>
+<span class="ann">live availability check Â· reserved-list enforced (M2 Â§4.4) Â· verify-email banner after</span>
+</div></div></div>
+
+<div class="dv-opt" id="1n"><div class="dv-olabel"><a class="dv-oid" href="#1n">1n</a>Google completion step <em>Â· first OAuth sign-in</em></div>
+<div class="f" style="width:320px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span></div>
+<div class="pad col" style="gap:8px">
+<span class="lblr">ONE MORE STEP</span>
+<span class="h2">Choose your username</span>
+<div class="p"><i style="width:90%"></i><i style="width:55%"></i></div>
+<div class="fld"><span class="lbl">USERNAME â€” PERMANENT</span><div class="inp" style="color:#0C1418">daniyal_r <span style="margin-left:auto;color:#0A5750">âœ“</span></div></div>
+<div class="fld"><span class="lbl">I AM A</span><div class="row" style="gap:0;border:1px solid #C6CCCB"><span class="b" style="border:0;flex:1;background:#EAF4F2;color:#0A5750;justify-content:center">STUDENT</span><span class="b" style="border:0;flex:1;border-left:1px solid #C6CCCB;justify-content:center">PHARMACIST</span><span class="b" style="border:0;flex:1;border-left:1px solid #C6CCCB;justify-content:center">OTHER</span></div></div>
+<span class="row" style="gap:5px;font-size:8.5px"><span class="gl2" style="width:8px;height:8px"></span><span>I'm 13 or older + Terms/Privacy</span></span>
+<span class="b bp" style="justify-content:flex-start">Finish and start learning</span>
+<span class="ann">profile row created only on completion â€” no half-created accounts (M2 Â§4.2) Â· lands back at pre-auth location</span>
+</div></div></div>
+
+<div class="dv-opt" id="1o"><div class="dv-olabel"><a class="dv-oid" href="#1o">1o</a>Sign in <em>Â· /auth/sign-in</em></div>
+<div class="f" style="width:260px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span></div>
+<div class="pad col" style="gap:8px">
+<span class="h1">Sign in</span>
+<span class="b" style="justify-content:flex-start">G Â· Continue with Google</span>
+<div class="fld"><span class="lbl">EMAIL</span><div class="inp"></div></div>
+<div class="fld"><span class="lbl">PASSWORD</span><div class="inp"></div></div>
+<span class="b bp" style="justify-content:flex-start">Sign in</span>
+<a href="#1o" style="font-size:8.5px">Forgot password</a>
+<span class="ann">same-email Google auto-links only when both sides verified (M2-4)</span>
+</div></div></div>
+
+<div class="dv-opt" id="1p"><div class="dv-olabel"><a class="dv-oid" href="#1p">1p</a>Settings â€” profile &amp; appearance <em>Â· /settings/profile</em></div>
+<div class="f" style="width:600px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div style="display:grid;grid-template-columns:130px 1fr">
+<div class="col" style="border-right:1px solid #0C1418;padding:8px 0;gap:0">
+  <span class="ni nia">Profile</span><span class="ni">Appearance</span><span class="ni">AI keys</span><span class="ni">Data</span><span class="ni">Sessions &amp; sign-in</span>
+</div>
+<div class="pad col" style="gap:8px">
+  <span class="lblr">PROFILE</span>
+  <div class="row" style="align-items:flex-start;gap:12px">
+    <div class="col" style="gap:4px"><div class="av" style="width:44px;height:44px;font-size:12px">AK</div><span class="chip">REPLACE</span></div>
+    <div class="col" style="flex:1">
+      <div class="fld"><span class="lbl">USERNAME</span><div class="inp" style="background:#EDEBE4;color:#51606A">ayesha-k â€” permanent</div></div>
+      <div class="fld"><span class="lbl">DISPLAY NAME</span><div class="inp" style="color:#0C1418">Ayesha Khan</div></div>
+      <div class="row"><div class="fld" style="flex:1"><span class="lbl">USER TYPE</span><div class="inp">Student â–¾</div></div><div class="fld" style="flex:1"><span class="lbl">COUNTRY</span><div class="inp">Pakistan â–¾</div></div></div>
+      <div class="fld"><span class="lbl">INSTITUTION â€” OPTIONAL</span><div class="inp">University of the Punjab</div></div>
+      <div class="fld"><span class="lbl">BIO â€” â‰¤280</span><div class="inp" style="height:30px"></div></div>
+    </div>
+  </div>
+  <span class="b bp" style="align-self:flex-start">Save profile</span>
+  <span class="lblr" style="margin-top:6px">APPEARANCE</span>
+  <div class="row"><span class="lbl" style="width:86px">THEME</span><div class="row" style="gap:0;border:1px solid #C6CCCB"><span class="b" style="border:0;background:#EAF4F2;color:#0A5750">SYSTEM</span><span class="b" style="border:0;border-left:1px solid #C6CCCB">LIGHT</span><span class="b" style="border:0;border-left:1px solid #C6CCCB">DARK</span></div></div>
+  <div class="row"><span class="lbl" style="width:86px">READER TEXT</span><div class="row" style="gap:0;border:1px solid #C6CCCB"><span class="b" style="border:0">Aâˆ’</span><span class="b" style="border:0;border-left:1px solid #C6CCCB;background:#EAF4F2;color:#0A5750">A</span><span class="b" style="border:0;border-left:1px solid #C6CCCB">A+</span></div></div>
+  <span class="ann">theme + text size persist in profiles.prefs â€” follow the account across devices (M2 Â§4.6)</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1q"><div class="dv-olabel"><a class="dv-oid" href="#1q">1q</a>Settings â€” data, export &amp; deletion <em>Â· consequence sheet</em></div>
+<div class="f" style="width:600px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div style="display:grid;grid-template-columns:130px 1fr">
+<div class="col" style="border-right:1px solid #0C1418;padding:8px 0;gap:0">
+  <span class="ni">Profile</span><span class="ni">Appearance</span><span class="ni">AI keys</span><span class="ni nia">Data</span><span class="ni">Sessions &amp; sign-in</span>
+</div>
+<div class="pad col" style="gap:8px">
+  <span class="lblr">EXPORT</span>
+  <div class="row sp"><div class="col" style="gap:2px"><b>Export my study data</b><span class="k" style="font-size:8.5px">Highlights, notes, progress, bookmarks â€” one JSON file</span></div><span class="b">Export JSON</span></div>
+  <span class="ann">rate limit 3/day Â· includes orphaned highlights + AI source labels (M2 Â§4.9)</span>
+  <span class="lblr" style="margin-top:6px;color:#B3261E;border-color:#B3261E">DELETE ACCOUNT</span>
+  <div class="ovl" style="padding:10px" >
+    <div class="col" style="gap:5px">
+    <span class="lblr">BEFORE YOU CONFIRM</span>
+    <span class="row" style="gap:5px"><span class="dot" style="background:#B3261E"></span><span>Everything purges after a 14-day grace period</span></span>
+    <span class="row" style="gap:5px"><span class="dot" style="background:#B3261E"></span><span>AI keys are removed first, immediately at purge</span></span>
+    <span class="row" style="gap:5px"><span class="dot" style="background:#0E6B63"></span><span>Signing in during the 14 days cancels deletion</span></span>
+    <div class="fld"><span class="lbl">RE-ENTER PASSWORD TO CONTINUE</span><div class="inp" style="width:160px"></div></div>
+    <div class="row"><span class="b" style="border-color:#B3261E;color:#B3261E">Delete my account</span><span class="b bg">Cancel</span></div>
+    </div>
+  </div>
+  <span class="ann">T0: sessions revoked + email with cancel link Â· day-14 cron purges in Privacy-Policy order (M2 Â§4.7)</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1r"><div class="dv-olabel"><a class="dv-oid" href="#1r">1r</a>Settings â€” sessions &amp; sign-in</div>
+<div class="f" style="width:320px">
+<div class="pad col" style="gap:8px">
+<span class="lblr">SIGN-IN METHODS</span>
+<div class="row sp" style="border:1px solid #E3E7E8;padding:6px"><span class="row" style="gap:6px"><b>Password</b><span class="chip chipt">ACTIVE</span></span><span class="chip">REMOVE</span></div>
+<div class="row sp" style="border:1px solid #E3E7E8;padding:6px"><span class="row" style="gap:6px"><b>Google</b><span class="chip chipt">LINKED</span></span><span class="chip">REMOVE</span></div>
+<span class="ann">a method can be removed only if another remains (M2 Â§4.3)</span>
+<span class="lblr" style="margin-top:4px">SESSIONS</span>
+<span class="b" style="align-self:flex-start">Sign out everywhere</span>
+<span class="k" style="font-size:8px">Revokes every device â€” including this one.</span>
+<span class="lblr" style="margin-top:4px">TWO-FACTOR â€” STAFF OPTIONAL</span>
+<div class="row sp"><span>Authenticator app (TOTP)</span><span class="chip">SET UP</span></div>
+</div></div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="gd">
+<div class="dv-thd"><a class="dv-tid" href="#gd">1 Â· M3</a><span class="dv-tname">AI study suite â€” BYOK</span></div>
+<p class="dv-sub">Explain from selection with quick actions (M3-6) Â· summarize Â· chat (see <a class="dv-oid" href="#1g">1g</a> for the chat panel in context) Â· normalized failure + recovery (M3-5) Â· key management.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1s"><div class="dv-olabel"><a class="dv-oid" href="#1s">1s</a>Explain â€” selection popover result</div>
+<div class="f" style="width:400px">
+<div style="padding:12px 16px" class="col">
+<div class="p"><i></i><i class="hlM" style="width:62%"></i><i style="width:90%"></i></div>
+<div class="ovl" style="padding:10px" >
+  <div class="col" style="gap:6px">
+  <div class="row sp"><span class="lblr" style="flex:1">EXPLAIN â€” GROQ Â· LLAMA-4</span></div>
+  <div class="p"><i></i><i style="width:94%"></i><i style="width:87%"></i><i style="width:52%"></i></div>
+  <div class="row"><span class="chip">SIMPLER</span><span class="chip">EXAMPLE</span><span class="chip">MNEMONIC</span><span class="chip chipt">QUIZ ME</span></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:4px">
+    <span class="lbl">CHECK QUESTION 1 Â· 2</span>
+    <div class="p"><i style="width:88%"></i></div>
+    <div style="border:1px solid #C6CCCB;background:#EDEBE4;padding:4px;text-align:center" class="lbl">TAP TO REVEAL ANSWER</div>
+  </div>
+  <div class="row sp"><span class="row"><span class="chip">SAVE TO NOTES</span><span class="chip">ASK IN CHAT</span></span></div>
+  <span class="lbl" style="color:#9A6700">EDUCATIONAL AID â€” NOT MEDICAL ADVICE</span>
+  </div>
+</div>
+<span class="ann">grounding = selection + containing block Â± one sibling (M3 Â§4.3) Â· quiz answers collapsed by default Â· Ask-in-chat carries selection + response</span>
+</div></div></div>
+
+<div class="dv-opt" id="1t"><div class="dv-olabel"><a class="dv-oid" href="#1t">1t</a>Summarize <em>Â· fixed-shape output</em></div>
+<div class="f" style="width:300px">
+<div class="pad col" style="gap:7px">
+<div class="row sp"><span class="lblr" style="flex:1">SUMMARY â€” LOOP DIURETICS</span></div>
+<span class="lbl" style="color:#0A5750">KEY POINTS Â· â‰¤6</span>
+<div class="col" style="gap:3px"><span class="row" style="gap:4px"><span class="dot" style="background:#0C1418"></span><span class="bar" style="width:85%"></span></span><span class="row" style="gap:4px"><span class="dot" style="background:#0C1418"></span><span class="bar" style="width:74%"></span></span><span class="row" style="gap:4px"><span class="dot" style="background:#0C1418"></span><span class="bar" style="width:80%"></span></span></div>
+<span class="lbl" style="color:#0A5750">MUST-KNOW TERMS</span>
+<div class="col" style="gap:3px"><span class="row" style="gap:4px"><b class="m" style="font-size:8px">NKCC2</b><span class="bar" style="width:60%"></span></span><span class="row" style="gap:4px"><b class="m" style="font-size:8px">OTOTOX.</b><span class="bar" style="width:52%"></span></span></div>
+<span class="lbl" style="color:#0A5750">EXAM ANGLES Â· â‰¤3</span>
+<div class="col" style="gap:3px"><span class="bar" style="width:88%"></span><span class="bar" style="width:70%"></span></div>
+<div class="row"><span class="chip">SAVE TO NOTES</span></div>
+<span class="lbl" style="color:#9A6700">MAY CONTAIN ERRORS â€” VERIFY AGAINST SOURCES</span>
+<span class="ann">prompt contract pins the three sections (M3 Â§4.4) Â· output capped by user's token limit</span>
+</div></div></div>
+
+<div class="dv-opt" id="1u"><div class="dv-olabel"><a class="dv-oid" href="#1u">1u</a>Failure &amp; caps <em>Â· error card + recovery sheet</em></div>
+<div class="f" style="width:300px">
+<div class="pad col" style="gap:8px">
+<div class="col" style="border:1px solid #B3261E;padding:8px;gap:4px">
+  <span class="lbl" style="color:#B3261E">QUOTA EXCEEDED â€” GROQ</span>
+  <span style="font-size:9px">Your Groq key ran out of quota. Switch provider or retry later â€” your chat is safe.</span>
+</div>
+<div class="ovl" style="padding:8px"><div class="col" style="gap:5px">
+  <span class="lblr">RECOVER</span>
+  <div class="row sp"><span>Switch model</span><span class="chip">LLAMA-4 â–¾</span></div>
+  <div class="row sp"><span>Switch provider</span><span class="chip chipt">GEMINI â€” KEY SET</span></div>
+  <span class="b" style="align-self:flex-start">Retry</span>
+</div></div>
+<span class="ann">taxonomy: invalid_key Â· quota Â· model_not_found Â· rate_limited Â· filtered Â· network (M3 Â§4.8) â€” history never lost</span>
+<div class="col" style="border:1px solid #9A6700;background:#FBF3E2;padding:8px;gap:3px">
+  <span class="lbl" style="color:#9A6700">DAILY CAP REACHED</span>
+  <span style="font-size:9px">You've reached your daily AI limit (100). It resets at midnight â€” or raise it in Settings.</span>
+</div>
+<div class="row" style="border:1px solid #E3E7E8;padding:6px;gap:4px"><span class="bar" style="width:55%"></span><span class="lbl" style="color:#9A6700">â€” RESPONSE REACHED YOUR LENGTH LIMIT (SETTINGS â†’ AI)</span></div>
+</div></div></div>
+
+<div class="dv-opt" id="1v"><div class="dv-olabel"><a class="dv-oid" href="#1v">1v</a>Settings â€” AI keys <em>Â· /settings/ai-keys</em></div>
+<div class="f" style="width:620px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div style="display:grid;grid-template-columns:130px 1fr">
+<div class="col" style="border-right:1px solid #0C1418;padding:8px 0;gap:0"><span class="ni">Profile</span><span class="ni">Appearance</span><span class="ni nia">AI keys</span><span class="ni">Data</span><span class="ni">Sessions</span></div>
+<div class="pad col" style="gap:8px">
+<span class="lblr">PROVIDERS â€” YOUR KEYS, YOUR COST</span>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:74px 1fr auto auto auto"><b>Groq</b><span class="row"><span class="chip chipt">DEVICE ONLY</span><span class="m k" style="font-size:8px">Â·Â·Â·Â·k3Jq</span></span><span class="chip">VALIDATE</span><span class="chip">SYNC â–¾</span><span class="chip">REMOVE</span></div>
+  <div class="tr" style="grid-template-columns:74px 1fr auto auto auto"><b>Gemini</b><span class="row"><span class="chip chipt">SYNCED</span><span class="m k" style="font-size:8px">Â·Â·Â·Â·9xTv</span></span><span class="chip">VALIDATE</span><span class="chip">DEVICE â–¾</span><span class="chip">REMOVE</span></div>
+  <div class="tr" style="grid-template-columns:74px 1fr auto"><b>Anthropic</b><span class="k" style="font-size:8.5px">No key â€” <a href="#1v">get one in 2 minutes â†—</a></span><span class="chip">ADD KEY</span></div>
+  <div class="tr" style="grid-template-columns:74px 1fr auto"><b>OpenAI</b><span class="k" style="font-size:8.5px">No key</span><span class="chip">ADD KEY</span></div>
+  <div class="tr" style="grid-template-columns:74px 1fr auto;border-bottom:0"><b>OpenRouter</b><span class="k" style="font-size:8.5px">No key</span><span class="chip">ADD KEY</span></div>
+</div>
+<span class="ann">Groq + Gemini first â€” free tiers (R3) Â· keys masked after save, validated with a 1-token call Â· switching syncâ†’device deletes the server copy immediately</span>
+<div class="row" style="gap:14px">
+  <div class="col" style="flex:1;gap:4px"><span class="lbl">DEFAULT MODEL</span><div class="inp">Groq Â· Llama-4 â€” fast â–¾</div><span class="lbl" style="text-transform:none;letter-spacing:.02em">Advanced: custom model ID â€” unvalidated, may fail</span></div>
+  <div class="col" style="flex:1;gap:4px"><span class="lbl">MAX TOKENS / RESPONSE â€” 1,024</span><div class="row" style="gap:0"><span style="flex:1;height:2px;background:#0E6B63;align-self:center"></span><span class="gl2" style="width:7px;height:7px"></span><span style="flex:2;height:2px;background:#DDE1E0;align-self:center"></span></div><span class="lbl">DAILY REQUESTS â€” 100 Â· USED 23</span><div class="row" style="gap:0"><span style="flex:1;height:2px;background:#0E6B63;align-self:center"></span><span class="gl2" style="width:7px;height:7px"></span><span style="flex:3;height:2px;background:#DDE1E0;align-self:center"></span></div></div>
+</div>
+<span class="ann">guardrails protect the user's wallet: 256â€“4,096 tokens, 20â€“500/day, no â€œunlimitedâ€ (M3-4)</span>
+</div>
+</div></div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="ge">
+<div class="dv-thd"><a class="dv-tid" href="#ge">1 Â· M5</a><span class="dv-tname">Community â€” forum Â· blog Â· profiles Â· verification</span></div>
+<p class="dv-sub">Hybrid forum (D12): categories + Discussion/Question threads, reply upvotes only, accepted answers, anonymous Questions (M5-4). Blog with approved writers + Discuss-in-forum bridge. In-app-only notifications (M5-5).</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1w"><div class="dv-olabel"><a class="dv-oid" href="#1w">1w</a>Community home <em>Â· /community</em></div>
+<div class="f" style="width:700px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">ðŸ”” 3</span><span class="av">A</span></div>
+<div style="display:grid;grid-template-columns:170px 1fr">
+<div class="col" style="border-right:1px solid #E3E7E8;padding:10px;gap:5px">
+  <span class="lblr">CATEGORIES</span>
+  <span class="row sp"><span>Study Help</span><span class="m k" style="font-size:8px">124</span></span>
+  <span class="row sp"><span>Clinical Practice</span><span class="m k" style="font-size:8px">67</span></span>
+  <span class="row sp"><span>Industry &amp; RA</span><span class="m k" style="font-size:8px">41</span></span>
+  <span class="row sp"><span>Careers &amp; Licensing</span><span class="m k" style="font-size:8px">88</span></span>
+  <span class="row sp"><span>General Lounge</span><span class="m k" style="font-size:8px">52</span></span>
+  <span class="row sp"><span>Article Discussions</span><span class="m k" style="font-size:8px">19</span></span>
+  <span class="row sp"><span>Platform Feedback</span><span class="m k" style="font-size:8px">23</span></span>
+  <div class="inp" style="margin-top:6px">Search the forumâ€¦</div>
+</div>
+<div class="pad col" style="gap:8px">
+  <div class="row sp"><span class="h1">Community</span><span class="b bp">New thread</span></div>
+  <div class="col" style="border:1px solid #0C1418;padding:8px;gap:5px">
+    <span class="lblr">UNANSWERED SPOTLIGHT</span>
+    <span class="row" style="gap:6px"><span class="chip">Q</span><span class="bar" style="width:66%"></span><span class="lbl">4 D AGO</span></span>
+    <span class="row" style="gap:6px"><span class="chip">Q</span><span class="bar" style="width:52%"></span><span class="lbl">2 D AGO</span></span>
+    <span class="ann">oldest unanswered Questions â€” the community's to-do list (Â§4.8)</span>
+  </div>
+  <span class="lblr">RECENT ACTIVITY</span>
+  <div class="col" style="gap:0;border:1px solid #C6CCCB">
+    <div class="tr" style="grid-template-columns:auto 1fr auto auto"><span class="chip chipt">Q Â· ANSWERED</span><b>How do I remember loop vs thiazide sites?</b><span class="row" style="gap:3px"><span class="av">S</span><span class="vb">VERIFIED</span></span><span class="m k" style="font-size:8px">12 â†©</span></div>
+    <div class="tr" style="grid-template-columns:auto 1fr auto auto"><span class="chip">D</span><b>House job diaries â€” Lahore hospitals</b><span class="av">D</span><span class="m k" style="font-size:8px">31 â†©</span></div>
+    <div class="tr" style="grid-template-columns:auto 1fr auto auto"><span class="chip">Q</span><b>GPAT vs local industry route?</b><span class="av" style="background:#EDEBE4">?</span><span class="m k" style="font-size:8px">0 â†©</span></div>
+    <div class="tr" style="grid-template-columns:auto 1fr auto auto;border-bottom:0"><span class="chip">D Â· ðŸ“Œ</span><b>Welcome â€” read the content policy</b><span class="av">T</span><span class="m k" style="font-size:8px">8 â†©</span></div>
+  </div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1x"><div class="dv-olabel"><a class="dv-oid" href="#1x">1x</a>Category page <em>Â· /community/[category]</em></div>
+<div class="f" style="width:540px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<span class="lbl">COMMUNITY / STUDY HELP</span>
+<div class="row sp"><span class="h1">Study Help</span><span class="b bp">New thread</span></div>
+<div class="row"><span class="chip chipt">ALL</span><span class="chip">QUESTIONS</span><span class="chip">DISCUSSIONS</span><span class="chip">UNANSWERED</span><span class="chip">TAG â–¾</span><span style="flex:1"></span><span class="chip">LATEST ACTIVITY â–¾</span></div>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:auto 1fr auto"><span class="chip">ðŸ“Œ</span><b>Semester 4 resource megathread</b><span class="m k" style="font-size:8px">44 â†©</span></div>
+  <div class="tr" style="grid-template-columns:auto 1fr auto"><span class="chip chipt">Q Â· ANSWERED</span><div class="col" style="gap:2px"><b>Loop vs thiazide â€” mnemonic?</b><span class="row" style="gap:4px"><span class="chip">pharmacology</span><span class="chip">sem-4</span></span></div><span class="m k" style="font-size:8px">12 â†©</span></div>
+  <div class="tr" style="grid-template-columns:auto 1fr auto"><span class="chip">Q</span><b>Best way to memorize ADRs?</b><span class="m k" style="font-size:8px">3 â†©</span></div>
+  <div class="tr" style="grid-template-columns:auto 1fr auto;border-bottom:0"><span class="chip">D</span><b>Study group â€” Karachi campuses</b><span class="m k" style="font-size:8px">17 â†©</span></div>
+</div>
+<span class="ann">threads: 15â€“140 char titles Â· â‰¤5 free-form tags, admin-mergeable</span>
+</div></div></div>
+
+<div class="dv-opt" id="1y"><div class="dv-olabel"><a class="dv-oid" href="#1y">1y</a>Question thread <em>Â· accepted answer + anonymous OP</em></div>
+<div class="f" style="width:700px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">ðŸ”” 3</span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<span class="lbl">COMMUNITY / STUDY HELP</span>
+<div class="row sp"><span class="h1">Why does furosemide cause ototoxicity?</span><span class="chip chipt">FOLLOWING âœ“</span></div>
+<div class="row"><span class="chip">QUESTION</span><span class="chip chipt">ANSWERED</span><span class="chip">pharmacology</span><span class="lbl">ASKED 3 D AGO</span></div>
+<div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:5px">
+  <div class="row" style="gap:6px"><span class="av" style="background:#EDEBE4">?</span><b>Anonymous student (OP)</b><span class="lbl">3 D AGO</span></div>
+  <div class="p"><i></i><i style="width:88%"></i><i style="width:40%"></i></div>
+  <div class="row"><span class="chip">QUOTE</span><span class="chip">REPORT</span></div>
+</div>
+<span class="ann">anonymity: Question threads only, permanent, identity masked by security-barrier views â€” mods still see it (M5-4/Â§10) Â· no badge, no profile link</span>
+<div class="col" style="border:2px solid #0E6B63;padding:8px;gap:5px;background:#EAF4F2">
+  <div class="row sp"><span class="row" style="gap:6px"><span class="av">S</span><b>sana.h</b><span class="vb">VERIFIED</span><span class="lbl">2 D AGO</span></span><span class="stamp">âœ“ ACCEPTED ANSWER</span></div>
+  <div class="p"><i></i><i style="width:94%"></i><i style="width:76%"></i></div>
+  <div class="row"><span class="chip chipt">â–² 18</span><span class="chip">QUOTE</span><span class="chip">REPORT</span></div>
+</div>
+<span class="ann">accepted pins to top â€” OP marks it (server verifies real author_id, works for anonymous OPs via RPC) Â· sort: accepted â†’ upvotes â†’ time</span>
+<div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:5px">
+  <div class="row" style="gap:6px"><span class="av">D</span><b>daniyal_r</b><span class="lbl">2 D AGO</span><span class="chip">EDITED Â· 11 JUL</span></div>
+  <div class="col" style="border-left:2px solid #C6CCCB;padding-left:6px;gap:2px"><span class="lbl">QUOTING SANA.H</span><span class="bar" style="width:56%"></span></div>
+  <div class="p"><i style="width:90%"></i><i style="width:64%"></i></div>
+  <div class="row"><span class="chip">â–² 4</span><span class="chip">QUOTE</span></div>
+</div>
+<span class="ann">15-min silent edit window; after that: badge + public revision history (M5-2) Â· upvotes on replies only, no downvotes</span>
+<div class="col" style="border:1px solid #C6CCCB;padding:8px;gap:4px"><span class="lbl">YOUR REPLY â€” PLATE-LITE</span><div class="inp" style="height:28px"></div><div class="row sp"><span class="row"><span class="chip">B</span><span class="chip">I</span><span class="chip">LIST</span><span class="chip">IMG</span><span class="chip">CODE</span></span><span class="b bp">Post reply</span></div></div>
+</div></div></div>
+
+<div class="dv-opt" id="1z"><div class="dv-olabel"><a class="dv-oid" href="#1z">1z</a>New thread composer <em>Â· + verify-email gate state</em></div>
+<div class="f" style="width:460px">
+<div class="pad col" style="gap:8px">
+<span class="h2">New thread</span>
+<div class="fld"><span class="lbl">TYPE</span><div class="row" style="gap:0;border:1px solid #C6CCCB;align-self:flex-start"><span class="b" style="border:0">DISCUSSION</span><span class="b" style="border:0;border-left:1px solid #C6CCCB;background:#EAF4F2;color:#0A5750">QUESTION</span></div></div>
+<div class="fld"><span class="lbl">TITLE â€” 15â€“140 CHARS</span><div class="inp"></div></div>
+<div class="row"><div class="fld" style="flex:1"><span class="lbl">CATEGORY</span><div class="inp">Study Help â–¾</div></div><div class="fld" style="flex:1"><span class="lbl">TAGS â€” â‰¤5</span><div class="inp">pharmacology âœ•</div></div></div>
+<div class="fld"><span class="lbl">BODY</span><div class="inp" style="height:44px"></div></div>
+<div class="row sp" style="border:1px solid #E3E7E8;padding:6px"><div class="col" style="gap:1px"><b>Post anonymously</b><span class="k" style="font-size:8px">Shown as â€œAnonymous studentâ€. Permanent â€” can't be revealed later.</span></div><span class="chip chipt">ON</span></div>
+<span class="ann">anonymity toggle exists on Question type only (M5-4)</span>
+<span class="b bp" style="align-self:flex-start">Post question</span>
+<div style="border:1px dashed #C6CCCB;padding:8px" class="col">
+  <span class="lbl" style="color:#9A6700">GATE STATE â€” UNVERIFIED EMAIL</span>
+  <span style="font-size:9px">Verify your email to post. Browsing stays open.</span>
+  <span class="b" style="align-self:flex-start">Resend verification email</span>
+  <span class="ann">composer replaced by verify card (M5-1) Â· new accounts &lt;24h: 2 threads + 10 replies/day</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1aa"><div class="dv-olabel"><a class="dv-oid" href="#1aa">1aa</a>Notification center <em>Â· bell dropdown</em></div>
+<div class="f" style="width:300px">
+<div class="pad col" style="gap:6px">
+<div class="row sp"><span class="lblr" style="flex:1">NOTIFICATIONS Â· 3 UNREAD</span><span class="chip">MARK ALL READ</span></div>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:auto 1fr;background:#EAF4F2"><span class="dot" style="background:#0E6B63"></span><div class="col" style="gap:1px"><b>Your answer was accepted</b><span class="k" style="font-size:8px">Why does furosemide causeâ€¦</span></div></div>
+  <div class="tr" style="grid-template-columns:auto 1fr;background:#EAF4F2"><span class="dot" style="background:#0E6B63"></span><div class="col" style="gap:1px"><b>Reply in a followed thread</b><span class="k" style="font-size:8px">House job diaries â€” Lahore</span></div></div>
+  <div class="tr" style="grid-template-columns:auto 1fr;background:#EAF4F2"><span class="dot" style="background:#0E6B63"></span><div class="col" style="gap:1px"><b>Someone mentioned you in a Question</b><span class="k" style="font-size:8px">actor hidden â€” anonymous OP</span></div></div>
+  <div class="tr" style="grid-template-columns:auto 1fr;border-bottom:0"><span class="dot" style="background:#DDE1E0"></span><div class="col" style="gap:1px"><span>Moderation notice on your reply</span><span class="k" style="font-size:8px">General Lounge</span></div></div>
+</div>
+<span class="ann">in-app only, zero community email (M5-5) Â· four kinds Â· rows deep-link</span>
+</div></div></div>
+
+<div class="dv-opt" id="1ab"><div class="dv-olabel"><a class="dv-oid" href="#1ab">1ab</a>Blog index <em>Â· /blog</em></div>
+<div class="f" style="width:560px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<div class="row sp"><span class="h1">Blog</span><span class="chip">WRITE FOR US â†’</span></div>
+<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:10px">
+  <div class="col" style="border:1px solid #0C1418;gap:0">
+    <div style="height:80px;background:#DDE1E0"></div>
+    <div class="col" style="padding:8px;gap:4px"><span class="chip chipt">CLINICAL</span><b style="font-size:12px">Antibiotic stewardship in Pakistani hospitals</b><div class="p"><i style="width:92%"></i><i style="width:60%"></i></div><span class="row" style="gap:5px"><span class="av">S</span><span style="font-size:8.5px">sana.h</span><span class="vb">VERIFIED</span><span class="lbl">Â· 8 MIN</span></span></div>
+  </div>
+  <div class="col" style="gap:8px">
+    <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:3px"><span class="chip">CAREERS</span><b>From house job to industry QA</b><span class="row" style="gap:4px"><span class="av">M</span><span class="lbl">6 MIN</span></span></div>
+    <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:3px"><span class="chip">PLATFORM</span><b>What's new â€” July</b><span class="row" style="gap:4px"><span class="av">T</span><span style="font-size:8px">Team ePharmatica</span></span></div>
+    <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:3px"><span class="chip">STUDY</span><b>Spaced repetition for pharm</b><span class="row" style="gap:4px"><span class="av">D</span><span class="lbl">5 MIN</span></span></div>
+  </div>
+</div>
+<span class="ann">approved writers only (D13) Â· team byline for staff posts (M5-3), aggregates at /blog/author/team</span>
+</div></div></div>
+
+<div class="dv-opt" id="1ac"><div class="dv-olabel"><a class="dv-oid" href="#1ac">1ac</a>Blog post <em>Â· /blog/[slug]</em></div>
+<div class="f" style="width:480px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div class="rb" style="width:30%"></div>
+<div style="padding:12px 20px" class="col">
+<span class="lblr">BLOG Â· CLINICAL</span>
+<span class="h1" style="font-size:16px">Antibiotic stewardship in Pakistani hospitals</span>
+<div class="row"><span class="row" style="gap:5px"><span class="av">S</span><span style="font-size:9px">sana.h</span><span class="vb">VERIFIED</span></span><span class="chip">8 MIN</span><span class="chip">12 JUL 2026</span></div>
+<div style="height:70px;background:#DDE1E0;border:1px solid #C6CCCB"></div>
+<div class="p"><i></i><i style="width:94%"></i><i style="width:88%"></i></div>
+<div class="callout"><span class="lbl" style="color:#0A5750">KEY TAKEAWAY</span><div class="p"><i style="width:84%"></i></div></div>
+<div class="p"><i style="width:96%"></i><i style="width:71%"></i></div>
+<div class="row" style="border:1px solid #0C1418;padding:8px;justify-content:space-between"><div class="col" style="gap:1px"><b>Discuss in forum</b><span class="k" style="font-size:8px">Comments live in Article Discussions</span></div><span class="b bp">Open thread Â· 7 â†©</span></div>
+<span class="ann">first click creates the thread, then always routes to it (Â§5.4) â€” no blog comments (A6)</span>
+<div class="col" style="border-top:1px solid #E3E7E8;padding-top:8px;gap:4px"><span class="lblr">RELATED POSTS â€” SHARED TAGS</span><div class="row"><span class="bar" style="width:40%"></span><span class="bar" style="width:34%"></span></div></div>
+</div></div></div>
+
+<div class="dv-opt" id="1ad"><div class="dv-olabel"><a class="dv-oid" href="#1ad">1ad</a>Writer application <em>Â· /blog/write</em></div>
+<div class="f" style="width:340px">
+<div class="pad col" style="gap:8px">
+<span class="lblr">WRITE FOR EPHARMATICA</span>
+<div class="p"><i></i><i style="width:80%"></i></div>
+<div class="fld"><span class="lbl">MOTIVATION â€” â‰¤600 CHARS</span><div class="inp" style="height:40px"></div></div>
+<div class="fld"><span class="lbl">ONE WRITING SAMPLE â€” LINK OR UPLOAD</span><div class="inp">https://â€¦</div></div>
+<div class="fld"><span class="lbl">CREDENTIALS â€” OPTIONAL</span><div class="inp"></div></div>
+<span class="b bp" style="align-self:flex-start">Submit application</span>
+<span class="ann">blog_editor decides Â· reject requires reason, reapply after 30 days (Â§5.1)</span>
+</div></div></div>
+
+<div class="dv-opt" id="1ae"><div class="dv-olabel"><a class="dv-oid" href="#1ae">1ae</a>Public profile <em>Â· /u/[username] + private state</em></div>
+<div class="f" style="width:460px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<div class="row" style="gap:10px;align-items:flex-start">
+  <div class="av" style="width:40px;height:40px;font-size:12px">S</div>
+  <div class="col" style="gap:3px;flex:1">
+    <div class="row"><b style="font-size:12px">Sana Hashmi</b><span class="vb">VERIFIED</span></div>
+    <span class="lbl">@SANA.H Â· PHARMACIST Â· JOINED MAR 2026</span>
+    <div class="p"><i style="width:76%"></i></div>
+    <div class="row"><span class="chip">THREADS 14</span><span class="chip">REPLIES 122</span><span class="chip chipt">ACCEPTED 31</span></div>
+  </div>
+</div>
+<div class="row" style="gap:0;border-bottom:1px solid #0C1418"><span class="b" style="border:0;background:#EAF4F2;color:#0A5750">ACTIVITY</span><span class="b" style="border:0">POSTS</span></div>
+<div class="col" style="gap:0;border:1px solid #E3E7E8;border-top:0">
+  <div class="tr" style="grid-template-columns:auto 1fr auto"><span class="chip">â†©</span><span class="bar" style="width:70%"></span><span class="lbl">2 D</span></div>
+  <div class="tr" style="grid-template-columns:auto 1fr auto;border-bottom:0"><span class="chip">Q</span><span class="bar" style="width:56%"></span><span class="lbl">6 D</span></div>
+</div>
+<span class="ann">anonymous contributions never surface here, by construction (Â§6) Â· study data never public</span>
+<div style="border:1px dashed #C6CCCB;padding:10px;text-align:center" class="col"><span class="lbl">PRIVATE STATE</span><span>This profile is private.</span><span class="ann">same response signed-in or out (M2 Â§4.10)</span></div>
+</div></div></div>
+
+<div class="dv-opt" id="1af"><div class="dv-olabel"><a class="dv-oid" href="#1af">1af</a>Verified Pharmacist application <em>Â· /verify-pharmacist</em></div>
+<div class="f" style="width:340px">
+<div class="pad col" style="gap:8px">
+<span class="lblr">VERIFIED PHARMACIST â€” APPLY</span>
+<div class="fld"><span class="lbl">FULL NAME</span><div class="inp"></div></div>
+<div class="row"><div class="fld" style="flex:1"><span class="lbl">LICENSE / REG NO.</span><div class="inp"></div></div><div class="fld" style="flex:1"><span class="lbl">GRADUATION YEAR</span><div class="inp"></div></div></div>
+<div class="fld"><span class="lbl">ISSUING COUNCIL</span><div class="inp">Punjab Pharmacy Council â–¾</div></div>
+<div class="fld"><span class="lbl">LICENSE / DEGREE SCAN â€” PDF/JPG/PNG â‰¤5MB</span><div style="border:1px dashed #C6CCCB;padding:10px;text-align:center" class="lbl">DROP FILE â€” PRIVATE BUCKET</div></div>
+<span class="b bp" style="align-self:flex-start">Submit for review</span>
+<div class="row" style="border:1px solid #E3E7E8;padding:6px;gap:6px"><span class="chipw">PENDING</span><span class="k" style="font-size:8.5px">Manual review â€” you'll be emailed either way.</span></div>
+<span class="ann">docs auto-purge 90 days after decision (Â§7) Â· reject = reason + reapply after 30d Â· badge renders everywhere except anonymous content</span>
+</div></div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="gf">
+<div class="dv-thd"><a class="dv-tid" href="#gf">1 Â· M6</a><span class="dv-tname">Jobs portal</span></div>
+<p class="dv-sub">Curated-only at launch (M6-2) Â· honest filters incl. the salary-shown nudge (M6-3) Â· mailto apply (M6-1) Â· saved + applied tracker (M6-5). Jobs Manager surface is in <a class="dv-oid" href="#1bf">1bf</a>.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1ag"><div class="dv-olabel"><a class="dv-oid" href="#1ag">1ag</a>Jobs index <em>Â· /jobs + expired notice</em></div>
+<div class="f" style="width:700px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="chip">âŒ˜K</span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<div class="row" style="border:1px solid #9A6700;background:#FBF3E2;padding:5px 8px;gap:6px"><span class="chipw">EXPIRED</span><span style="font-size:9px">That listing has expired â€” here are the live ones.</span></div>
+<span class="ann">expired detail URLs redirect here with this notice (Â§4.3)</span>
+<div class="row sp"><span class="h1">Jobs</span><span class="chip">NEWEST â–¾ Â· EXPIRING SOON</span></div>
+<div class="row" style="flex-wrap:wrap"><span class="chip">CATEGORY â–¾</span><span class="chip chipt">KARACHI âœ•</span><span class="chip">+ CITY Â· REMOTE Â· INTL</span><span class="chip chipt">INTERNSHIP âœ•</span><span class="chip">EXPERIENCE â–¾</span><span class="chip chipt">SALARY SHOWN âœ“</span></div>
+<span class="ann">curated city list â€” no â€œLahore/lahore/Lhrâ€ entropy (M6-6) Â· salary toggle = visibility nudge, never a ranking boost (M6-3)</span>
+<div class="bl" style="grid-template-columns:1fr 1fr">
+  <div class="col" style="gap:5px"><div class="row sp"><span class="row" style="gap:6px"><span class="av">GX</span><div class="col" style="gap:1px"><b>QA Officer â€” Internship</b><span class="k" style="font-size:8px">Getz Pharma</span></div></span><span class="chip">â˜†</span></div><div class="row"><span class="chip">KARACHI Â· ON-SITE</span><span class="chip">INTERNSHIP</span><span class="chip chipt">SALARY SHOWN</span></div><span class="lbl">POSTED 2 D AGO</span></div>
+  <div class="col" style="gap:5px"><div class="row sp"><span class="row" style="gap:6px"><span class="av">SP</span><div class="col" style="gap:1px"><b>Production Pharmacist</b><span class="k" style="font-size:8px">Searle</span></div></span><span class="chip" style="background:#EAF4F2">â˜…</span></div><div class="row"><span class="chip">KARACHI Â· ON-SITE</span><span class="chip">FULL-TIME</span><span class="chip chipt">SALARY SHOWN</span></div><span class="lbl">POSTED 5 D AGO</span></div>
+  <div class="col" style="gap:5px"><div class="row sp"><span class="row" style="gap:6px"><span class="av">AK</span><div class="col" style="gap:1px"><b>Hospital Pharmacist</b><span class="k" style="font-size:8px">Aga Khan University Hospital</span></div></span><span class="chip">â˜†</span></div><div class="row"><span class="chip">KARACHI Â· ON-SITE</span><span class="chip">FULL-TIME</span><span class="chip chipt">SALARY SHOWN</span></div><div class="row sp"><span class="lbl">POSTED 1 W AGO</span><span class="chipw">EXPIRES IN 5 D</span></div></div>
+  <div class="col" style="gap:5px"><div class="row sp"><span class="row" style="gap:6px"><span class="av">PV</span><div class="col" style="gap:1px"><b>PV Associate â€” Intern</b><span class="k" style="font-size:8px">Global CRO â€” Remote</span></div></span><span class="chip">â˜†</span></div><div class="row"><span class="chip">REMOTE</span><span class="chip">INTERNSHIP</span><span class="chip chipt">SALARY SHOWN</span></div><span class="lbl">POSTED 1 D AGO</span></div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1ah"><div class="dv-olabel"><a class="dv-oid" href="#1ah">1ah</a>Job detail <em>Â· /jobs/[slug]</em></div>
+<div class="f" style="width:520px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<div class="row" style="gap:8px"><span class="av" style="width:26px;height:26px">GX</span><div class="col" style="gap:1px"><b>Getz Pharma</b><a href="#1ah" style="font-size:8px">getzpharma.com â†—</a></div></div>
+<span class="h1">QA Officer â€” Internship</span>
+<div class="row"><span class="chip">KARACHI Â· ON-SITE</span><span class="chip">INTERNSHIP</span><span class="chip">ENTRY LEVEL</span><span class="chipw">EXPIRES IN 5 D</span></div>
+<div class="rec">
+  <div><b>TYPE</b><span>Internship Â· 6 months</span></div>
+  <div><b>LOCATION</b><span>Karachi â€” on-site</span></div>
+  <div><b>EXPERIENCE</b><span>Entry â€” final-year eligible</span></div>
+  <div><b>SALARY</b><span class="m" style="font-size:9px">PKR 60â€“80k / month</span></div>
+  <div><b>POSTED</b><span class="m" style="font-size:9px">16 JUL 2026</span></div>
+  <div><b>EXPIRES</b><span class="m" style="font-size:9px">23 JUL 2026</span></div>
+</div>
+<span class="ann">key-facts = the stacked-record pattern â€” becomes the mobile table natively (Â§6.6)</span>
+<div class="p"><i></i><i style="width:92%"></i><i style="width:85%"></i><i style="width:44%"></i></div>
+<div class="row"><span class="b bp">Apply by email</span><span class="chip">COPY EMAIL</span><span class="b">â˜† Save</span><span class="b">âœ“ Mark as applied</span><span class="chip">SHARE â€” WHATSAPP</span></div>
+<span class="ann">mailto: prefilled subject â€œApplication: QA Officer â€” via ePharmaticaâ€ + copy fallback for clientless devices (M6-1) Â· JobPosting JSON-LD emitted</span>
+</div></div></div>
+
+<div class="dv-opt" id="1ai"><div class="dv-olabel"><a class="dv-oid" href="#1ai">1ai</a>Jobs â€” mobile 360</div>
+<div class="f" style="width:270px">
+<div class="tb" style="padding:6px 10px"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="k">â˜°</span></div>
+<div style="padding:10px" class="col">
+<span class="h1">Jobs</span>
+<div class="row" style="gap:4px;overflow:hidden"><span class="chip chipt">KARACHI</span><span class="chip">CATEGORY</span><span class="chip">TYPE</span><span class="chip">SALARâ€¦</span></div>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="col" style="padding:8px;border-bottom:1px solid #E3E7E8;gap:4px"><div class="row sp"><span class="row" style="gap:5px"><span class="av">GX</span><b>QA Officer â€” Internship</b></span><span class="chip">â˜†</span></div><span class="k" style="font-size:8px">Getz Pharma Â· Karachi</span><div class="row"><span class="chip">INTERNSHIP</span><span class="chip chipt">SALARY</span></div></div>
+  <div class="col" style="padding:8px;border-bottom:1px solid #E3E7E8;gap:4px"><div class="row sp"><span class="row" style="gap:5px"><span class="av">SP</span><b>Production Pharmacist</b></span><span class="chip" style="background:#EAF4F2">â˜…</span></div><span class="k" style="font-size:8px">Searle Â· Karachi</span><div class="row"><span class="chip">FULL-TIME</span></div></div>
+  <div class="col" style="padding:8px;gap:4px"><div class="row sp"><span class="row" style="gap:5px"><span class="av">PV</span><b>PV Associate â€” Intern</b></span><span class="chip">â˜†</span></div><span class="k" style="font-size:8px">Global CRO Â· Remote</span><div class="row"><span class="chip">REMOTE</span><span class="chipw">EXPIRES 3 D</span></div></div>
+</div>
+<span class="ann">cards stack full-width Â· filters become a bottom sheet on touch</span>
+</div></div></div>
+
+<div class="dv-opt" id="1aj"><div class="dv-olabel"><a class="dv-oid" href="#1aj">1aj</a>My jobs tracker <em>Â· dashboard section</em></div>
+<div class="f" style="width:520px">
+<div class="pad col" style="gap:8px">
+<div class="row" style="gap:0;border-bottom:1px solid #0C1418"><span class="b" style="border:0;background:#EAF4F2;color:#0A5750">SAVED Â· 4</span><span class="b" style="border:0">APPLIED Â· 2</span></div>
+<div class="col" style="gap:0;border:1px solid #E3E7E8;border-top:0">
+  <div class="tr" style="grid-template-columns:1fr auto auto auto"><div class="col" style="gap:1px"><b>QA Officer â€” Internship</b><span class="k" style="font-size:8px">Getz Pharma Â· Karachi</span></div><span class="chip chipt">LIVE</span><span class="chip">MARK APPLIED</span><span class="chip">âœ•</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto auto"><div class="col" style="gap:1px"><b>Hospital Pharmacist</b><span class="k" style="font-size:8px">AKUH Â· Karachi</span></div><span class="chipd">EXPIRED</span><span class="chip">MARK APPLIED</span><span class="chip">âœ•</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto;border-bottom:0"><div class="col" style="gap:2px"><b>Production Pharmacist</b><span class="k" style="font-size:8px">Searle Â· applied 12 JUL</span><div class="row" style="gap:4px"><span class="lbl">NOTE:</span><span class="bar" style="width:120px"></span><span class="chip">EDIT</span></div></div><span class="stamp">APPLIED Â· 12 JUL</span><span class="chip">UNMARK</span></div>
+</div>
+<span class="ann">applied entries persist past expiry â€” history never vanishes (M6-5) Â· hard-deleted listing leaves a â€œListing removedâ€ tombstone</span>
+</div></div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="gg">
+<div class="dv-thd"><a class="dv-tid" href="#gg">1 Â· M7</a><span class="dv-tname">Resume builder</span></div>
+<p class="dv-sub">Hub capped at 5 (M7-1) Â· fixed pharmacy section set (M7-2) Â· four templates, fixed accents, photo never on ATS (M7-4/5) Â· export floor + checklist (M7-6) Â· AI polish &amp; review on the user's key (M7-3).</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1ak"><div class="dv-olabel"><a class="dv-oid" href="#1ak">1ak</a>Resume hub <em>Â· /resume + empty state</em></div>
+<div class="f" style="width:560px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="av">A</span></div>
+<div class="pad col" style="gap:8px">
+<div class="row sp"><span class="h1">My resumes Â· 3 of 5</span><span class="row"><span class="b bp">New resume</span><span class="b">Duplicate â–¾</span></span></div>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:34px 1fr auto auto auto"><div style="width:26px;height:34px;background:#FFF;border:1px solid #C6CCCB;padding:2px"><div class="bar" style="height:3px;margin-bottom:2px"></div><div class="bar" style="height:2px;width:70%"></div></div><div class="col" style="gap:1px"><b>Hospital â€” main</b><span class="lbl">MONOGRAPH Â· UPDATED 14 JUL</span></div><span class="gl2"></span><span class="chip">DUPLICATE</span><span class="chip">DELETE</span></div>
+  <div class="tr" style="grid-template-columns:34px 1fr auto auto auto"><div style="width:26px;height:34px;background:#FFF;border:1px solid #C6CCCB"></div><div class="col" style="gap:1px"><b>Industry â€” QA</b><span class="lbl">ATS STANDARD Â· UPDATED 9 JUL</span></div><span class="gl1"></span><span class="chip">DUPLICATE</span><span class="chip">DELETE</span></div>
+  <div class="tr" style="grid-template-columns:34px 1fr auto auto auto;border-bottom:0"><div style="width:26px;height:34px;background:#FFF;border:1px solid #C6CCCB"></div><div class="col" style="gap:1px"><b>Academia draft</b><span class="lbl">CLASSIC Â· UPDATED 2 JUL</span></div><span class="gl0"></span><span class="chip">DUPLICATE</span><span class="chip">DELETE</span></div>
+</div>
+<span class="ann">at cap 5: New + Duplicate disable â€” â€œdelete one to create anotherâ€ (M7-1, server-enforced)</span>
+<div style="border:1px dashed #C6CCCB;padding:12px;text-align:center" class="col"><span class="lbl">FIRST-VISIT EMPTY STATE</span><span>Build a resume that survives the ATS.</span><span class="b bp" style="align-self:center">Create your first resume</span></div>
+</div></div></div>
+
+<div class="dv-opt" id="1al"><div class="dv-olabel"><a class="dv-oid" href="#1al">1al</a>Builder <em>Â· form + live preview</em></div>
+<div class="f" style="width:860px">
+<div class="tb"><span class="mk"></span><span class="wm">EPHARMATICA</span><span style="flex:1"></span><span class="lbl">SAVED Â· 14:02</span><span class="chip">TEMPLATE: MONOGRAPH â–¾</span><span class="b bp" style="padding:2px 6px">Export PDF</span></div>
+<div style="display:grid;grid-template-columns:150px 1fr 260px">
+<div class="col" style="border-right:1px solid #0C1418;padding:8px 0;gap:0">
+  <span class="ni" style="display:flex;gap:5px;align-items:center"><span class="gl2"></span>Personal &amp; contact</span>
+  <span class="ni" style="display:flex;gap:5px;align-items:center"><span class="gl2"></span>Summary</span>
+  <span class="ni nia" style="display:flex;gap:5px;align-items:center"><span class="gl1"></span>Experience</span>
+  <span class="ni" style="display:flex;gap:5px;align-items:center"><span class="gl2"></span>Education</span>
+  <span class="ni" style="display:flex;gap:5px;align-items:center"><span class="gl1"></span>Licenses &amp; certs</span>
+  <span class="ni" style="display:flex;gap:5px;align-items:center"><span class="gl0"></span>Skills</span>
+  <span class="ni" style="display:flex;gap:5px;align-items:center"><span class="gl0"></span>Publications</span>
+  <span class="ni" style="display:flex;gap:5px;align-items:center"><span class="gl0"></span>Additional</span>
+  <span class="ni" style="display:flex;gap:5px;align-items:center"><span class="gl0"></span>References</span>
+  <div style="padding:8px 10px" class="col"><span class="lbl">COMPLETENESS</span><div class="ps"><span class="gl2"></span><span class="gl2"></span><span class="gl2"></span><span class="gl1"></span><span class="gl0"></span><span class="gl0"></span></div></div>
+</div>
+<div class="pad col" style="gap:8px;border-right:1px solid #E3E7E8">
+  <span class="lblr">EXPERIENCE â€” INCL. HOUSE JOB &amp; INTERNSHIPS</span>
+  <span class="ann">tip copy speaks pharmacy: â€œHouse job counts as experience â€” list rotations as bulletsâ€</span>
+  <div class="col" style="border:1px solid #C6CCCB;padding:8px;gap:5px">
+    <div class="row"><div class="fld" style="flex:1"><span class="lbl">ROLE</span><div class="inp" style="color:#0C1418">House Officer â€” Pharmacy</div></div><div class="fld" style="flex:1"><span class="lbl">ORGANIZATION</span><div class="inp" style="color:#0C1418">Services Hospital Lahore</div></div></div>
+    <div class="row"><div class="fld" style="flex:1"><span class="lbl">CITY</span><div class="inp">Lahore</div></div><div class="fld" style="flex:1"><span class="lbl">DATES Â· CURRENT â˜</span><div class="inp">2025 â€” 2026</div></div></div>
+    <div class="fld"><span class="lbl">BULLETS â€” â‰¤6</span>
+      <div class="row" style="gap:4px"><span class="bar" style="width:82%"></span><span class="chip chipt">IMPROVE WITH AI</span></div>
+      <div class="row" style="gap:4px"><span class="bar" style="width:74%"></span><span class="chip chipt">IMPROVE WITH AI</span></div>
+    </div>
+  </div>
+  <span class="b" style="align-self:flex-start">+ Add experience</span>
+  <span class="ann">autosave 1.5s debounce + on blur â€” mono â€œSAVED Â· 14:02â€ stamp (Â§4.2)</span>
+</div>
+<div class="col" style="padding:10px;background:#EDEBE4">
+  <span class="lbl">LIVE PREVIEW â€” A4 Â· PAGE 1 OF 2</span>
+  <div style="background:#FFF;border:1px solid #C6CCCB;padding:10px" class="col">
+    <b style="font:700 11px 'Archivo',sans-serif">AYESHA KHAN</b>
+    <span class="lbl" style="color:#0A5750">PHARM-D Â· LAHORE Â· AYESHA@â€¦ Â· 0300-â€¦</span>
+    <span class="lblr" style="margin-top:4px;color:#0A5750;border-color:#0E6B63">EXPERIENCE</span>
+    <div class="p"><i style="width:88%"></i><i style="width:80%"></i></div>
+    <span class="lblr" style="color:#0A5750;border-color:#0E6B63">EDUCATION</span>
+    <div class="p"><i style="width:76%"></i></div>
+    <span class="lblr" style="color:#0A5750;border-color:#0E6B63">LICENSES</span>
+    <div class="p"><i style="width:60%"></i></div>
+  </div>
+  <span class="ann">side-by-side â‰¥lg Â· Form â‡„ Preview toggle below Â· renders client-side, server never sees it</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1am"><div class="dv-olabel"><a class="dv-oid" href="#1am">1am</a>Templates + export checklist <em>Â· floor + warnings</em></div>
+<div class="f" style="width:560px">
+<div class="pad col" style="gap:8px">
+<span class="lblr">TEMPLATES â€” FIXED ACCENTS, SWITCHING NEVER TOUCHES DATA</span>
+<div class="row" style="gap:8px">
+  <div class="col" style="flex:1;border:1px solid #0C1418;padding:6px;gap:3px"><div style="height:36px;background:#FFF;border:1px solid #E3E7E8"></div><b style="font-size:8.5px">ATS Standard</b><span class="lbl">NO PHOTO â€” EVER</span></div>
+  <div class="col" style="flex:1;border:2px solid #0E6B63;padding:6px;gap:3px"><div style="height:36px;background:#FFF;border-top:3px solid #0E6B63"></div><b style="font-size:8.5px">Monograph</b><span class="lbl" style="color:#0A5750">TEAL Â· SELECTED</span></div>
+  <div class="col" style="flex:1;border:1px solid #C6CCCB;padding:6px;gap:3px"><div style="height:36px;background:#FFF;border-left:14px solid #51606A"></div><b style="font-size:8.5px">Slate</b><span class="lbl">GRAPHITE Â· 2-COL</span></div>
+  <div class="col" style="flex:1;border:1px solid #C6CCCB;padding:6px;gap:3px"><div style="height:36px;background:#FFF;border-top:3px solid #1E3A5F"></div><b style="font-size:8.5px">Classic</b><span class="lbl">NAVY Â· SERIF</span></div>
+</div>
+<div class="row" style="gap:6px"><span class="chip">PHOTO OMITTED ON THE ATS TEMPLATE</span><span class="ann">quiet chip on switch (M7-4)</span></div>
+<div class="ovl" style="padding:10px"><div class="col" style="gap:6px">
+  <span class="lblr">BEFORE YOU EXPORT</span>
+  <div class="row sp"><span class="row" style="gap:5px"><span class="dot" style="background:#9A6700"></span><span>Summary is empty</span></span><span class="chip">FIX FIRST</span></div>
+  <div class="row sp"><span class="row" style="gap:5px"><span class="dot" style="background:#9A6700"></span><span>No experience bullets</span></span><span class="chip">FIX FIRST</span></div>
+  <div class="row"><span class="b bp">Export anyway â€” A4 â–¾</span><span class="b bg">Back</span></div>
+</div></div>
+<div class="col" style="border:1px solid #B3261E;padding:8px;gap:3px"><span class="lbl" style="color:#B3261E">EXPORT FLOOR â€” BLOCKED</span><span style="font-size:9px">Add your name and one contact (email or phone) to export.</span></div>
+<span class="ann">floor disables export with the exact reason Â· warnings are honest friction, never a block (M7-6) Â· filename {name}-resume-{template}.pdf Â· true text layer, ATS-safe</span>
+</div></div></div>
+
+<div class="dv-opt" id="1an"><div class="dv-olabel"><a class="dv-oid" href="#1an">1an</a>AI polish + review report <em>Â· BYOK via M3</em></div>
+<div class="f" style="width:560px">
+<div class="pad col" style="gap:8px">
+<div class="row" style="border:1px solid #E3E7E8;padding:6px;gap:6px"><span class="lbl">FIRST USE:</span><span style="font-size:8.5px">Your resume text will be sent to Groq using your key.</span><span class="chip">OK â€” REMEMBER</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<div class="col" style="gap:6px">
+  <span class="lblr">POLISH â€” EXPERIENCE BULLET</span>
+  <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:3px"><span class="lbl">ORIGINAL</span><span class="bar" style="width:88%"></span></div>
+  <div class="col" style="border:1px solid #0E6B63;padding:6px;gap:3px"><span class="lbl" style="color:#0A5750">ALTERNATIVE 1</span><span class="bar hlM" style="width:84%"></span><span class="chip chipt">APPLY</span></div>
+  <div class="col" style="border:1px solid #0E6B63;padding:6px;gap:3px"><span class="lbl" style="color:#0A5750">ALTERNATIVE 2</span><span class="bar hlM" style="width:78%"></span><span class="chip chipt">APPLY</span></div>
+  <span class="chip">KEEP ORIGINAL</span>
+  <span class="ann">apply â†’ 10s Undo toast Â· hard clause: never invent facts, employers, credentials</span>
+</div>
+<div class="col" style="gap:6px">
+  <span class="lblr">REVIEW MY RESUME â€” REPORT <span class="chip">AI</span></span>
+  <span class="lbl" style="color:#0A5750">STRENGTHS Â· â‰¤3</span><span class="bar" style="width:80%"></span>
+  <span class="lbl" style="color:#B3261E">FIX FIRST Â· â‰¤5</span>
+  <div class="row sp"><span class="bar" style="width:64%"></span><span class="chip">JUMP â†’ SUMMARY</span></div>
+  <div class="row sp"><span class="bar" style="width:58%"></span><span class="chip">JUMP â†’ SKILLS</span></div>
+  <span class="lbl" style="color:#0A5750">BULLET UPGRADES Â· â‰¤4</span>
+  <div class="row sp"><span class="bar" style="width:70%"></span><span class="chip chipt">APPLY</span></div>
+  <span class="lbl">ATS NOTES</span><span class="bar" style="width:74%"></span>
+  <span class="ann">nothing auto-applies (M7-3) Â· keyless state: â€œAdd an AI key to use thisâ€ â†’ Settings</span>
+</div>
+</div>
+</div></div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="gh">
+<div class="dv-thd"><a class="dv-tid" href="#gh">1 Â· M8</a><span class="dv-tname">WhatsApp content bot â€” conversation flows</span></div>
+<p class="dv-sub">Inbound-only, menu-driven, no LLM (D15) Â· bilingual English / Roman Urdu chosen at greeting (M8-2) Â· console in <a class="dv-oid" href="#1bg">1bg</a>.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1ao"><div class="dv-olabel"><a class="dv-oid" href="#1ao">1ao</a>Greeting, language &amp; main menu</div>
+<div class="f" style="width:270px;background:#EFEAE2">
+<div class="tb" style="background:#0C1418;color:#FFF;border-bottom:0"><span class="mk" style="background:#FFF"></span><span class="wm" style="color:#FFF">EPHARMATICA</span><span style="flex:1"></span><span class="lbl" style="color:#93A4A8">DEDICATED NUMBER</span></div>
+<div style="padding:10px" class="col">
+<div style="background:#E1F4D3;border:1px solid #C6CCCB;padding:6px;align-self:flex-end;max-width:75%"><span style="font-size:9px">Salam!</span></div>
+<div style="background:#FFF;border:1px solid #C6CCCB;padding:6px;max-width:85%" class="col">
+  <span style="font-size:9px">Welcome to ePharmatica â€” study notes, blogs &amp; pharmacy jobs. Choose a language:</span>
+  <div class="row" style="gap:4px;margin-top:4px"><span class="chip chipt">ENGLISH</span><span class="chip">ROMAN URDU</span></div>
+</div>
+<span class="ann">choice persists per contact Â· LANG re-offers anytime (M8-2)</span>
+<div style="background:#FFF;border:1px solid #C6CCCB;padding:6px;max-width:85%" class="col">
+  <span class="lbl">MAIN MENU</span>
+  <div class="col" style="gap:2px;margin-top:3px;font-size:9px">
+    <span>1 Â· Find a topic</span><span>2 Â· Latest blogs</span><span>3 Â· New jobs</span><span>4 Â· Job alerts (coming soon)</span><span>5 Â· Talk to a human</span><span>6 Â· About ePharmatica</span>
+  </div>
+  <span class="lbl" style="margin-top:3px;color:#9AA5A4">REPLY MENU ANYTIME TO START OVER</span>
+</div>
+<div style="background:#E1F4D3;border:1px solid #C6CCCB;padding:6px;align-self:flex-end;max-width:75%"><span style="font-size:9px">4</span></div>
+<div style="background:#FFF;border:1px solid #C6CCCB;padding:6px;max-width:85%"><span style="font-size:9px">Noted! You're on the list for job alerts. <b>Nothing will be sent until the feature launches</b> â€” and STOP works anytime.</span></div>
+<span class="ann">registration, not activation (M8-4) Â· inbound-only: no code path can send unsolicited (Â§6)</span>
+</div></div></div>
+
+<div class="dv-opt" id="1ap"><div class="dv-olabel"><a class="dv-oid" href="#1ap">1ap</a>Topic flow <em>Â· FTS â†’ buttons â†’ summary + links</em></div>
+<div class="f" style="width:270px;background:#EFEAE2">
+<div class="tb" style="background:#0C1418;color:#FFF;border-bottom:0"><span class="mk" style="background:#FFF"></span><span class="wm" style="color:#FFF">EPHARMATICA</span></div>
+<div style="padding:10px" class="col">
+<div style="background:#E1F4D3;border:1px solid #C6CCCB;padding:6px;align-self:flex-end;max-width:75%"><span style="font-size:9px">1</span></div>
+<div style="background:#FFF;border:1px solid #C6CCCB;padding:6px;max-width:85%"><span style="font-size:9px">What do you want to study? Type the topic name.</span></div>
+<div style="background:#E1F4D3;border:1px solid #C6CCCB;padding:6px;align-self:flex-end;max-width:75%"><span style="font-size:9px">loop diuretics</span></div>
+<div style="background:#FFF;border:1px solid #C6CCCB;padding:6px;max-width:88%" class="col">
+  <span style="font-size:9px">Top matches:</span>
+  <div class="col" style="gap:3px;margin-top:3px">
+    <span class="chip" style="text-transform:none">Pharmacology â€º Loop diuretics</span>
+    <span class="chip" style="text-transform:none">Pharmacology â€º Thiazides</span>
+    <span class="chip" style="text-transform:none">Renal â€º Diuretic resistance</span>
+  </div>
+</div>
+<div style="background:#E1F4D3;border:1px solid #C6CCCB;padding:6px;align-self:flex-end;max-width:75%"><span style="font-size:9px">1</span></div>
+<div style="background:#FFF;border:1px solid #C6CCCB;padding:6px;max-width:88%" class="col" >
+  <b style="font-size:9px">Loop diuretics</b>
+  <div class="p"><i style="width:94%"></i><i style="width:82%"></i></div>
+  <span style="font-size:8px;color:#0A5750;text-decoration:underline">epharmatica.com/learn/pharmâ€¦/loop-diuretics</span>
+  <span style="font-size:8px;color:#0A5750;text-decoration:underline">â–¶ youtube.com/watch?v=â€¦</span>
+</div>
+<span class="ann">summary â‰ˆ200 chars from preview text Â· video line only when primary_video_url exists (M1-2 contract) Â· 30 msgs/hr rate limit, then one notice + silence (M8-6)</span>
+</div></div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="gi">
+<div class="dv-thd"><a class="dv-tid" href="#gi">1 Â· M4</a><span class="dv-tname">CMS / Admin â€” shell &amp; content operations</span></div>
+<p class="dv-sub">Compact density, environment banner, tree rail + per-level list editors (M4-1). Editor gets two variations (<a class="dv-oid" href="#1as">1as</a>, <a class="dv-oid" href="#1at">1at</a>). Special flows: Moveâ€¦ (<a class="dv-oid" href="#1aw">1aw</a>), rollback diff (<a class="dv-oid" href="#1av">1av</a>), preview links (<a class="dv-oid" href="#1ax">1ax</a>).</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1aq"><div class="dv-olabel"><a class="dv-oid" href="#1aq">1aq</a>Admin dashboard <em>Â· /admin</em></div>
+<div class="f" style="width:860px">
+<div class="env">STAGING â€” EPHARMATICA ADMIN</div>
+<div class="tb" style="padding:6px 12px"><span class="mk"></span><span class="wm">EPHARMATICA / ADMIN</span><span style="flex:1"></span><span class="chip">COMPACT DENSITY</span><span class="av">CM</span></div>
+<div class="adm">
+<div class="anav col" style="gap:0">
+  <span class="lbl" style="padding:4px 10px">PHASE 1</span>
+  <span class="ni nia">Dashboard</span><span class="ni">Content</span><span class="ni">Media</span><span class="ni">Users</span><span class="ni">Settings</span><span class="ni">Audit</span>
+  <span class="lbl" style="padding:8px 10px 4px">LATER PHASES</span>
+  <span class="ni" style="opacity:.45">Blog</span><span class="ni" style="opacity:.45">Community</span><span class="ni" style="opacity:.45">Jobs</span><span class="ni" style="opacity:.45">Verifications</span><span class="ni" style="opacity:.45">WhatsApp</span>
+</div>
+<div class="pad col" style="gap:10px">
+<span class="ann">later-phase groups render only behind their feature flags (Â§4)</span>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+  <div class="col" style="border:1px solid #0C1418;padding:8px;gap:2px"><span class="lbl">PUBLISHED SUBTOPICS</span><b class="m" style="font-size:15px">61 / 50</b><span class="lbl" style="color:#0A5750">PHASE-1 GATE MET âœ“</span></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:2px"><span class="lbl">IN REVIEW</span><b class="m" style="font-size:15px">7</b><span class="lbl" style="color:#9A6700">OLDEST Â· 9 DAYS</span></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:2px"><span class="lbl">DRAFTS</span><b class="m" style="font-size:15px">23</b><span class="lbl">ACROSS 2 SUBJECTS</span></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:2px"><span class="lbl">ACTIVE PREVIEW LINKS</span><b class="m" style="font-size:15px">4</b><span class="lbl">NEXT EXPIRY Â· 2 D</span></div>
+</div>
+<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:10px">
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:4px">
+    <span class="lblr">AUDIT â€” LAST 20</span>
+    <div class="tr" style="grid-template-columns:auto 1fr auto;padding:3px 0"><span class="chip">PUBLISH</span><span class="m" style="font-size:8px">subtopic/loop-diuretics â€” by content.mgr</span><span class="lbl">14:02</span></div>
+    <div class="tr" style="grid-template-columns:auto 1fr auto;padding:3px 0"><span class="chip">ROLE</span><span class="m" style="font-size:8px">user daniyal_r â†’ reviewer â€” by admin</span><span class="lbl">13:40</span></div>
+    <div class="tr" style="grid-template-columns:auto 1fr auto;padding:3px 0;border-bottom:0"><span class="chip">FLAG</span><span class="m" style="font-size:8px">wa_bot_enabled â†’ off â€” by admin</span><span class="lbl">11:16</span></div>
+  </div>
+  <div class="col" style="gap:8px">
+    <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:4px"><span class="lblr">CONTENT VS GATE â€” PER SUBJECT</span>
+      <div class="row sp"><span>Pharmacology</span><span class="ps"><span class="gl2"></span><span class="gl2"></span><span class="gl2"></span><span class="gl1"></span></span></div>
+      <div class="row sp"><span>Pharmaceutics</span><span class="ps"><span class="gl2"></span><span class="gl1"></span><span class="gl0"></span><span class="gl0"></span></span></div>
+    </div>
+    <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:4px"><span class="lblr">QUICK ACTIONS</span><div class="row" style="flex-wrap:wrap"><span class="b">New subtopic</span><span class="b">Review queue Â· 7</span><span class="b">Media</span></div></div>
+  </div>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1ar"><div class="dv-olabel"><a class="dv-oid" href="#1ar">1ar</a>Content â€” tree rail + list editor <em>Â· /admin/content</em></div>
+<div class="f" style="width:860px">
+<div class="env">STAGING</div>
+<div class="adm" style="grid-template-columns:128px 190px 1fr">
+<div class="anav col" style="gap:0"><span class="ni">Dashboard</span><span class="ni nia">Content</span><span class="ni">Media</span><span class="ni">Users</span><span class="ni">Settings</span><span class="ni">Audit</span></div>
+<div class="col" style="border-right:1px solid #E3E7E8;padding:8px;gap:3px;background:#FFF">
+  <span class="lblr">TREE â€” READ-ONLY RAIL</span>
+  <span class="row" style="gap:4px"><span class="dot" style="background:#0E6B63"></span><b>Pharmacology</b><span class="m k" style="font-size:7px">48</span></span>
+  <span class="row" style="gap:4px;padding-left:8px"><span class="dot" style="background:#0E6B63"></span><span>ANS</span><span class="m k" style="font-size:7px">14</span></span>
+  <span class="row" style="gap:4px;padding-left:8px"><span class="dot" style="background:#9A6700"></span><span style="color:#0A5750;font-weight:500">Cardiovascular</span><span class="m k" style="font-size:7px">18</span></span>
+  <span class="row" style="gap:4px;padding-left:16px"><span class="dot" style="background:#9A6700"></span><span>Diuretics</span></span>
+  <span class="row" style="gap:4px;padding-left:8px"><span class="dot" style="background:#DDE1E0"></span><span>CNS</span><span class="m k" style="font-size:7px">0</span></span>
+  <span class="row" style="gap:4px"><span class="dot" style="background:#9A6700"></span><b>Pharmaceutics</b><span class="m k" style="font-7px">13</span></span>
+  <span class="ann">status dots: amber = any draft Â· teal = all published (M4-1) Â· click opens that level's list</span>
+</div>
+<div class="pad col" style="gap:8px">
+  <span class="lbl">CONTENT / PHARMACOLOGY / CARDIOVASCULAR</span>
+  <div class="row sp"><span class="h2">Topics in Cardiovascular drugs</span><span class="b bp" style="padding:2px 6px">New topic</span></div>
+  <div class="thd" style="grid-template-columns:24px 1fr 90px 60px 70px 110px"><span class="lbl">ORD</span><span class="lbl">NAME / SLUG</span><span class="lbl">STATUS</span><span class="lbl">SEM</span><span class="lbl">UPDATED</span><span class="lbl">ACTIONS</span></div>
+  <div class="col" style="gap:0">
+    <div class="tr" style="grid-template-columns:24px 1fr 90px 60px 70px 110px"><span class="m k">â†‘â†“</span><div class="col" style="gap:1px"><b>Antihypertensives</b><span class="m k" style="font-size:7px">antihypertensives</span></div><span class="chip chipt">5/5 PUB</span><span class="chip">SEM 4</span><span class="m k" style="font-size:8px">12 JUL</span><span class="row" style="gap:3px"><span class="chip">EDIT</span><span class="chip">MOVEâ€¦</span><span class="chip">OPEN â€º</span></span></div>
+    <div class="tr" style="grid-template-columns:24px 1fr 90px 60px 70px 110px"><span class="m k">â†‘â†“</span><div class="col" style="gap:1px"><b>Diuretics</b><span class="m k" style="font-size:7px">diuretics</span></div><span class="chipw">4/6 PUB</span><span class="chip">SEM 4</span><span class="m k" style="font-size:8px">14 JUL</span><span class="row" style="gap:3px"><span class="chip">EDIT</span><span class="chip">MOVEâ€¦</span><span class="chip">OPEN â€º</span></span></div>
+    <div class="tr" style="grid-template-columns:24px 1fr 90px 60px 70px 110px;border-bottom:0"><span class="m k">â†‘â†“</span><div class="col" style="gap:1px"><b>Antiarrhythmics</b><span class="m k" style="font-size:7px">antiarrhythmics</span></div><span class="chip">DRAFT</span><span class="chip">SEM 4</span><span class="m k" style="font-size:8px">8 JUL</span><span class="row" style="gap:3px"><span class="chip">EDIT</span><span class="chip">MOVEâ€¦</span><span class="chip">OPEN â€º</span></span></div>
+  </div>
+  <span class="ann">order: up/down + flat drag within list Â· slug editable until anything beneath publishes, then rename â†’ consequence sheet (Â§5.2)</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1as"><div class="dv-olabel"><a class="dv-oid" href="#1as">1as</a>Subtopic editor â€” v1 canvas + right rail</div>
+<div class="f" style="width:860px">
+<div class="env">STAGING</div>
+<div class="tb" style="padding:6px 12px"><span class="lbl">CONTENT / â€¦ / DIURETICS /</span><b>Loop diuretics</b><span class="chip">DRAFT</span><span style="flex:1"></span><span class="lbl">AUTOSAVED 30S AGO</span><span class="b" style="padding:2px 6px">Submit for review</span></div>
+<div style="display:grid;grid-template-columns:1fr 230px">
+<div style="padding:12px 20px;border-right:1px solid #E3E7E8" class="col">
+  <div class="row" style="gap:4px"><span class="chip">H2</span><span class="chip">B</span><span class="chip">I</span><span class="chip">LIST</span><span class="chip">TABLE</span><span class="chip">CALLOUT â–¾</span><span class="chip">IMAGE</span><span class="chip">VIDEO</span><span class="chip">DRUG CARD</span><span class="chip">TOC</span><span class="chip">/ SLASH</span></div>
+  <span class="h1">Loop diuretics</span>
+  <div class="p"><i></i><i style="width:92%"></i><i style="width:60%"></i></div>
+  <div class="row" style="gap:6px;align-items:stretch"><span style="width:3px;background:#0E6B63"></span><div class="col" style="flex:1;border:1px solid #E3E7E8;padding:6px;gap:3px"><span class="lbl" style="color:#0A5750">CALLOUT Â· EXAM ALERT â–¾</span><div class="p"><i style="width:86%"></i></div></div></div>
+  <div class="rec"><div><b>DRUG</b><span>Furosemide</span></div><div><b>CLASS</b><span class="bar" style="width:120px"></span></div><div><b>MOA</b><span class="bar" style="width:180px"></span></div></div>
+  <div class="row" style="gap:6px"><div class="vid" style="flex:1;height:48px"><span class="play">â–¶</span></div><div class="col" style="gap:2px;flex:1"><span class="lbl">VIDEO EMBED â€” URL VALIDATED AT SAVE</span><div class="inp" style="font-size:7.5px">youtube.com/watch?v=â€¦</div><span class="lbl">CAPTION â€” REQUIRED, FIG STYLE</span></div></div>
+  <span class="ann">video blocks placeable anywhere â€” first one becomes primary_video_url at publish (M1-2) Â· comments/suggestions on for review</span>
+</div>
+<div class="col" style="padding:10px;gap:8px">
+  <div class="col" style="border:1px solid #0C1418;padding:8px;gap:4px"><span class="lblr">STATUS â€” DRAFT</span><span class="lbl">DRAFT â†’ IN REVIEW â†’ CHANGES REQ. â†’ APPROVED â†’ PUBLISHED</span></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:4px"><span class="lblr">PREVIEW GATE</span><div class="row sp"><span class="lbl">PREVIEW BLOCKS</span><span class="chip">DEFAULT â–¾ (4)</span></div><span class="chip chipt">SHOW WHAT ANONYMOUS SEES</span></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:3px"><span class="lblr">DERIVED AT PUBLISH</span><div class="row sp"><span class="lbl">READING TIME</span><span class="m" style="font-size:8px">12 MIN</span></div><div class="row sp"><span class="lbl">PRIMARY VIDEO</span><span class="m" style="font-size:8px">youtu.be/â€¦</span></div><div class="row sp"><span class="lbl">SEMESTER</span><span class="m" style="font-size:8px">4 â€” INHERITED</span></div></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:3px"><span class="lblr">REVISIONS</span><span class="chip">HISTORY Â· 6 â€º</span></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:3px"><span class="lblr">PREVIEW LINKS</span><span class="chip">CREATE LINK Â· 1 ACTIVE â€º</span></div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1at"><div class="dv-olabel"><a class="dv-oid" href="#1at">1at</a>Subtopic editor â€” v2 split with live reader preview</div>
+<div class="f" style="width:860px">
+<div class="env">STAGING</div>
+<div class="tb" style="padding:6px 12px"><b>Loop diuretics</b><span class="chip chipw">IN REVIEW â€” CLAIMED BY SANA.R</span><span style="flex:1"></span><span class="row" style="gap:4px"><span class="chip chipt">PREVIEW ON</span><span class="chip">360 â–¾</span></span><span class="b" style="padding:2px 6px;border-color:#0A5750;color:#0A5750">Approve</span><span class="b" style="padding:2px 6px">Request changes</span></div>
+<div style="display:grid;grid-template-columns:1fr 300px">
+<div style="padding:12px 20px;border-right:1px solid #0C1418" class="col">
+  <span class="h1">Loop diuretics</span>
+  <div class="p"><i></i><i style="width:90%"></i></div>
+  <div class="col" style="border:1px solid #9A6700;background:#FBF3E2;padding:6px;gap:3px"><span class="lbl" style="color:#9A6700">SUGGESTION â€” SANA.R</span><div class="row" style="gap:4px"><span class="bar" style="width:40%;text-decoration:line-through;background:#EAC9C6"></span><span class="bar hlM" style="width:34%"></span></div><div class="row"><span class="chip chipt">ACCEPT</span><span class="chip">REJECT</span></div></div>
+  <div class="p"><i style="width:94%"></i><i style="width:70%"></i></div>
+  <div class="col" style="border-left:2px solid #9A6700;padding:4px 6px;gap:2px;background:#FFF"><span class="lbl" style="color:#9A6700">COMMENT Â· SANA.R â€” â€œsource for the Kâº figure?â€</span><div class="inp" style="height:14px;font-size:7.5px">Replyâ€¦</div></div>
+  <span class="ann">reviewer comments/suggests inline (Plate) Â· Request changes requires a comment (Â§5.5)</span>
+</div>
+<div class="col" style="padding:10px;background:#EDEBE4;gap:4px">
+  <span class="lbl">READER PREVIEW â€” REAL RENDERER Â· 360PX</span>
+  <div style="background:#FBFBF9;border:1px solid #C6CCCB;padding:8px" class="col">
+    <span class="lblr">TOPIC Â· DIURETICS</span>
+    <b style="font-size:10px">Loop diuretics</b>
+    <div class="row"><span class="chip">12 MIN</span><span class="chip">SEM 04</span></div>
+    <div class="p"><i></i><i style="width:88%"></i></div>
+    <div class="callout"><span class="lbl" style="color:#0A5750">EXAM ALERT</span><div class="p"><i style="width:80%"></i></div></div>
+    <div style="height:30px;background:linear-gradient(180deg,rgba(251,251,249,0),#FBFBF9);margin-top:-22px"></div>
+    <div style="border:1px solid #0C1418;padding:6px;text-align:center" class="lbl">SIGN-IN GATE SHOWN HERE</div>
+  </div>
+  <span class="ann">â€œwhat anonymous seesâ€ toggle renders the true gate through the reader renderer (I4) â€” resizable, 360 preset (Â§5.4)</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1au"><div class="dv-olabel"><a class="dv-oid" href="#1au">1au</a>Review queue <em>Â· open claims (M4-2) + empty state</em></div>
+<div class="f" style="width:700px">
+<div class="env">STAGING</div>
+<div class="pad col" style="gap:8px">
+<div class="row sp"><span class="h2">Review queue â€” 7 in review</span><span class="chip">SUBJECT: ALL â–¾</span></div>
+<div class="thd" style="grid-template-columns:1fr 110px 90px 80px 120px"><span class="lbl">SUBTOPIC</span><span class="lbl">SUBJECT</span><span class="lbl">WAITING</span><span class="lbl">CLAIM</span><span class="lbl">ACTIONS</span></div>
+<div class="col" style="gap:0">
+  <div class="tr" style="grid-template-columns:1fr 110px 90px 80px 120px"><b>Loop diuretics</b><span class="k">Pharmacology</span><span class="chipw">9 DAYS</span><span class="chip chipt">SANA.R</span><span class="row" style="gap:3px"><span class="chip">OPEN</span><span class="chip">RELEASE</span></span></div>
+  <div class="tr" style="grid-template-columns:1fr 110px 90px 80px 120px"><b>Emulsion stability</b><span class="k">Pharmaceutics</span><span class="chipw">8 DAYS</span><span class="chip">UNCLAIMED</span><span class="b" style="padding:1px 5px">Claim</span></div>
+  <div class="tr" style="grid-template-columns:1fr 110px 90px 80px 120px;border-bottom:0"><b>Beta blockers</b><span class="k">Pharmacology</span><span class="chip">2 DAYS</span><span class="chip">UNCLAIMED</span><span class="b" style="padding:1px 5px">Claim</span></div>
+</div>
+<span class="ann">oldest first Â· amber &gt;7 days feeds review-cycle metric Â· claim = coordination, not permission; auto-releases on decision (Â§5.6)</span>
+<div style="border:1px dashed #C6CCCB;padding:12px;text-align:center" class="col"><span class="lbl">EMPTY STATE</span><span>Queue clear. Nothing waiting for review.</span><span class="b" style="align-self:center">Open drafts</span></div>
+</div></div></div>
+
+<div class="dv-opt" id="1av"><div class="dv-olabel"><a class="dv-oid" href="#1av">1av</a>Revisions â€” rollback diff <em>Â· side-by-side through the reader renderer</em></div>
+<div class="f" style="width:700px">
+<div class="env">STAGING</div>
+<div class="pad col" style="gap:8px">
+<div class="row sp"><span class="h2">Revisions â€” Loop diuretics</span><span class="chip">6 SNAPSHOTS</span></div>
+<div class="row" style="gap:8px;align-items:stretch">
+<div class="col" style="width:150px;border:1px solid #E3E7E8;padding:6px;gap:4px">
+  <div class="row sp"><span class="m" style="font-size:8px">REV 6</span><span class="chip chipt">CURRENT</span></div>
+  <div class="row sp" style="background:#EAF4F2;padding:2px"><span class="m" style="font-size:8px">REV 5</span><span class="lbl">12 JUL</span></div>
+  <div class="row sp"><span class="m" style="font-size:8px">REV 4</span><span class="lbl">9 JUL</span></div>
+  <div class="row sp"><span class="m" style="font-size:8px">REV 3</span><span class="lbl">2 JUL</span></div>
+</div>
+<div class="col" style="flex:1;border:1px solid #C6CCCB;padding:8px;gap:3px"><span class="lbl">REV 5 â€” 12 JUL Â· SANA.R</span><div class="p"><i></i><i style="width:88%"></i><i class="hlR" style="width:52%"></i></div></div>
+<div class="col" style="flex:1;border:1px solid #0E6B63;padding:8px;gap:3px"><span class="lbl" style="color:#0A5750">REV 6 â€” CURRENT</span><div class="p"><i></i><i style="width:88%"></i><i class="hlM" style="width:64%"></i></div></div>
+</div>
+<div class="row"><span class="b bp">Restore rev 5 as new revision</span><span class="b bg">Close</span></div>
+<span class="ann">restore is never destructive â€” creates a NEW revision, then republish path (Â§5.5) Â· snapshots on submit + publish, not every autosave</span>
+</div></div></div>
+
+<div class="dv-opt" id="1aw"><div class="dv-olabel"><a class="dv-oid" href="#1aw">1aw</a>Moveâ€¦ <em>Â· destination + consequence sheet (M4-1)</em></div>
+<div class="f" style="width:520px">
+<div class="pad col" style="gap:8px">
+<span class="lblr">MOVE â€œDIURETICSâ€ â€” PUBLISHED TOPIC</span>
+<div class="row" style="gap:10px;align-items:stretch">
+<div class="col" style="flex:1;border:1px solid #E3E7E8;padding:6px;gap:3px">
+  <span class="lbl">DESTINATION â€” LEGAL TARGETS ONLY</span>
+  <span>Pharmacology</span>
+  <span style="padding-left:8px" class="k">â€º ANS</span>
+  <span style="padding-left:8px;background:#EAF4F2;color:#0A5750;font-weight:500">â€º Renal pharmacology âœ“</span>
+  <span style="padding-left:8px" class="k">â€º CNS</span>
+</div>
+<div class="col" style="flex:1.2;border:1px solid #9A6700;background:#FBF3E2;padding:8px;gap:4px">
+  <span class="lbl" style="color:#9A6700">CONSEQUENCES</span>
+  <span style="font-size:8.5px">Â· URL changes â€” 301 via slug_history</span>
+  <span class="m" style="font-size:7px">/cardiovascular/diuretics â†’ /renal-pharmacology/diuretics</span>
+  <span style="font-size:8.5px">Â· 214 highlights will re-anchor (async job)</span>
+  <span style="font-size:8.5px">Â· Cache tags fire: topic, both chapters, sitemap</span>
+</div>
+</div>
+<div class="fld"><span class="lbl">TYPE <b>move</b> TO CONFIRM</span><div class="inp" style="width:120px">move</div></div>
+<div class="row"><span class="b bp">Move topic</span><span class="b bg">Cancel</span></div>
+<span class="ann">atomic: reparent + slug_history + tag invalidation + re-anchor job (Â§5.3) Â· drafts move without ceremony</span>
+</div></div></div>
+
+<div class="dv-opt" id="1ax"><div class="dv-olabel"><a class="dv-oid" href="#1ax">1ax</a>Preview links <em>Â· panel + public watermarked view (M4-4)</em></div>
+<div class="f" style="width:640px">
+<div style="display:grid;grid-template-columns:1.2fr 1fr">
+<div class="pad col" style="gap:6px;border-right:1px solid #E3E7E8">
+<span class="lblr">PREVIEW LINKS â€” LOOP DIURETICS</span>
+<span class="b" style="align-self:flex-start">Create preview link Â· 7-day expiry</span>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:auto 1fr auto auto"><span class="m" style="font-size:8px">â€¦8f2a</span><div class="col" style="gap:1px"><span class="lbl">BY AUTHOR.1 Â· EXPIRES IN 5 D</span><span class="lbl" style="color:#0A5750">OPENS Â· 12</span></div><span class="chip">COPY</span><span class="chip chipd">REVOKE</span></div>
+  <div class="tr" style="grid-template-columns:auto 1fr auto;border-bottom:0"><span class="m" style="font-size:8px">â€¦c41d</span><span class="lbl">REVOKED Â· 11 JUL</span><span class="chip">â€”</span></div>
+</div>
+<span class="ann">128-bit token, stored hashed Â· single subtopic scope Â· publish auto-revokes (Â§5.7) Â· opens logged with ip_hash</span>
+</div>
+<div class="col" style="padding:10px;background:#EDEBE4;gap:4px">
+<span class="lbl">PUBLIC /preview/[token]</span>
+<div style="background:#FBFBF9;border:1px solid #C6CCCB" class="col">
+  <div style="background:#9A6700;color:#FFF;text-align:center;padding:2px" class="lbl" >DRAFT â€” NOT PUBLISHED</div>
+  <div style="padding:8px" class="col"><b style="font-size:10px">Loop diuretics</b><div class="p"><i></i><i style="width:84%"></i></div></div>
+</div>
+<span class="ann">no site nav, no study tools, noindex Â· expired/invalid â†’ one neutral card: â€œThis preview link is no longer active.â€</span>
+</div>
+</div></div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="gi2">
+<div class="dv-thd"><a class="dv-tid" href="#gi2">1 Â· M4</a><span class="dv-tname">CMS / Admin â€” media Â· users Â· settings Â· audit</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1ay"><div class="dv-olabel"><a class="dv-oid" href="#1ay">1ay</a>Media library <em>Â· usage tracking + delete-block (M4-3)</em></div>
+<div class="f" style="width:760px">
+<div class="env">STAGING</div>
+<div style="display:grid;grid-template-columns:1fr 230px">
+<div class="pad col" style="gap:8px;border-right:1px solid #E3E7E8">
+<div class="row sp"><span class="h2">Media</span><span class="row"><span class="inp" style="width:130px">Search filename, alt, tagsâ€¦</span><span class="chip">UPLOADER â–¾</span><span class="chip">UNUSED</span><span class="b bp" style="padding:2px 6px">Upload</span></span></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+  <div class="col" style="gap:2px"><div style="height:52px;background:#DDE1E0;border:2px solid #0E6B63"></div><span class="lbl">NEPHRON-FIG.WEBP</span></div>
+  <div class="col" style="gap:2px"><div style="height:52px;background:#DDE1E0;border:1px solid #C6CCCB"></div><span class="lbl">HENLE-LOOP.WEBP</span></div>
+  <div class="col" style="gap:2px"><div style="height:52px;background:#DDE1E0;border:1px solid #C6CCCB"></div><span class="lbl">TABLET-PRESS.WEBP</span></div>
+  <div class="col" style="gap:2px"><div style="height:52px;background:#DDE1E0;border:1px solid #C6CCCB"></div><span class="lbl">EMULSION-01.WEBP</span></div>
+</div>
+<span class="ann">upload: type-sniffed â†’ WebP, max edge 1920, â‰¤2MB Â· alt text REQUIRED at upload â€” no alt, no save (a11y floor)</span>
+</div>
+<div class="col" style="padding:10px;gap:6px">
+<span class="lblr">NEPHRON-FIG.WEBP</span>
+<div style="height:60px;background:#DDE1E0;border:1px solid #C6CCCB"></div>
+<div class="rec"><div><b>DIMENSIONS</b><span class="m" style="font-size:8px">1600Ã—900</span></div><div><b>SIZE</b><span class="m" style="font-size:8px">184 KB</span></div><div><b>ALT</b><span class="bar" style="width:90px"></span></div></div>
+<span class="lbl" style="color:#0A5750">USED IN 3 SUBTOPICS</span>
+<div class="col" style="gap:2px"><a href="#1ay" style="font-size:8px">Loop diuretics â†—</a><a href="#1ay" style="font-size:8px">Thiazides â†—</a><a href="#1ay" style="font-size:8px">Renal handling â†—</a></div>
+<div class="row"><span class="b" style="padding:2px 6px">Replace in place</span><span class="b bd" style="padding:2px 6px;border-color:#B3261E;color:#B3261E">Delete</span></div>
+<span class="ann">delete blocked while used (usages listed) Â· replace-in-place propagates on next publish, old file kept 30 d</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1az"><div class="dv-olabel"><a class="dv-oid" href="#1az">1az</a>Users admin <em>Â· role rules + force-rename</em></div>
+<div class="f" style="width:700px">
+<div class="env">STAGING</div>
+<div class="pad col" style="gap:8px">
+<div class="row"><span class="inp" style="width:200px">Search username or emailâ€¦</span></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<div class="col" style="border:1px solid #0C1418;padding:8px;gap:5px">
+  <div class="row" style="gap:6px"><span class="av" style="width:22px;height:22px">D</span><div class="col" style="gap:1px"><b>daniyal_r</b><span class="lbl">DANIYAL@â€¦ Â· EMAIL VERIFIED âœ“</span></div></div>
+  <div class="rec"><div><b>ROLE</b><span class="row" style="gap:4px"><span class="chip chipt">REVIEWER</span><span class="chip">CHANGE â–¾</span></span></div><div><b>VERIFIED RX</b><span>No</span></div><div><b>CREATED</b><span class="m" style="font-size:8px">02 MAR 2026</span></div><div><b>DELETION</b><span>â€”</span></div></div>
+  <div class="row"><span class="b" style="padding:2px 6px">Force-renameâ€¦</span><span class="b" style="padding:2px 6px">Send reset email</span></div>
+  <span class="ann">role assign: admin+ only, never to rank â‰¥ your own Â· super_admin only by super_admin + typed confirm (Â§7) Â· staff can never view/set passwords</span>
+</div>
+<div class="col" style="gap:8px">
+  <div class="col" style="border:1px solid #9A6700;background:#FBF3E2;padding:8px;gap:4px">
+    <span class="lbl" style="color:#9A6700">FORCE-RENAME â€” REASON REQUIRED</span>
+    <div class="inp">Impersonation of facultyâ€¦</div>
+    <span style="font-size:8.5px">New handle: <b class="m">user-8k2df</b> Â· old handle quarantined 90 days Â· user notified by email</span>
+    <div class="row"><span class="b" style="padding:2px 6px">Rename</span><span class="b bg">Cancel</span></div>
+  </div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:3px"><span class="lblr">SANCTIONS â€” M5 CONTRACT</span><span class="row sp"><span class="chip chipw">MUTED UNTIL 24 JUL</span><span class="lbl">SET IN MODERATION</span></span></div>
+  <div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:3px"><span class="lblr">DELETION GRACE LIST â€” READ-ONLY</span><span class="row sp"><span class="m" style="font-size:8px">2 accounts in grace</span><span class="lbl">PURGE CANNOT BE EXPEDITED</span></span></div>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1ba"><div class="dv-olabel"><a class="dv-oid" href="#1ba">1ba</a>Settings <em>Â· flags Â· AI model registry Â· reserved handles</em></div>
+<div class="f" style="width:760px">
+<div class="env">STAGING</div>
+<div class="pad col" style="gap:10px">
+<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px">
+<div class="col" style="gap:5px">
+  <span class="lblr">FEATURE FLAGS</span>
+  <div class="thd" style="grid-template-columns:1fr auto auto"><span class="lbl">KEY</span><span class="lbl">PHASE</span><span class="lbl">STATE</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto"><span class="m" style="font-size:8px">community</span><span class="chip">P2</span><span class="chip">OFF</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto"><span class="m" style="font-size:8px">employer_submissions</span><span class="chip">P3</span><span class="chip">OFF</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto"><span class="m" style="font-size:8px">highlight_kinds</span><span class="chip">P1</span><span class="chip chipt">ALL KINDS</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto;border-bottom:0"><span class="m" style="font-size:8px">wa_bot_enabled</span><span class="chip">P4</span><span class="chip chipt">ON</span></div>
+  <span class="ann">flags power Coming-Soon states, nav visibility, kill-switches â€” flips audited + cache-busted (Â§8)</span>
+</div>
+<div class="col" style="gap:5px">
+  <span class="lblr">AI MODEL REGISTRY â€” NO DEPLOYS</span>
+  <div class="tr" style="grid-template-columns:auto 1fr auto auto;border:1px solid #E3E7E8"><span class="chip">GROQ</span><div class="col" style="gap:1px"><b class="m" style="font-size:8px">llama-4</b><span class="lbl">FREE-TIER FRIENDLY</span></div><span class="chip chipt">DEFAULT</span><span class="chip">EDIT</span></div>
+  <div class="tr" style="grid-template-columns:auto 1fr auto;border:1px solid #E3E7E8;border-top:0"><span class="chip">ANTHROPIC</span><div class="col" style="gap:1px"><b class="m" style="font-size:8px">claude-sonnet-4-5</b><span class="lbl">STRONG</span></div><span class="chip">DEACTIVATE</span></div>
+  <span class="b" style="align-self:flex-start;padding:2px 6px">Add model</span>
+  <span class="lblr" style="margin-top:6px">SITE METADATA Â· RESERVED USERNAMES</span>
+  <div class="row"><span class="chip">TITLE / DESCRIPTION / OG</span><span class="chip">RESERVED LIST Â· 21 â€º</span><span class="chip">PURGE REGISTRY â€º</span></div>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1bb"><div class="dv-olabel"><a class="dv-oid" href="#1bb">1bb</a>Audit log <em>Â· append-only</em></div>
+<div class="f" style="width:700px">
+<div class="env">STAGING</div>
+<div class="pad col" style="gap:8px">
+<div class="row sp"><span class="h2">Audit log</span><span class="row"><span class="chip">ACTOR â–¾</span><span class="chip">ACTION â–¾</span><span class="chip">ENTITY â–¾</span><span class="chip">DATE RANGE â–¾</span><span class="b" style="padding:2px 6px">Export CSV</span></span></div>
+<div class="thd" style="grid-template-columns:70px 80px 1fr 70px"><span class="lbl">TIME</span><span class="lbl">ACTOR</span><span class="lbl">ACTION â†’ ENTITY</span><span class="lbl">META</span></div>
+<div class="col" style="gap:0">
+  <div class="tr" style="grid-template-columns:70px 80px 1fr 70px"><span class="m k" style="font-size:8px">14:02:11</span><span class="m" style="font-size:8px">content.mgr</span><span class="m" style="font-size:8px">publish â†’ subtopic/loop-diuretics <a href="#1bb">â†—</a></span><span class="chip">DIFF</span></div>
+  <div class="tr" style="grid-template-columns:70px 80px 1fr 70px"><span class="m k" style="font-size:8px">13:40:52</span><span class="m" style="font-size:8px">admin.1</span><span class="m" style="font-size:8px">role_assign â†’ user/daniyal_r (user â†’ reviewer)</span><span class="chip">META</span></div>
+  <div class="tr" style="grid-template-columns:70px 80px 1fr 70px"><span class="m k" style="font-size:8px">11:16:03</span><span class="m" style="font-size:8px">admin.1</span><span class="m" style="font-size:8px">flag_flip â†’ wa_bot_enabled (on â†’ off)</span><span class="chip">META</span></div>
+  <div class="tr" style="grid-template-columns:70px 80px 1fr 70px;border-bottom:0"><span class="m k" style="font-size:8px">09:58:47</span><span class="m" style="font-size:8px">jobs.mgr</span><span class="m" style="font-size:8px">job_expire_now â†’ jobs/qa-officer-getz</span><span class="chip">META</span></div>
+</div>
+<span class="ann">append-only â€” no update/delete grants for ANY role, CI-tested Â· 12 mo hot â†’ yearly export to R2 â†’ prune (D-b) Â· hashed IPs</span>
+</div></div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="gj">
+<div class="dv-thd"><a class="dv-tid" href="#gj">1 Â· SLOTS</a><span class="dv-tname">CMS module slots â€” blog Â· moderation Â· verifications Â· jobs Â· WhatsApp</span></div>
+<p class="dv-sub">Later-phase surfaces plugging into the M4 shell contracts (Â§10): shared queue components, claim/decision actions, withAudit on every mutation, a dashboard tile each.</p>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1bc"><div class="dv-olabel"><a class="dv-oid" href="#1bc">1bc</a>Blog slot <em>Â· posts + writer applications</em></div>
+<div class="f" style="width:700px">
+<div class="env">STAGING</div>
+<div class="pad col" style="gap:8px">
+<div class="row" style="gap:0;border-bottom:1px solid #0C1418"><span class="b" style="border:0;background:#EAF4F2;color:#0A5750">POSTS</span><span class="b" style="border:0">WRITER APPLICATIONS Â· 3</span><span class="b" style="border:0">CATEGORIES</span></div>
+<div class="col" style="gap:0;border:1px solid #E3E7E8;border-top:0">
+  <div class="tr" style="grid-template-columns:1fr auto auto auto auto"><div class="col" style="gap:1px"><b>Antibiotic stewardshipâ€¦</b><span class="lbl">SANA.H Â· CLINICAL</span></div><span class="chip chipt">PUBLISHED</span><span class="lbl">12 JUL</span><span class="chip">EDIT</span><span class="chip">UNPUBLISH</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto auto"><div class="col" style="gap:1px"><b>What's new â€” July</b><span class="lbl">TEAM EPHARMATICA Â· PLATFORM</span></div><span class="chipw">SCHEDULED Â· 21 JUL 09:00</span><span class="chip">EDIT</span><span class="chip">CANCEL</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto auto;border-bottom:0"><div class="col" style="gap:1px"><b>Spaced repetition for pharm</b><span class="lbl">DANIYAL_R Â· STUDY</span></div><span class="chipw">IN REVIEW</span><span class="chip">REVIEW</span><span class="chip">â€”</span></div>
+</div>
+<span class="ann">scheduler cron flips status + fires tags (Â§5.3) Â· post-publish body edits above trivial threshold â†’ re-review</span>
+<div class="col" style="border:1px solid #C6CCCB;padding:8px;gap:4px">
+  <span class="lblr">WRITER APPLICATION â€” AYESHA-K</span>
+  <div class="row" style="gap:10px"><div class="col" style="flex:1;gap:2px"><span class="lbl">MOTIVATION â‰¤600</span><div class="p"><i></i><i style="width:74%"></i></div></div><div class="col" style="gap:2px"><span class="lbl">SAMPLE</span><a href="#1bc" style="font-size:8px">medium.com/â€¦ â†—</a></div></div>
+  <div class="row"><span class="b" style="padding:2px 6px;border-color:#0A5750;color:#0A5750">Approve â€” grant blog_writer</span><span class="b" style="padding:2px 6px;border-color:#B3261E;color:#B3261E">Reject with reasonâ€¦</span></div>
+  <span class="ann">reject requires reason Â· reapply after 30 d (M5 Â§5.1)</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1bd"><div class="dv-olabel"><a class="dv-oid" href="#1bd">1bd</a>Moderation queue <em>Â· reports + sanctions</em></div>
+<div class="f" style="width:700px">
+<div class="env">STAGING</div>
+<div class="pad col" style="gap:8px">
+<div class="row sp"><span class="h2">Reports â€” 4 open</span><span class="row"><span class="chip">TARGET â–¾</span><span class="chip">REASON â–¾</span></span></div>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:auto 1fr auto"><span class="chip chipd">SPAM</span><div class="col" style="gap:1px"><b>Reply in â€œGPAT vs local industry route?â€</b><span class="lbl">REPORTED BY 2 USERS Â· 3 H AGO</span></div><span class="chip">OPEN â€º</span></div>
+  <div class="tr" style="grid-template-columns:auto 1fr auto;border-bottom:0"><span class="chipw">HARASSMENT</span><div class="col" style="gap:1px"><b>Anonymous Question thread</b><span class="lbl">TRUE IDENTITY VISIBLE TO MODERATORS HERE</span></div><span class="chip">OPEN â€º</span></div>
+</div>
+<div class="col" style="border:1px solid #0C1418;padding:8px;gap:5px">
+  <span class="lblr">REPORT DETAIL</span>
+  <div class="col" style="border:1px solid #E3E7E8;padding:6px;gap:2px"><span class="row" style="gap:5px"><span class="av">?</span><b>Anonymous student</b><span class="chip">REAL: @user-x â€” MOD-ONLY</span></span><div class="p"><i style="width:86%"></i></div></div>
+  <div class="row" style="flex-wrap:wrap"><span class="b" style="padding:2px 6px">Dismiss</span><span class="b" style="padding:2px 6px">Hide</span><span class="b" style="padding:2px 6px">Delete</span><span class="b" style="padding:2px 6px">Warn</span><span class="b" style="padding:2px 6px">Mute 1/7/30 d â–¾</span><span class="b" style="padding:2px 6px;border-color:#B3261E;color:#B3261E">Ban</span></div>
+  <span class="ann">sanctions render honestly to the user (â€œmuted until 24 Jul â€” reasonâ€) and block writes at RLS, not just UI (M5 Â§4.10) Â· every action audited</span>
+</div>
+<div class="row"><span class="chip">LOCK THREAD â€” REASON REQUIRED</span><span class="chip">PIN PER CATEGORY Â· MAX 3</span><span class="ann">no auto-lock exists anywhere (M5-6)</span></div>
+</div></div></div>
+
+<div class="dv-opt" id="1be"><div class="dv-olabel"><a class="dv-oid" href="#1be">1be</a>Verifications queue <em>Â· badge review</em></div>
+<div class="f" style="width:640px">
+<div class="env">STAGING</div>
+<div style="display:grid;grid-template-columns:1fr 240px">
+<div class="pad col" style="gap:6px;border-right:1px solid #E3E7E8">
+<span class="h2">Pharmacist verifications â€” 5 pending</span>
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:1fr auto auto;background:#EAF4F2"><div class="col" style="gap:1px"><b>Sana Hashmi</b><span class="lbl">PUNJAB PHARMACY COUNCIL Â· GRAD 2019</span></div><span class="chipw">PENDING Â· 2 D</span><span class="chip">REVIEWING</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto"><div class="col" style="gap:1px"><b>M. Bilal</b><span class="lbl">SINDH COUNCIL Â· GRAD 2021</span></div><span class="chipw">PENDING Â· 4 D</span><span class="chip">OPEN</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto auto;border-bottom:0"><div class="col" style="gap:1px"><b>H. Fatima</b><span class="lbl">KP COUNCIL Â· GRAD 2018</span></div><span class="chipd">REJECTED Â· REAPPLY 14 AUG</span><span class="chip">VIEW</span></div>
+</div>
+<div class="row"><span class="b" style="padding:2px 6px;border-color:#0A5750;color:#0A5750">Approve â€” set badge</span><span class="b" style="padding:2px 6px;border-color:#B3261E;color:#B3261E">Reject with reasonâ€¦</span></div>
+<span class="ann">support role decides Â· both outcomes email the user Â· reapply +30 d on reject (M5 Â§7)</span>
+</div>
+<div class="col" style="padding:10px;gap:5px">
+<span class="lblr">DOCUMENT â€” SIGNED URL</span>
+<div style="height:110px;background:#DDE1E0;border:1px solid #C6CCCB;display:flex;align-items:center;justify-content:center" class="lbl">LICENSE SCAN â€” PRIVATE BUCKET</div>
+<div class="rec"><div><b>LICENSE NO.</b><span class="m" style="font-size:8px">PPC-2019-â€¦</span></div><div><b>PURGE</b><span class="m" style="font-size:8px">90 D AFTER DECISION</span></div></div>
+<span class="ann">docs auto-purge on cron â€” purge status shown here Â· registered in personal-data registry</span>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1bf"><div class="dv-olabel"><a class="dv-oid" href="#1bf">1bf</a>Jobs manager <em>Â· listings ops + quick-add (M6 Â§6)</em></div>
+<div class="f" style="width:860px">
+<div class="env">STAGING</div>
+<div class="pad col" style="gap:8px">
+<div class="row sp"><span class="h2">Job listings</span><span class="row"><span class="chip chipt">PUBLISHED</span><span class="chip">PENDING</span><span class="chip">EXPIRED</span><span class="chip">ARCHIVED</span><span class="b" style="padding:2px 6px">Organizations</span><span class="b bp" style="padding:2px 6px">New listing</span></span></div>
+<div class="thd" style="grid-template-columns:1fr 110px 90px 100px 150px"><span class="lbl">TITLE / ORG</span><span class="lbl">CITY Â· TYPE</span><span class="lbl">SOURCE</span><span class="lbl">EXPIRES âŒ„</span><span class="lbl">ACTIONS</span></div>
+<div class="col" style="gap:0">
+  <div class="tr" style="grid-template-columns:1fr 110px 90px 100px 150px"><div class="col" style="gap:1px"><b>QA Officer â€” Internship</b><span class="lbl">GETZ PHARMA</span></div><span class="k" style="font-size:8px">Karachi Â· Intern</span><span class="chip">CURATED</span><span class="chipw">5 DAYS</span><span class="row" style="gap:3px"><span class="chip">EDIT</span><span class="chip chipt">EXTEND +30D</span><span class="chip">EXPIRE NOW</span></span></div>
+  <div class="tr" style="grid-template-columns:1fr 110px 90px 100px 150px"><div class="col" style="gap:1px"><b>Production Pharmacist</b><span class="lbl">SEARLE</span></div><span class="k" style="font-size:8px">Karachi Â· FT</span><span class="chip">CURATED</span><span class="chip">22 DAYS</span><span class="row" style="gap:3px"><span class="chip">EDIT</span><span class="chip chipt">EXTEND +30D</span><span class="chip">EXPIRE NOW</span></span></div>
+  <div class="tr" style="grid-template-columns:1fr 110px 90px 100px 150px;border-bottom:0"><div class="col" style="gap:1px"><b>Hospital Pharmacist</b><span class="lbl">AKUH</span></div><span class="k" style="font-size:8px">Karachi Â· FT</span><span class="chip">CURATED</span><span class="chipd">EXPIRED</span><span class="row" style="gap:3px"><span class="chip">EXTEND â€” RESURRECTS</span><span class="chip">ARCHIVE</span></span></div>
+</div>
+<span class="ann">bulk-extend on selection Â· duplicate guard: same org + similar title in 30 d warns, never blocks (Â§11) Â· employer submissions queue dormant behind flag (M6-2)</span>
+<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:10px">
+<div class="col" style="border:1px solid #0C1418;padding:8px;gap:5px">
+  <span class="lblr">QUICK-ADD â€” â€œFIVE ROLES FROM THIS WEEK'S SCAN IN FIVE MINUTESâ€</span>
+  <div class="row"><div class="fld" style="flex:1.4"><span class="lbl">TITLE</span><div class="inp"></div></div><div class="fld" style="flex:1"><span class="lbl">ORG â€” PICKER + INLINE CREATE</span><div class="inp">Searle â–¾</div></div></div>
+  <div class="row"><div class="fld" style="flex:1"><span class="lbl">CITY</span><div class="inp">Karachi â–¾</div></div><div class="fld" style="flex:1"><span class="lbl">TYPE</span><div class="inp">Full-time â–¾</div></div><div class="fld" style="flex:1"><span class="lbl">EXPIRES</span><div class="inp">+30 d</div></div></div>
+  <div class="fld"><span class="lbl">APPLY â€” URL OR EMAIL</span><div class="inp">hr@searleâ€¦</div></div>
+  <span class="b bp" style="align-self:flex-start;padding:2px 6px">Publish directly</span>
+  <span class="ann">Jobs Manager IS the review â€” quick-add lands published (Â§6)</span>
+</div>
+<div class="col" style="border:1px solid #E3E7E8;padding:8px;gap:4px">
+  <span class="lblr">ORGANIZATIONS</span>
+  <div class="tr" style="grid-template-columns:auto 1fr auto;padding:3px 0"><span class="av">GX</span><b>Getz Pharma</b><span class="row" style="gap:3px"><span class="chip">EDIT</span><span class="chip">MERGE</span></span></div>
+  <div class="tr" style="grid-template-columns:auto 1fr auto;padding:3px 0;border-bottom:0"><span class="av">SP</span><b>Searle</b><span class="row" style="gap:3px"><span class="chip">EDIT</span><span class="chip">MERGE</span></span></div>
+  <span class="ann">reusable records (M6-4): logo + description once, attach to many Â· merge re-points listings, audited Â· name-similarity hint warns near-duplicates</span>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="1bg"><div class="dv-olabel"><a class="dv-oid" href="#1bg">1bg</a>WhatsApp console <em>Â· sessions Â· transcript Â· kill-switch (M8 Â§4.8)</em></div>
+<div class="f" style="width:760px">
+<div class="env">STAGING</div>
+<div class="pad col" style="gap:8px">
+<div class="row" style="gap:8px">
+  <div class="col" style="flex:1;border:1px solid #E3E7E8;padding:6px;gap:1px"><span class="lbl">SESSIONS / WK</span><b class="m" style="font-size:13px">312</b></div>
+  <div class="col" style="flex:1;border:1px solid #E3E7E8;padding:6px;gap:1px"><span class="lbl">TOP INTENT</span><b class="m" style="font-size:13px">TOPICS Â· 61%</b></div>
+  <div class="col" style="flex:1;border:1px solid #E3E7E8;padding:6px;gap:1px"><span class="lbl">ALERT INTEREST</span><b class="m" style="font-size:13px">148</b></div>
+  <div class="col" style="flex:1;border:1px solid #E3E7E8;padding:6px;gap:1px"><span class="lbl">FLAGGED OPEN</span><b class="m" style="font-size:13px" >3</b></div>
+  <div class="row" style="border:1px solid #B3261E;padding:6px;gap:6px"><span class="lbl" style="color:#B3261E">KILL-SWITCH</span><span class="chip chipt">BOT ON</span></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1.2fr;gap:10px">
+<div class="col" style="gap:0;border:1px solid #C6CCCB">
+  <div class="tr" style="grid-template-columns:1fr auto auto;background:#EAF4F2"><div class="col" style="gap:1px"><b class="m" style="font-size:8.5px">+92 â€¢â€¢â€¢ â€¢â€¢34</b><span class="lbl">EN Â· LAST: TOPICS Â· 2 H</span></div><span class="chipw">FLAGGED</span><span class="chip">OPEN</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto"><div class="col" style="gap:1px"><b class="m" style="font-size:8.5px">+92 â€¢â€¢â€¢ â€¢â€¢81</b><span class="lbl">UR-LATN Â· JOBS Â· 5 H</span></div><span class="chip">OPEN</span></div>
+  <div class="tr" style="grid-template-columns:1fr auto;border-bottom:0"><div class="col" style="gap:1px"><b class="m" style="font-size:8.5px">+92 â€¢â€¢â€¢ â€¢â€¢07</b><span class="lbl">EN Â· BLOGS Â· 1 D</span></div><span class="chip">OPEN</span></div>
+</div>
+<div class="col" style="border:1px solid #0C1418;padding:8px;gap:4px">
+  <div class="row sp"><span class="lblr" style="flex:1">TRANSCRIPT â€” +92 â€¢â€¢â€¢ â€¢â€¢34</span><span class="chip chipd">REVEAL NUMBER â€” AUDITED</span></div>
+  <div style="background:#E1F4D3;border:1px solid #C6CCCB;padding:4px;align-self:flex-end;max-width:70%"><span style="font-size:8px">5 (talk to a human)</span></div>
+  <div style="background:#FFF;border:1px solid #C6CCCB;padding:4px;max-width:80%"><span style="font-size:8px">Email support@epharmatica.com â€” reference <b class="m">S-8K2D</b>. A human will read this thread.</span></div>
+  <span class="ann">reveal writes wa_phone_revealed to audit_log Â· messages purge at 90 d, contacts + flags persist</span>
+  <div class="row"><span class="chip">STRING CATALOGS â€” READ-ONLY (EN / UR-LATN)</span><span class="chip">RETENTION CRON âœ“</span></div>
+</div>
+</div>
+</div></div></div>
+
+</div>
+<p class="dv-next">Try next: â€œvariations for <a class="dv-oid" href="#1f">1f</a> with the AI panel always dockedâ€ Â· â€œdark-mode duplicates of <a class="dv-oid" href="#1f">1f</a> and <a class="dv-oid" href="#1aq">1aq</a>â€ Â· â€œzoom into the Moveâ€¦ flow as a step-by-step storyboardâ€ Â· â€œturn <a class="dv-oid" href="#1a">1a</a> into a hi-fi landingâ€</p>
+</section></x-dc>
+</body>
+</html>

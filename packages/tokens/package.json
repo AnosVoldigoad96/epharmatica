@@ -1,0 +1,20 @@
+{
+  "name": "@epharmatica/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./css": "./dist/tokens.css",
+    "./figma": "./dist/figma.tokens.json"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@epharmatica/config": "workspace:*",
+    "style-dictionary": "^5.5.0",
+    "typescript": "~5.9.3"
+  }
+}

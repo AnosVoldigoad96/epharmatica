@@ -1,0 +1,205 @@
+{
+  "common": {
+    "appName": "ePharmatica",
+    "tagline": "Study pharmacy with structured, reviewed material — reader, study tools, and community, built mobile-first for Pharm-D students and professionals."
+  },
+  "errors": {
+    "notFound": {
+      "label": "404 · Not found",
+      "message": "This page does not exist or has moved.",
+      "goHome": "Go to the home page"
+    },
+    "appError": {
+      "label": "Error",
+      "message": "Something went wrong while loading this page.",
+      "tryAgain": "Try again",
+      "goHome": "Go to the home page"
+    }
+  },
+  "landing": {
+    "meta": {
+      "title": "Study material that's easier than the textbook",
+      "description": "Structured, visual notes mapped to the HEC Pharm-D syllabus — paired with videos, progress tracking, and AI study tools that run on your own key. Free account, no ads."
+    },
+    "nav": {
+      "primary": "Primary",
+      "learn": "Learn",
+      "community": "Community",
+      "blog": "Blog",
+      "jobs": "Jobs",
+      "resume": "Resume",
+      "joinWaitlist": "Join waitlist"
+    },
+    "hero": {
+      "eyebrow": "PHARM-D · LEARNING & COMMUNITY · PAKISTAN → WORLDWIDE",
+      "headline": "Study material that's easier than the textbook.",
+      "sub": "Structured, visual notes mapped to the HEC Pharm-D syllabus — paired with videos, progress tracking, and AI study tools that run on your own key.",
+      "startLearning": "Start learning free",
+      "joinWaitlist": "Join waitlist",
+      "chipFreeAccount": "FREE ACCOUNT",
+      "chipNoAds": "NO ADS",
+      "chipBuiltWithPharmacists": "BUILT WITH PHARMACISTS"
+    },
+    "demo": {
+      "label": "LIVE FROM THE SYSTEM — NOT A SCREENSHOT",
+      "notStarted": "Not started",
+      "unit01": {
+        "label": "UNIT 01",
+        "title": "Renal handling",
+        "stamp": "COMPLETED · 12 JUL"
+      },
+      "unit02": {
+        "label": "UNIT 02",
+        "title": "Thiazides",
+        "chip": "IN PROGRESS"
+      },
+      "unit03": {
+        "label": "UNIT 03",
+        "title": "Loop diuretics",
+        "chip": "12 MIN"
+      },
+      "unit04": {
+        "label": "UNIT 04",
+        "title": "K⁺-sparing agents",
+        "chip": "8 MIN"
+      },
+      "reader": {
+        "topic": "TOPIC · DIURETICS",
+        "sentence": "Loop diuretics inhibit the <hl>Na⁺-K⁺-2Cl⁻ symporter</hl> in the thick ascending limb — the highest-efficacy diuretic class.",
+        "pearlLabel": "CLINICAL PEARL",
+        "pearl": "Efficacy persists at low GFR — the reason they're preferred in renal impairment."
+      }
+    },
+    "features": {
+      "comingSoon": "COMING SOON",
+      "learning": {
+        "title": "LEARNING",
+        "body": "The full syllabus as structured units — highlights, notes, and honest manual progress.",
+        "link": "Browse subjects →"
+      },
+      "aiStudyTools": {
+        "title": "AI STUDY TOOLS",
+        "body": "Explain, summarize, and chat with any topic — powered by your own API key. We never bill you.",
+        "chip": "BYOK — YOUR KEY"
+      },
+      "community": {
+        "title": "COMMUNITY",
+        "body": "Questions with accepted answers, verified pharmacists, and a forum that respects beginners."
+      },
+      "blog": {
+        "title": "BLOG",
+        "body": "Editorial writing from approved pharmacist writers — practice, industry, careers."
+      },
+      "jobs": {
+        "title": "JOBS",
+        "body": "Curated pharmaceutical roles across Pakistan — filters that mean what they say.",
+        "hiring": "Hiring? Email your listing to <jobs>jobs@epharmatica.com</jobs>"
+      },
+      "resume": {
+        "title": "RESUME BUILDER",
+        "body": "Pharmacy-tuned sections, four templates, ATS-safe PDF export in your browser."
+      }
+    },
+    "youtube": {
+      "label": "FROM THE YOUTUBE CHANNEL",
+      "comingSoon": "COMING SOON"
+    }
+  },
+  "waitlist": {
+    "title": "JOIN THE WAITLIST",
+    "explainer": "Pick the module you care about — we'll email you once, when it ships.",
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "you@university.edu.pk",
+      "module": "Module",
+      "role": "Role",
+      "submit": "Join waitlist",
+      "successPrefix": "ON THE LIST",
+      "genericError": "Something went wrong saving your signup. Try again."
+    },
+    "modules": {
+      "learning": "Learning platform",
+      "ai-study-tools": "AI study tools",
+      "community": "Community",
+      "blog": "Blog",
+      "jobs": "Jobs portal",
+      "resume-builder": "Resume builder"
+    },
+    "roles": {
+      "student": "Student",
+      "professional": "Professional",
+      "other": "Other"
+    },
+    "errors": {
+      "turnstile": "Human verification failed. Reload the page and try again.",
+      "notConfigured": "The waitlist isn't configured yet — email support@epharmatica.com and we'll add you.",
+      "generic": "Something went wrong saving your signup. Try again."
+    }
+  },
+  "footer": {
+    "legalLabel": "LEGAL",
+    "contactLabel": "CONTACT",
+    "copyright": "© {year} EPHARMATICA",
+    "links": {
+      "about": "About",
+      "contact": "Contact",
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "contentPolicy": "Content Policy",
+      "medicalDisclaimer": "Medical Disclaimer"
+    }
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms of Service",
+      "description": "The terms that govern your use of ePharmatica."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "What we collect on epharmatica.com, why, and the choices you have."
+    },
+    "contentPolicy": {
+      "title": "Content Policy",
+      "description": "Community guidelines for everything published on ePharmatica."
+    },
+    "medicalDisclaimer": {
+      "title": "Medical Disclaimer",
+      "description": "ePharmatica is an educational platform — nothing on it is medical advice."
+    },
+    "about": {
+      "title": "About",
+      "description": "What ePharmatica is: a learning platform and professional community for pharmacy, from Pakistan to the world.",
+      "intro": "ePharmatica is a web platform with two connected halves: a learning platform delivering structured, visual study material covering the HEC-approved Pharm-D syllabus — written notes paired with videos and AI study tools that run on your own key — and a professional community for the pharmacists of Pakistan, open to the world: a discussion forum, an editorial blog, a curated jobs portal, and a resume builder.",
+      "modulesLabel": "THE SIX MODULES",
+      "reviewLabel": "CONTENT REVIEW",
+      "review": "Every piece of study and blog content passes review by an external licensed pharmacist before publication — authors never approve their own work."
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "How to reach ePharmatica — support, legal, privacy, and job listings.",
+      "intro": "Every mailbox below is read by a human. Pick the one that matches your question.",
+      "rows": {
+        "support": {
+          "label": "SUPPORT",
+          "email": "support@epharmatica.com",
+          "note": "Product questions, bug reports, and account help."
+        },
+        "jobs": {
+          "label": "JOBS",
+          "email": "jobs@epharmatica.com",
+          "note": "Employers — email your listing for the jobs board."
+        },
+        "legal": {
+          "label": "LEGAL",
+          "email": "legal@epharmatica.com",
+          "note": "Legal notices and questions about the terms."
+        },
+        "privacy": {
+          "label": "PRIVACY",
+          "email": "privacy@epharmatica.com",
+          "note": "Data requests and privacy questions."
+        }
+      }
+    }
+  }
+}

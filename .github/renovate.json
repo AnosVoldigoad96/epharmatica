@@ -1,0 +1,41 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", ":semanticCommitTypeAll(chore)"],
+  "timezone": "Asia/Karachi",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "replace",
+  "postUpdateOptions": ["pnpmDedupe"],
+  "prConcurrentLimit": 5,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "Framework pin (rules.md §4.7): Next.js 16, always latest 16.x patch — a major bump is a deliberate architecture event, never automated.",
+      "matchPackageNames": ["next", "eslint-config-next", "@next/**"],
+      "allowedVersions": "<17"
+    },
+    {
+      "description": "Editor stack is version-pinned; upgrades are deliberate events gated on the full fixture suite (rules.md §6.6) — never auto-bumped.",
+      "matchPackageNames": ["slate", "slate-*", "@udecode/**", "platejs", "@platejs/**"],
+      "enabled": false
+    },
+    {
+      "description": "Docker images are pinned with a monthly patch window (rules.md §10.4).",
+      "matchDatasources": ["docker"],
+      "schedule": ["before 6am on the first day of the month"]
+    },
+    {
+      "description": "Group non-major updates into one weekly PR to keep review load sane for a 1–2 developer team.",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "weekly non-major dependencies"
+    }
+  ]
+}

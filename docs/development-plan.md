@@ -1,14 +1,14 @@
 # ePharmatica — Development Plan
 
-| | |
-|---|---|
-| **Version** | 1.0 |
-| **Date** | 19 July 2026 |
-| **Derived from** | Master PRD v1.6 · module PRDs M1–M8 · ARCHITECTURE.md v1.1 · STYLE.md v1.3 · legal drafts |
-| **Companions** | `rules.md` (engineering ground rules) · `securities.md` (security program) |
-| **Team assumption** | 1–2 developers + founder/content team (per master PRD §6) |
+|                     |                                                                                           |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| **Version**         | 1.0                                                                                       |
+| **Date**            | 19 July 2026                                                                              |
+| **Derived from**    | Master PRD v1.6 · module PRDs M1–M8 · ARCHITECTURE.md v1.1 · STYLE.md v1.3 · legal drafts |
+| **Companions**      | `rules.md` (engineering ground rules) · `securities.md` (security program)                |
+| **Team assumption** | 1–2 developers + founder/content team (per master PRD §6)                                 |
 
-> **Governance reminder:** module PRDs are authoritative for module-level detail; on conflict with the master PRD §7, the module PRD + master changelog govern. The Decision Log (master §5) wins over ARCHITECTURE.md. This plan is a *sequencing* document — it never overrides a PRD.
+> **Governance reminder:** module PRDs are authoritative for module-level detail; on conflict with the master PRD §7, the module PRD + master changelog govern. The Decision Log (master §5) wins over ARCHITECTURE.md. This plan is a _sequencing_ document — it never overrides a PRD.
 
 ---
 
@@ -23,16 +23,16 @@
 
 A single Next.js 16 application backed by self-hosted Supabase on one Hetzner EU VPS behind Cloudflare, serving four surfaces: public marketing/learn pages, the authenticated learner app, the community, and the `/admin` CMS. Eight modules ship across five phases:
 
-| Module | What | Phase |
-|---|---|---|
-| M1 | Learning platform — reader, highlights, notes, bookmarks, progress, search | 1 |
-| M2 | Accounts & profiles — auth, immutable usernames, 14-day deletion machine, export | 1 |
-| M3 | AI study suite — BYOK explain/summarize/chat, key vault, guardrails | 1 |
-| M4 | CMS/admin — shell, editorial workflow, review queue, media, audit, §10 contracts | 1 (progressive) |
-| M5 | Community — forum, blog, public profiles, pharmacist verification | 2 |
-| M6 | Jobs portal — curated listings, organizations, saved/applied tracking | 3 |
-| M7 | Resume builder — 5 resumes, 4 templates, client-side PDF, AI polish/review | 3 |
-| M8 | WhatsApp bot — inbound-only, bilingual (English / Roman Urdu), menu + FTS | 4 |
+| Module | What                                                                             | Phase           |
+| ------ | -------------------------------------------------------------------------------- | --------------- |
+| M1     | Learning platform — reader, highlights, notes, bookmarks, progress, search       | 1               |
+| M2     | Accounts & profiles — auth, immutable usernames, 14-day deletion machine, export | 1               |
+| M3     | AI study suite — BYOK explain/summarize/chat, key vault, guardrails              | 1               |
+| M4     | CMS/admin — shell, editorial workflow, review queue, media, audit, §10 contracts | 1 (progressive) |
+| M5     | Community — forum, blog, public profiles, pharmacist verification                | 2               |
+| M6     | Jobs portal — curated listings, organizations, saved/applied tracking            | 3               |
+| M7     | Resume builder — 5 resumes, 4 templates, client-side PDF, AI polish/review       | 3               |
+| M8     | WhatsApp bot — inbound-only, bilingual (English / Roman Urdu), menu + FTS        | 4               |
 
 Strategic posture: content-first, cost-disciplined (~US$15/month infra), BYOK AI (zero platform inference cost), globally usable, monetization-flexible (dormant entitlement layer from Phase 1).
 
@@ -75,7 +75,7 @@ Phase 4  WhatsApp bot          3–4 wks   weeks 26–29
 Phase 5  Assessment engine     deferred  re-scope at Phase 3 planning (A3)
 ```
 
-**Content track (Risk R1) — Q2 resolved (v1.7):** Phase 1 launch requires ≥2 subjects with ≥25 published subtopics through the full review workflow, and the YouTube channel live with initial videos. The founder is the primary author and **most launch content is already written** — so the Phase-1 content work is porting into the CMS (Plate blocks, Drug Cards, callouts, video embeds) plus the review cycle, not greenfield authoring. Team at launch: founder + 1 recruited author + **≥1 external licensed reviewer** (required before the first publish — the workflow forbids self-approval, M4 CI-enforces "author cannot approve own draft", and G6 requires independent medical-accuracy review). The CMS authoring path is still built *first* inside Phase 1 so porting starts the week it lands.
+**Content track (Risk R1) — Q2 resolved (v1.7):** Phase 1 launch requires ≥2 subjects with ≥25 published subtopics through the full review workflow, and the YouTube channel live with initial videos. The founder is the primary author and **most launch content is already written** — so the Phase-1 content work is porting into the CMS (Plate blocks, Drug Cards, callouts, video embeds) plus the review cycle, not greenfield authoring. Team at launch: founder + 1 recruited author + **≥1 external licensed reviewer** (required before the first publish — the workflow forbids self-approval, M4 CI-enforces "author cannot approve own draft", and G6 requires independent medical-accuracy review). The CMS authoring path is still built _first_ inside Phase 1 so porting starts the week it lands.
 
 ---
 
@@ -113,6 +113,13 @@ Phase 5  Assessment engine     deferred  re-scope at Phase 3 planning (A3)
 - [ ] Environment variables per master Appendix A, secrets only in Coolify env store
 
 ### 0.C Design system & tokens (STYLE.md §16, S11)
+
+> **UI reference (added 19 Jul 2026, founder-supplied):** `docs/design/` holds the design canvases from the claude.ai/design project "CMS and Public Site Wireframes":
+>
+> - `epharmatica-wireframes.dc.html` — **every product screen** (1a–1bg): learn tree, reader (3 variants), gate, search, dashboard, auth, settings, AI suite, community, blog, profiles, verification, jobs, resume, WhatsApp flow, and all CMS surfaces incl. Move…, preview links, media library, queues, and consoles. Each phase implements its screens from these wireframes.
+> - `epharmatica-ui-mockups.dc.html` — hi-fi mockups: landing (2a — the 0.E spec), reader desktop/mobile (2b/2d), dashboard (2c), CMS editor + review (2e/2f), community thread (2g), jobs (2h/2i), resume builder (2j), plus full-coverage hi-fi + dark-mode turns.
+>
+> Both share the Pharmacopoeia tokens. Precedence: STYLE.md wins on token values; the mockups/wireframes win on composition and layout; PRD acceptance criteria win on behavior.
 
 - [ ] `packages/tokens` (@epharmatica/tokens): Style Dictionary pipeline — `tokens/*.json` is the single source of truth → CSS `@theme` block, TS constants, Tokens-Studio file for Figma. Tokens are edited only in JSON; `apps/web` and `packages/ui` consume the build outputs
 - [ ] Tailwind v4 `@theme` with the locked Pharmacopoeia tokens: all `--color-*` (paper/surface/ink/ink-2/line/primary/primary-strong/primary-tint/on-primary, ok/warn/danger, hl-amber/mint/lilac/rose), `--radius-*: 0px` (immutable, S1), fonts, breakpoints (sm 480 / md 768 / lg 1024 / xl 1200), z-scale (sticky 100 · dropdown 200 · overlay 300 · dialog 400 · toast 500), plus `.dark` values
@@ -362,7 +369,7 @@ Forward-only, each paired with regenerated types + RLS tests (I7):
 **Entry criteria:** Phase 3 gate passed. **Re-verify Meta's pricing for user-initiated service conversations** (R7/R-M8a — a phase gate, not a task). Dedicated number acquired (SIM stored securely offline). Native Roman-Urdu reviewer lined up (launch gate R-M8b).
 
 - [ ] Meta Business setup: number registration, display profile, webhook `/api/whatsapp/webhook` (GET verify token; POST `X-Hub-Signature-256` verification)
-- [ ] Data: wa_contacts (phone_hash pk + phone_encrypted, lang, opt_in_alerts, do_not_contact), wa_sessions (24 h resume window), wa_messages (wamid-unique, 90-day purge cron; the purge cycle also nulls `phone_encrypted` for contacts with no activity in 90 days and no active alert opt-in — the Privacy Policy scopes the encrypted copy "solely for reply routing"); **zero anon/authenticated access to any wa_* table** (CI-probed); console via staff RPCs with masking
+- [ ] Data: wa_contacts (phone_hash pk + phone_encrypted, lang, opt_in_alerts, do_not_contact), wa_sessions (24 h resume window), wa_messages (wamid-unique, 90-day purge cron; the purge cycle also nulls `phone_encrypted` for contacts with no activity in 90 days and no active alert opt-in — the Privacy Policy scopes the encrypted copy "solely for reply routing"); _\*zero anon/authenticated access to any wa_* table_* (CI-probed); console via staff RPCs with masking
 - [ ] Intent router: state machine + M1 FTS, **no LLM** (D15); bilingual catalogs (en, ur-latn ~30 strings each, code-owned, native-reviewed); universal keywords MENU / LANG / STOP / START
 - [ ] Flows: topic search (top 3 buttons, summary + study link + video link iff `primary_video_url`), latest 3 blogs, newest 5 jobs (expired-race fallback), about, job-alert interest (exact registration-not-activation copy), human handoff (support@ + reference code, flags session)
 - [ ] Rate limit 30 inbound/hr/contact (one notice then silence); wamid idempotency; edge cases per M8 §7 (media → "text only", groups ignored, blocked users silent)
@@ -373,7 +380,7 @@ Forward-only, each paired with regenerated types + RLS tests (I7):
 ### Phase 4 exit gate
 
 - End-to-end user-initiated conversation on the production number
-- **Zero business-initiated sends** in the outbound log (inbound-only is an architectural property — no code path capable of *unsolicited* sends exists; replies only, via `lib/integrations/whatsapp.ts`)
+- **Zero business-initiated sends** in the outbound log (inbound-only is an architectural property — no code path capable of _unsolicited_ sends exists; replies only, via `lib/integrations/whatsapp.ts`)
 - Logs visible in CMS; session staleness tested at 23:59/24:01; STOP/START honored; retention cron clock-tested
 - Module gate: **all M8 §9 acceptance criteria** pass — video line present/absent per `primary_video_url` fixtures; exact registration-not-activation alert copy; handoff reference code + flagged filter + phone reveal writes the audit row; 31st message in the hour gets the notice, 32nd gets silence, all logged; wamid duplicate-delivery processes once; kill-switch flips within one revalidation; `wa_*` tables unreachable from any non-service credential
 
@@ -387,15 +394,15 @@ Practice MCQs per topic, attempt history, weak-area surfacing. **Re-scope at Pha
 
 ## 10. Continuous tracks (all phases)
 
-| Track | Cadence / notes |
-|---|---|
+| Track                                    | Cadence / notes                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Content production + YouTube channel** | R1 track. Q2 resolved: founder primary author (most launch content pre-written; work = porting + review) + 1 recruited author + ≥1 external reviewer; channel live with initial videos before Phase 1 launch, cadence target 2 shorts/wk; ≥2 complete subjects before public launch; add authors under reviewer supervision when volume demands |
-| SEO | Sitemaps (content/blog/jobs), schema.org, OG images, slug_history 301s — ship with each surface, audit monthly |
-| Performance budgets | Lighthouse CI every PR (warn <90); real-device check on mid-range Android per phase |
-| Accessibility | AA floor on every new surface; keyboard + screen-reader pass per phase gate |
-| Security patching | `pnpm audit` + Renovate weekly; Docker images pinned, monthly patch window; Supabase upgrades on scratch clone first, snapshot before |
-| Restore drills | Monthly, calendar-enforced, into a scratch container |
-| Business-model review | Quarterly (R8) — entitlement layer keeps it a switch, not a refactor |
+| SEO                                      | Sitemaps (content/blog/jobs), schema.org, OG images, slug_history 301s — ship with each surface, audit monthly                                                                                                                                                                                                                                  |
+| Performance budgets                      | Lighthouse CI every PR (warn <90); real-device check on mid-range Android per phase                                                                                                                                                                                                                                                             |
+| Accessibility                            | AA floor on every new surface; keyboard + screen-reader pass per phase gate                                                                                                                                                                                                                                                                     |
+| Security patching                        | `pnpm audit` + Renovate weekly; Docker images pinned, monthly patch window; Supabase upgrades on scratch clone first, snapshot before                                                                                                                                                                                                           |
+| Restore drills                           | Monthly, calendar-enforced, into a scratch container                                                                                                                                                                                                                                                                                            |
+| Business-model review                    | Quarterly (R8) — entitlement layer keeps it a switch, not a refactor                                                                                                                                                                                                                                                                            |
 
 ## 11. Cross-module dependency map
 
@@ -430,16 +437,16 @@ M5 blog + M6 jobs live data ──▶ M8 blogs/jobs flows
 
 ## 13. Risk register (plan-level)
 
-| # | Risk | Plan response |
-|---|---|---|
-| R1 | Content bottleneck | **Largely mitigated: most launch content pre-written (Q2/v1.7)** — residual risk is porting + review throughput. CMS-first build order in Phase 1; style guide as the porting template; author + reviewer recruited in Phase 0; acceptance gates on content, not just code; add authors if the review queue's >7-day amber chip becomes the norm |
-| R2 | Single-VPS / bus factor | Phase 0 backup+restore drill before any real data; monthly drills; documented runbook |
-| R6 | Plate/anchor complexity | `@epharmatica/editor` wrapper first; anchor fixture suite per block kind; `highlight_kinds` flag as production fallback; renderer snapshot tests |
-| R3 | BYOK friction | Wizard with screenshots; Groq/Gemini first; product fully valuable without AI |
-| R7 | Meta/YouTube dependency shifts | Phase 4 entry gate re-verifies pricing; video URLs stored abstractly |
-| R-M2b | Purge drift as tables accumulate | `personal_data_registry` + CI failure on unregistered `user_id` tables — wire in Phase 0 |
-| R-M4d | Admin shell forked by later modules | M4 §10 contracts are review-gated; deviations require a PRD update |
-| Legal | Policies promise features that don't exist | Launch checklist in `securities.md` §16 ties every policy promise to a shipped feature |
+| #     | Risk                                       | Plan response                                                                                                                                                                                                                                                                                                                                    |
+| ----- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R1    | Content bottleneck                         | **Largely mitigated: most launch content pre-written (Q2/v1.7)** — residual risk is porting + review throughput. CMS-first build order in Phase 1; style guide as the porting template; author + reviewer recruited in Phase 0; acceptance gates on content, not just code; add authors if the review queue's >7-day amber chip becomes the norm |
+| R2    | Single-VPS / bus factor                    | Phase 0 backup+restore drill before any real data; monthly drills; documented runbook                                                                                                                                                                                                                                                            |
+| R6    | Plate/anchor complexity                    | `@epharmatica/editor` wrapper first; anchor fixture suite per block kind; `highlight_kinds` flag as production fallback; renderer snapshot tests                                                                                                                                                                                                 |
+| R3    | BYOK friction                              | Wizard with screenshots; Groq/Gemini first; product fully valuable without AI                                                                                                                                                                                                                                                                    |
+| R7    | Meta/YouTube dependency shifts             | Phase 4 entry gate re-verifies pricing; video URLs stored abstractly                                                                                                                                                                                                                                                                             |
+| R-M2b | Purge drift as tables accumulate           | `personal_data_registry` + CI failure on unregistered `user_id` tables — wire in Phase 0                                                                                                                                                                                                                                                         |
+| R-M4d | Admin shell forked by later modules        | M4 §10 contracts are review-gated; deviations require a PRD update                                                                                                                                                                                                                                                                               |
+| Legal | Policies promise features that don't exist | Launch checklist in `securities.md` §16 ties every policy promise to a shipped feature                                                                                                                                                                                                                                                           |
 
 ## 14. Open decisions that move the timeline
 

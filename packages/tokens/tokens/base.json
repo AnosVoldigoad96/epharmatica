@@ -1,0 +1,54 @@
+{
+  "radius": {
+    "default": {
+      "value": "0px",
+      "comment": "S1 — the boxy contract. Founder-locked FINAL. Changing this is a rebrand, not a token edit."
+    },
+    "sm": { "value": "0px" },
+    "md": { "value": "0px" },
+    "lg": { "value": "0px" },
+    "xl": { "value": "0px" },
+    "2xl": { "value": "0px" },
+    "3xl": { "value": "0px" },
+    "full": { "value": "0px" }
+  },
+  "breakpoint": {
+    "sm": { "value": "480px" },
+    "md": { "value": "768px" },
+    "lg": { "value": "1024px" },
+    "xl": { "value": "1200px" }
+  },
+  "container": {
+    "content": { "value": "1200px", "comment": "S3 — max content container" },
+    "admin": { "value": "1440px", "comment": "admin surfaces may go fluid to this" },
+    "reading": { "value": "68ch", "comment": "reading column" }
+  },
+  "z": {
+    "sticky": { "value": "100" },
+    "dropdown": { "value": "200" },
+    "overlay": { "value": "300" },
+    "dialog": { "value": "400" },
+    "toast": { "value": "500" }
+  },
+  "font": {
+    "display": {
+      "value": "var(--font-archivo), 'Archivo', ui-sans-serif, system-ui, sans-serif",
+      "comment": "Archivo 600–700 for display/headings; wdth 125 is wordmark-only"
+    },
+    "sans": {
+      "value": "var(--font-instrument-sans), 'Instrument Sans', ui-sans-serif, system-ui, sans-serif",
+      "comment": "Instrument Sans 400/500 body"
+    },
+    "mono": {
+      "value": "var(--font-plex-mono), 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace",
+      "comment": "IBM Plex Mono — monograph labels (11px UPPERCASE +0.12em) and all numeric data (tabular-nums)"
+    }
+  },
+  "ease": {
+    "standard": { "value": "cubic-bezier(0.2, 0.6, 0.2, 1)" }
+  },
+  "duration": {
+    "fast": { "value": "160ms" },
+    "overlay": { "value": "240ms" }
+  }
+}
