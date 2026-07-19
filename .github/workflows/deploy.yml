@@ -74,55 +74,51 @@ jobs:
       - name: Test (turbo)
         run: pnpm turbo run test
 
+  # Deploy topology (founder decision, 19 Jul 2026 — supersedes the plan's Coolify
+  # assumption): the shared Hetzner box runs plain compose + a Cloudflare tunnel.
+  # CI connects with a dedicated key whose authorized_keys entry carries a FORCED
+  # COMMAND — the key can only run /opt/epharmatica-app/deploy-from-ci.sh
+  # (pull → build → compose up → health gate), nothing else. Least privilege on a
+  # box shared with an unrelated product (rules.md I11).
   deploy:
-    name: Deploy to production (Coolify)
+    name: Deploy to production (SSH)
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
-      - name: Detect Coolify webhook secret
-        id: coolify
+      - name: Detect deploy key secret
+        id: sshkey
         # The secrets context is not available in `if:` expressions, so presence is
-        # detected here and the trigger step gates on this output.
+        # detected here and the deploy step gates on this output.
         env:
-          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
-          if [ -n "$COOLIFY_WEBHOOK_URL" ]; then
+          if [ -n "$DEPLOY_SSH_KEY" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Trigger Coolify deploy webhook
-        if: steps.coolify.outputs.configured == 'true'
+      - name: Deploy over SSH (forced command on the server)
+        if: steps.sshkey.outputs.configured == 'true'
         env:
-          COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
-          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
-          # Coolify deploy webhooks accept a bare POST; newer Coolify versions expect
-          # an Authorization bearer token — set COOLIFY_API_TOKEN when required.
-          if [ -n "$COOLIFY_API_TOKEN" ]; then
-            curl --fail --silent --show-error --retry 3 --retry-delay 5 \
-              -H "Authorization: Bearer $COOLIFY_API_TOKEN" \
-              -X POST "$COOLIFY_WEBHOOK_URL"
-          else
-            curl --fail --silent --show-error --retry 3 --retry-delay 5 \
-              -X POST "$COOLIFY_WEBHOOK_URL"
-          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Host key pinned — no TOFU in CI.
+          echo "178.63.23.176 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMcTDuuJPbOdUBl/pIY1oBZrPnoUaUJa7rTuwIv/yHUR" >> ~/.ssh/known_hosts
+          # The command string is ignored by the server's forced command; passing
+          # it anyway documents intent.
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes root@178.63.23.176 deploy-from-ci
 
-      - name: Deploy skipped — webhook secret not configured
-        if: steps.coolify.outputs.configured != 'true'
+      - name: Deploy skipped — DEPLOY_SSH_KEY not configured
+        if: steps.sshkey.outputs.configured != 'true'
         run: |
-          echo "::notice::COOLIFY_WEBHOOK_URL secret is not configured — deploy trigger skipped."
-          echo "::notice::Add the deploy webhook URL from the Coolify app settings as a repository secret to enable deploys (development-plan.md §4 0.A/0.B)."
-
-      # TODO(0.A/0.B — CI-built container image, optional): Coolify currently builds
-      # the image itself from the repo (apps/web standalone output). If CI-built images
-      # are preferred later, add a GHCR build+push here and point Coolify at the image:
-      #   - uses: docker/setup-buildx-action@v3
-      #   - uses: docker/login-action@v3        # ghcr.io with GITHUB_TOKEN
-      #   - uses: docker/build-push-action@v6
-      # This is a deliberate deferral, not an omission.
+          echo "::notice::DEPLOY_SSH_KEY secret is not configured — deploy skipped."
+          echo "::notice::Add the CI deploy private key as a repository secret to enable deploy-on-merge (development-plan.md §4 0.B)."
 
       # TODO(PRD §13.4 — GATED MIGRATION STEP; activate when supabase/ migrations and
       # production DB access exist). Contract, in order:
