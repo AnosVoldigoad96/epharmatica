@@ -1,0 +1,27 @@
+# ePharmatica — Documentation Index
+
+**Status:** paper phase complete · 18 Jul 2026 · everything below is founder-signed and build-ready.
+**Decision method:** structured MCQ elicitation — **77 decisions** across three series (18 master · 12 style · 47 module answers → 51 recorded).
+
+## Reading order (for a new engineer)
+
+| # | Document | What it is |
+|---|---|---|
+| 1 | `epharmatica-prd.md` (+ `epharmatica-prd.pdf`) | **Master PRD v1.6** — vision, personas, the 18-decision log, phased roadmap, feature overview (§7), data-model overview, infrastructure, stack justification, roles, NFRs, metrics, risks. The PDF is the shareable designed edition. On module-level detail, module PRDs govern (v1.6 changelog). |
+| 2 | `ARCHITECTURE.md` | v1.1 — system topology, the ten load-bearing invariants, codemap, data-access layers, key flows, cache-tag map, CI/CD, evolution points. Read before your first PR. |
+| 3 | `STYLE.md` + `style-specimen.html` | Design system v1.3 (locked) — Pharmacopoeia palette, 0px contract, monograph-label signature, mobile/touch system, S1–S12 series. Open the specimen to *see* it. |
+| 4 | `prd-m1-learning-platform.md` | Reader & study tools — per-subtopic pages, universal typed highlight anchors, notes (drawer + inline), incremental publishing, search. |
+| 5 | `prd-m2-accounts-profiles.md` | Auth & identity — immutable usernames, verified-email auto-linking, the 14-day deletion machine, export schema, purge registry. |
+| 6 | `prd-m3-ai-study-suite.md` | BYOK AI — model registry, key modes with RPC-only access, explain/summarize/chat (+ selection→chat), spend guardrails, failure taxonomy. |
+| 7 | `prd-m4-cms-admin.md` | The admin shell + Phase-1 surfaces — editorial workflow, open review queue, preview links, media library, audit; §10 contracts every later module plugs into. |
+| 8 | `prd-m5-community.md` | Forum · blog · profiles · verification — anonymity enforced at the data layer, 15-min edit windows, accepted answers, team bylines, badge lifecycle. |
+| 9 | `prd-m6-jobs-portal.md` | Curated-first jobs — organizations, salary nudge, applied tracker, dormant employer path behind a flag. |
+| 10 | `prd-m7-resume-builder.md` | Five resumes, fixed sections + Additional, four templates, photo policy, export floor, AI polish + review with the no-fabrication clause. |
+| 11 | `prd-m8-whatsapp-bot.md` | Inbound-only bilingual bot — dedicated number, 24-h sessions, alert-interest capture, handoff, hard inbound-only posture. |
+| 12 | `terms-of-service.md` · `privacy-policy.md` · `content-policy.md` · `medical-disclaimer.md` | Legal drafts — tailored to the real architecture. **Counsel review required before launch**; bracketed fields pending. |
+
+## Build entry points
+Phase 0 starts from: `STYLE.md §16` (tokens → `globals.css`) · master PRD Appendix C (migration order) · `ARCHITECTURE.md §3.2` (repo codemap) · module acceptance criteria as the test plans.
+
+## Open threads (the honest short list)
+Q2 (content team shape — sets the real Phase-1 timeline) · legal counsel pass · YouTube channel creation (content-track gate) · employer-form and outbound-WhatsApp activation criteria (founder calls, gated in M6/M8) · Urdu locale timing (A2).

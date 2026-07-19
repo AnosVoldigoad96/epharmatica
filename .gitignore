@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# builds
+.next/
+out/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# testing
+coverage/
+playwright-report/
+test-results/
+
+# env & secrets — config only via env (Coolify store in prod)
+.env
+.env.*
+!.env.example
+
+# supabase local
+supabase/.temp/
+supabase/.branches/
+
+# misc
+.DS_Store
+*.log
