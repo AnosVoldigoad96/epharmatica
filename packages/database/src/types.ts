@@ -1,20 +1,1104 @@
-/**
- * GENERATED FILE — placeholder until the local Supabase stack runs.
- *
- * Regenerate with `pnpm --filter @epharmatica/database gen:types` (wraps
- * `supabase gen types typescript --local`). CI enforces zero drift between
- * migrations and this file (rules.md I7 / plan §0.B). Never hand-edit beyond
- * this placeholder stage.
- */
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
-// Placeholder shape — replaced wholesale by `supabase gen types` once the
-// local stack is provisioned (development-plan.md 0.A/0.D).
-export interface Database {
+export type Database = {
   public: {
-    Tables: Record<string, { Row: unknown; Insert: unknown; Update: unknown }>
-    Views: Record<string, { Row: unknown }>
-    Functions: Record<string, unknown>
-    Enums: Record<string, string>
+    Tables: {
+      ai_keys: {
+        Row: {
+          created_at: string
+          encrypted_key: string | null
+          id: string
+          last_validated_at: string | null
+          provider: string
+          storage_mode: Database['public']['Enums']['ai_key_storage_mode']
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_key?: string | null
+          id?: string
+          last_validated_at?: string | null
+          provider: string
+          storage_mode?: Database['public']['Enums']['ai_key_storage_mode']
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_key?: string | null
+          id?: string
+          last_validated_at?: string | null
+          provider?: string
+          storage_mode?: Database['public']['Enums']['ai_key_storage_mode']
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_models: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          is_default: boolean
+          label: string
+          model_id: string
+          provider: string
+          sort: number
+          tier_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label: string
+          model_id: string
+          provider: string
+          sort?: number
+          tier_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          label?: string
+          model_id?: string
+          provider?: string
+          sort?: number
+          tier_note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_rate_limits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: string
+          request_count: number
+          updated_at: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          ip_hash: string | null
+          meta: Json
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          ip_hash?: string | null
+          meta?: Json
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          ip_hash?: string | null
+          meta?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      auth_rate_limits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: string
+          identifier: string
+          request_count: number
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: string
+          identifier: string
+          request_count?: number
+          updated_at?: string
+          window_start: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: string
+          identifier?: string
+          request_count?: number
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          target_id: string
+          target_type: Database['public']['Enums']['bookmark_target']
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: Database['public']['Enums']['bookmark_target']
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: Database['public']['Enums']['bookmark_target']
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chapters: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'chapters_subject_id_fkey'
+            columns: ['subject_id']
+            referencedRelation: 'subjects'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      content_review_events: {
+        Row: {
+          actor_id: string | null
+          comment: string | null
+          created_at: string
+          from_status: Database['public']['Enums']['content_status'] | null
+          id: string
+          subtopic_id: string
+          to_status: Database['public']['Enums']['content_status']
+          updated_at: string
+        }
+        Insert: {
+          actor_id?: string | null
+          comment?: string | null
+          created_at?: string
+          from_status?: Database['public']['Enums']['content_status'] | null
+          id?: string
+          subtopic_id: string
+          to_status: Database['public']['Enums']['content_status']
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string | null
+          comment?: string | null
+          created_at?: string
+          from_status?: Database['public']['Enums']['content_status'] | null
+          id?: string
+          subtopic_id?: string
+          to_status?: Database['public']['Enums']['content_status']
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'content_review_events_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      content_revisions: {
+        Row: {
+          content: Json
+          created_at: string
+          editor_id: string | null
+          id: string
+          note: string | null
+          subtopic_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          editor_id?: string | null
+          id?: string
+          note?: string | null
+          subtopic_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          editor_id?: string | null
+          id?: string
+          note?: string | null
+          subtopic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'content_revisions_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      deletion_receipts: {
+        Row: {
+          created_at: string
+          id: string
+          purged_at: string
+          updated_at: string
+          user_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          purged_at?: string
+          updated_at?: string
+          user_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          purged_at?: string
+          updated_at?: string
+          user_hash?: string
+        }
+        Relationships: []
+      }
+      entitlements: {
+        Row: {
+          created_at: string
+          feature: string
+          id: string
+          plan_id: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          feature: string
+          id?: string
+          plan_id: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          feature?: string
+          id?: string
+          plan_id?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'entitlements_plan_id_fkey'
+            columns: ['plan_id']
+            referencedRelation: 'plans'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          key: string
+          phase_tag: string | null
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key: string
+          phase_tag?: string | null
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          phase_tag?: string | null
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: []
+      }
+      handle_quarantine: {
+        Row: {
+          created_at: string
+          freed_after: string
+          handle: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          freed_after: string
+          handle: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          freed_after?: string
+          handle?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      highlights: {
+        Row: {
+          anchor: Json
+          color: Database['public']['Enums']['highlight_color']
+          created_at: string
+          id: string
+          moved: boolean
+          orphaned: boolean
+          subtopic_id: string
+          text_snapshot: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anchor: Json
+          color: Database['public']['Enums']['highlight_color']
+          created_at?: string
+          id?: string
+          moved?: boolean
+          orphaned?: boolean
+          subtopic_id: string
+          text_snapshot: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anchor?: Json
+          color?: Database['public']['Enums']['highlight_color']
+          created_at?: string
+          id?: string
+          moved?: boolean
+          orphaned?: boolean
+          subtopic_id?: string
+          text_snapshot?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'highlights_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      last_visited: {
+        Row: {
+          created_at: string
+          subtopic_id: string
+          updated_at: string
+          user_id: string
+          visited_at: string
+        }
+        Insert: {
+          created_at?: string
+          subtopic_id: string
+          updated_at?: string
+          user_id: string
+          visited_at?: string
+        }
+        Update: {
+          created_at?: string
+          subtopic_id?: string
+          updated_at?: string
+          user_id?: string
+          visited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'last_visited_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      personal_data_registry: {
+        Row: {
+          created_at: string
+          module: string
+          notes: string | null
+          purge_step: number
+          table_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          module: string
+          notes?: string | null
+          purge_step: number
+          table_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          module?: string
+          notes?: string | null
+          purge_step?: number
+          table_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean
+          key: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          key: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          key?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          country: string | null
+          created_at: string
+          deletion_requested_at: string | null
+          display_name: string
+          email_verified_at: string | null
+          id: string
+          institution: string | null
+          is_verified_pharmacist: boolean
+          prefs: Json
+          role: Database['public']['Enums']['app_role']
+          updated_at: string
+          user_type: Database['public']['Enums']['user_type']
+          username: string
+          verified_at: string | null
+          visibility: Database['public']['Enums']['profile_visibility']
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          deletion_requested_at?: string | null
+          display_name: string
+          email_verified_at?: string | null
+          id: string
+          institution?: string | null
+          is_verified_pharmacist?: boolean
+          prefs?: Json
+          role?: Database['public']['Enums']['app_role']
+          updated_at?: string
+          user_type?: Database['public']['Enums']['user_type']
+          username: string
+          verified_at?: string | null
+          visibility?: Database['public']['Enums']['profile_visibility']
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          deletion_requested_at?: string | null
+          display_name?: string
+          email_verified_at?: string | null
+          id?: string
+          institution?: string | null
+          is_verified_pharmacist?: boolean
+          prefs?: Json
+          role?: Database['public']['Enums']['app_role']
+          updated_at?: string
+          user_type?: Database['public']['Enums']['user_type']
+          username?: string
+          verified_at?: string | null
+          visibility?: Database['public']['Enums']['profile_visibility']
+        }
+        Relationships: []
+      }
+      progress: {
+        Row: {
+          completed_at: string
+          created_at: string
+          id: string
+          subtopic_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          subtopic_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          subtopic_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'progress_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      reserved_usernames: {
+        Row: {
+          created_at: string
+          handle: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          handle: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          handle?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      slug_history: {
+        Row: {
+          created_at: string
+          entity_id: string
+          id: string
+          level: Database['public']['Enums']['content_level']
+          new_slug: string
+          old_slug: string
+          parent_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          id?: string
+          level: Database['public']['Enums']['content_level']
+          new_slug: string
+          old_slug: string
+          parent_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          id?: string
+          level?: Database['public']['Enums']['content_level']
+          new_slug?: string
+          old_slug?: string
+          parent_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          created_at: string
+          default_semester: number | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_semester?: number | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_semester?: number | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subtopics: {
+        Row: {
+          content: Json
+          created_at: string
+          headings_text: string
+          id: string
+          plain_text: string
+          preview_block_count: number | null
+          primary_video_url: string | null
+          published_at: string | null
+          reading_minutes: number
+          search_vector: unknown
+          slug: string
+          sort_order: number
+          status: Database['public']['Enums']['content_status']
+          title: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          headings_text?: string
+          id?: string
+          plain_text?: string
+          preview_block_count?: number | null
+          primary_video_url?: string | null
+          published_at?: string | null
+          reading_minutes?: number
+          search_vector?: unknown
+          slug: string
+          sort_order?: number
+          status?: Database['public']['Enums']['content_status']
+          title: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          headings_text?: string
+          id?: string
+          plain_text?: string
+          preview_block_count?: number | null
+          primary_video_url?: string | null
+          published_at?: string | null
+          reading_minutes?: number
+          search_vector?: unknown
+          slug?: string
+          sort_order?: number
+          status?: Database['public']['Enums']['content_status']
+          title?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'subtopics_topic_id_fkey'
+            columns: ['topic_id']
+            referencedRelation: 'topics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      topics: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          semester: number | null
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          semester?: number | null
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          semester?: number | null
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'topics_chapter_id_fkey'
+            columns: ['chapter_id']
+            referencedRelation: 'chapters'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      user_notes: {
+        Row: {
+          content: Json
+          created_at: string
+          highlight_id: string | null
+          id: string
+          source: string
+          source_label: string | null
+          subtopic_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          highlight_id?: string | null
+          id?: string
+          source?: string
+          source_label?: string | null
+          subtopic_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          highlight_id?: string | null
+          id?: string
+          source?: string
+          source_label?: string | null
+          subtopic_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'user_notes_highlight_id_fkey'
+            columns: ['highlight_id']
+            referencedRelation: 'highlights'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'user_notes_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      waitlist_signups: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          module: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          module: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          module?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      auth_rate_limit_hit: {
+        Args: { p_bucket: string; p_identifier: string; p_window_start: string }
+        Returns: number
+      }
+      can_feature: { Args: { feature_key: string }; Returns: boolean }
+      has_role: { Args: { required_roles: string[] }; Returns: boolean }
+      username_available: { Args: { candidate: string }; Returns: boolean }
+    }
+    Enums: {
+      ai_key_storage_mode: 'device' | 'sync'
+      app_role:
+        | 'user'
+        | 'author'
+        | 'reviewer'
+        | 'content_manager'
+        | 'blog_editor'
+        | 'moderator'
+        | 'jobs_manager'
+        | 'support'
+        | 'admin'
+        | 'super_admin'
+      bookmark_target: 'subtopic' | 'topic'
+      content_level: 'subject' | 'chapter' | 'topic' | 'subtopic'
+      content_status:
+        'draft' | 'in_review' | 'changes_requested' | 'approved' | 'published' | 'archived'
+      highlight_color: 'amber' | 'mint' | 'lilac' | 'rose'
+      profile_visibility: 'unset' | 'public' | 'private'
+      user_type: 'student' | 'pharmacist' | 'other'
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    keyof DefaultSchema['Enums'] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    keyof DefaultSchema['CompositeTypes'] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      ai_key_storage_mode: ['device', 'sync'],
+      app_role: [
+        'user',
+        'author',
+        'reviewer',
+        'content_manager',
+        'blog_editor',
+        'moderator',
+        'jobs_manager',
+        'support',
+        'admin',
+        'super_admin',
+      ],
+      bookmark_target: ['subtopic', 'topic'],
+      content_level: ['subject', 'chapter', 'topic', 'subtopic'],
+      content_status: [
+        'draft',
+        'in_review',
+        'changes_requested',
+        'approved',
+        'published',
+        'archived',
+      ],
+      highlight_color: ['amber', 'mint', 'lilac', 'rose'],
+      profile_visibility: ['unset', 'public', 'private'],
+      user_type: ['student', 'pharmacist', 'other'],
+    },
+  },
+} as const
