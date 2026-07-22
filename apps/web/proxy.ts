@@ -13,6 +13,12 @@ import { NextResponse } from 'next/server'
  * place httpOnly session cookies stay fresh (ARCHITECTURE §5 "Auth").
  * No redirects here — the completion gate lives in the authed layouts.
  *
+ * `/auth/**` is excluded from the matcher (below): those routes are pre-session
+ * (sign-in / OAuth callback / recovery), so there is no session to refresh, and
+ * running getUser() there clobbers the short-lived PKCE `code-verifier` cookie
+ * mid-OAuth — the callback's exchangeCodeForSession then fails with a missing
+ * verifier. Auth routes manage their own cookies via their own server clients.
+ *
  * TODO(Phase 1 · 1.B): hard-block /admin/** without a staff role — the proxy
  *   layer of the three-layer gate (proxy role gate + per-page permission map
  *   + RLS), defense-in-depth on top of RLS (M4; ARCHITECTURE §5).
@@ -59,7 +65,8 @@ export const config = {
      * - _next/static, _next/image (build assets)
      * - favicon and common static files
      * - api routes keep their own guards (health, cron secret, webhook signature)
+     * - auth/** (pre-session; running getUser() here breaks the PKCE flow — see above)
      */
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|auth/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
   ],
 }

@@ -40,7 +40,17 @@ export async function GET(request: NextRequest) {
   const tokenHash = url.searchParams.get('token_hash')
   const type = url.searchParams.get('type')
   const next = sanitizeNextPath(url.searchParams.get('next'))
-  const to = (path: string) => NextResponse.redirect(new URL(path, url.origin))
+  // Build redirects from the CONFIGURED public origin, never `request.url` — the
+  // app sits behind the Cloudflare tunnel + Traefik, which hand Next an internal
+  // origin (http://0.0.0.0:3000), so url.origin would send users to a dead host.
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://epharmatica.com'
+  const to = (path: string) => NextResponse.redirect(new URL(path, base))
+  // Auth-callback failures are ops-relevant (broken sign-in) and non-sensitive
+  // (no tokens/emails logged) — surface the reason instead of a silent redirect.
+  const fail = (reason: string, detail?: string) => {
+    console.error(`[auth/callback] ${reason}${detail ? `: ${detail}` : ''}`)
+    return to('/auth/sign-in?error=link')
+  }
 
   try {
     // Throws when Supabase env is unset — caught below as an expired-link
@@ -50,7 +60,7 @@ export async function GET(request: NextRequest) {
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code)
       if (error) {
-        return to('/auth/sign-in?error=link')
+        return fail('exchangeCodeForSession failed', error.message)
       }
     } else if (tokenHash && type) {
       const { error } = await supabase.auth.verifyOtp({
@@ -58,15 +68,15 @@ export async function GET(request: NextRequest) {
         token_hash: tokenHash,
       })
       if (error) {
-        return to('/auth/sign-in?error=link')
+        return fail('verifyOtp failed', error.message)
       }
     } else {
-      return to('/auth/sign-in?error=link')
+      return fail('no code or token_hash in callback')
     }
 
     const { data: userData, error: userError } = await supabase.auth.getUser()
     if (userError || !userData.user) {
-      return to('/auth/sign-in?error=link')
+      return fail('getUser after exchange failed', userError?.message)
     }
     const user = userData.user
     const identities = user.identities ?? []
@@ -165,7 +175,7 @@ export async function GET(request: NextRequest) {
       return to(`/auth/complete?next=${encodeURIComponent(next)}`)
     }
     return to(next)
-  } catch {
-    return to('/auth/sign-in?error=link')
+  } catch (err) {
+    return fail('unexpected error', err instanceof Error ? err.message : String(err))
   }
 }
