@@ -65,8 +65,8 @@ jobs:
         run: pnpm turbo run build
         env:
           # Placeholder values so `next build` can run in CI without a live Supabase
-          # stack. Real values live only in the Coolify env store (PRD Appendix A);
-          # repo/org Actions *variables* override these when set. Never commit real keys.
+          # stack. Real values live only in the VPS compose env file (/opt/epharmatica-app/.env,
+          # PRD Appendix A); repo/org Actions *variables* override these when set. Never commit real keys.
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
 

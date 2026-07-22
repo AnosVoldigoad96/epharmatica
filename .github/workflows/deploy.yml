@@ -1,10 +1,11 @@
 # ePharmatica — production deploy on merge to main
 # Spec: PRD §13.4 · development-plan.md §4 (0.B) · ARCHITECTURE.md §8
 #
-# Target pipeline (PRD §13.4): merge to main → build (+ image) → Coolify webhook deploy
-# → gated migration step (automatic pre-migration dump) → smoke ping → Sentry release
-# + sourcemaps. Steps whose infrastructure does not exist yet are explicit TODOs below,
-# and the webhook trigger is skipped honestly (with a notice) until its secret exists —
+# Pipeline (PRD §13.4, adapted by the 19 Jul 2026 founder decision — no Coolify):
+# merge to main → build (+ image) → SSH deploy (forced command on the box) → gated
+# migration step (automatic pre-migration dump) → smoke ping → Sentry release +
+# sourcemaps. Steps whose infrastructure does not exist yet are explicit TODOs below,
+# and the SSH deploy is skipped honestly (with a notice) until DEPLOY_SSH_KEY exists —
 # nothing here fakes success.
 
 name: Deploy
@@ -66,8 +67,8 @@ jobs:
         run: pnpm turbo run build
         env:
           # Placeholder values so `next build` can run in CI without a live Supabase
-          # stack — the production build with real values happens on the VPS via
-          # Coolify (env from the Coolify store only, PRD Appendix A).
+          # stack — the production build with real values happens on the VPS via the
+          # SSH deploy (env from /opt/epharmatica-app/.env only, PRD Appendix A).
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
 

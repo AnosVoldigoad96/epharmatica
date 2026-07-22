@@ -3,16 +3,41 @@
 What the `feat/1a-accounts-core` branch needs on the VPS before auth works in
 production. Companion to `development-plan.md` §5 (1.A) and `prd-m2-accounts-profiles.md`.
 
-## 1. Database
+## 0. Deploy topology (how this box actually works)
 
+Founder decision (19 Jul 2026) superseded the plan's Coolify assumption:
+**there is no Coolify.** The shared Hetzner box (`178.63.23.176`) runs plain
+Docker Compose behind a Cloudflare tunnel (`cloudflared`); Cloudflare terminates
+TLS. Deploy is on merge to `main`: `.github/workflows/deploy.yml` SSHes in with a
+forced-command key that can only run `deploy-from-ci` (pull → build →
+`compose up` → health gate). So:
+
+- **App runtime env** lives in the app's compose env file on the box
+  (`/opt/epharmatica-app/.env`), NOT in any Coolify store. Editing it + a redeploy
+  (or `docker compose up -d`) is how new app env takes effect.
+- **GoTrue env** lives in the self-hosted Supabase stack's own compose env on the
+  same box (a separate compose project). Changing it requires recreating the
+  `auth` (GoTrue) container in that stack.
+- **CI secrets** (e.g. `DEPLOY_SSH_KEY`) are GitHub repo secrets; the CI _build_
+  uses GitHub repo _variables_ for placeholder Supabase values only.
+
+## 1. Database (applied by hand on the box)
+
+The gated migration step in `deploy.yml` is still a TODO (no automated
+migration-on-deploy yet), so migration 011 is applied manually against the
+self-hosted stack — the same way 001–010 were.
+
+- Take a pre-migration dump first: `pg_dump -Fc` to the encrypted backup store
+  (the migration never runs without a fresh dump).
 - Apply migration `supabase/migrations/20260720000011_auth_rate_limits_reserved_handles.sql`
-  (forward-only; pre-migration dump per the merge pipeline).
+  (forward-only).
 - Run the RLS probe suite including the new `supabase/tests/07_auth_rate_limits.sql`
   (`psql -v ON_ERROR_STOP=1` as postgres, files in order).
 - Regenerate types against the migrated stack and commit:
-  `pnpm --filter @epharmatica/database gen:types` (type-drift CI check).
+  `pnpm --filter @epharmatica/database gen:types` (this clears the type-drift CI
+  check, which stays red until it runs).
 
-## 2. GoTrue (auth service env, Coolify)
+## 2. GoTrue (auth service env — self-hosted Supabase stack on the box)
 
 | Variable                                        | Value / note                                                                                                                                                                                                                                   |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -55,9 +80,10 @@ route handles both plus OAuth `?code=`.)
 4. OAuth consent screen: external, app name ePharmatica, support email
    `support@epharmatica.com`, scopes: `email`, `profile`, `openid`.
 
-HTTPS origin is a hard requirement (securities.md §12) — Traefik terminates TLS.
+HTTPS origin is a hard requirement (securities.md §12) — Cloudflare terminates
+TLS at the tunnel edge in front of the box.
 
-## 4. App container env (Coolify)
+## 4. App container env (`/opt/epharmatica-app/.env` on the box)
 
 | Variable                                                                                   | Note                                                                                                                                                                                                                               |
 | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

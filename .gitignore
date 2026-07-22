@@ -14,7 +14,7 @@ coverage/
 playwright-report/
 test-results/
 
-# env & secrets — config only via env (Coolify store in prod)
+# env & secrets — config only via env (VPS compose .env in prod)
 .env
 .env.*
 !.env.example
