@@ -136,6 +136,257 @@
       "generic": "Something went wrong saving your signup. Try again."
     }
   },
+  "auth": {
+    "meta": {
+      "signUp": {
+        "title": "Create your account",
+        "description": "Create a free ePharmatica account — structured study material, progress tracking, and AI study tools on your own key."
+      },
+      "signIn": {
+        "title": "Sign in",
+        "description": "Sign in to your ePharmatica account."
+      },
+      "complete": {
+        "title": "Choose your username",
+        "description": "One more step — choose your permanent username to finish creating your account."
+      },
+      "forgotPassword": {
+        "title": "Reset your password",
+        "description": "Request a password reset link for your ePharmatica account."
+      },
+      "resetPassword": {
+        "title": "Set a new password",
+        "description": "Choose a new password for your ePharmatica account."
+      }
+    },
+    "signUp": {
+      "title": "Create your account",
+      "google": "Continue with Google",
+      "or": "OR",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordHelper": "Minimum 10 characters — strength: {strength}",
+      "strength": {
+        "unknown": "—",
+        "tooWeak": "too weak",
+        "okay": "okay",
+        "good": "good",
+        "strong": "strong"
+      },
+      "username": "Username",
+      "usernameHelper": "Your username is permanent and can't be changed.",
+      "usernameAvailable": "✓ AVAILABLE",
+      "usernameTaken": "✗ TAKEN",
+      "usernameChecking": "CHECKING…",
+      "displayName": "Display name",
+      "ageConfirm": "I'm 13 or older — with a parent or guardian's consent if under 18 — and accept the <terms>Terms</terms> and <privacy>Privacy Policy</privacy>",
+      "submit": "Create account",
+      "haveAccount": "Already here? <link>Sign in</link>",
+      "checkEmail": {
+        "label": "CHECK YOUR EMAIL",
+        "message": "We've sent a verification link to {email}. Open it to verify your account and pick up where you left off.",
+        "resendNote": "Nothing arriving? Check spam, or sign in later to resend it."
+      }
+    },
+    "signIn": {
+      "title": "Sign in",
+      "google": "Continue with Google",
+      "or": "OR",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "submit": "Sign in",
+      "forgotPassword": "Forgot password",
+      "noAccount": "New here? <link>Create account</link>",
+      "resendVerification": "Resend verification email",
+      "resendDone": "Verification email sent.",
+      "notices": {
+        "signedOut": "You've been signed out on every device.",
+        "linkBlocked": "An account with this email exists but isn't verified. Verify it first, then sign in with Google to connect them.",
+        "linkError": "That link has expired or was already used. Request a new one.",
+        "verified": "Email verified — you're all set."
+      }
+    },
+    "complete": {
+      "eyebrow": "ONE MORE STEP",
+      "title": "Choose your username",
+      "signedInAs": "Signed in as <strong>{email}</strong>. Your account is created once this step is done — not before.",
+      "username": "Username — permanent",
+      "usernameHelper": "Your username is permanent and can't be changed.",
+      "userType": "I am a",
+      "userTypes": {
+        "student": "Student",
+        "pharmacist": "Pharmacist",
+        "other": "Other"
+      },
+      "ageConfirm": "I'm 13 or older — with a parent or guardian's consent if under 18 — and accept the <terms>Terms</terms> and <privacy>Privacy Policy</privacy>",
+      "submit": "Finish and start learning"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "explainer": "Enter your account email and we'll send a reset link.",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "submit": "Email me a reset link",
+      "done": "If that account exists, we've emailed a link",
+      "backToSignIn": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "password": "New password",
+      "passwordHelper": "Minimum 10 characters — strength: {strength}",
+      "submit": "Set new password"
+    },
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "turnstile": "Human verification failed. Reload the page and try again.",
+      "notConfigured": "Accounts aren't configured yet — email support@epharmatica.com if this persists.",
+      "badCredentials": "Email or password doesn't match.",
+      "emailNotConfirmed": "Verify your email first — check your inbox for the link.",
+      "passwordTooWeak": "That password is too easy to guess — make it longer or less predictable.",
+      "usernameTaken": "That username was just taken — pick another.",
+      "usernameUnavailable": "That username isn't available — pick another.",
+      "tooManyAttempts": "Too many attempts. Wait about {minutes} min and try again.",
+      "sessionExpired": "Your session expired. Sign in again.",
+      "profileExists": "Your account is already set up.",
+      "resetLinkRequired": "Open the reset link from your email first."
+    }
+  },
+  "settings": {
+    "meta": {
+      "profile": { "title": "Profile settings", "description": "Your profile on ePharmatica." },
+      "appearance": { "title": "Appearance", "description": "Theme and reader text size." },
+      "aiKeys": { "title": "AI keys", "description": "Bring-your-own-key AI settings." },
+      "data": { "title": "Your data", "description": "Export and deletion." },
+      "sessions": { "title": "Sessions & sign-in", "description": "Sign-in methods and sessions." }
+    },
+    "nav": {
+      "heading": "SETTINGS",
+      "profile": "Profile",
+      "appearance": "Appearance",
+      "aiKeys": "AI keys",
+      "data": "Data",
+      "sessions": "Sessions & sign-in"
+    },
+    "topnav": {
+      "settings": "Settings",
+      "home": "Home"
+    },
+    "banner": {
+      "label": "VERIFY YOUR EMAIL",
+      "message": "Verify your email — we've emailed you a link.",
+      "resend": "Resend verification email",
+      "resent": "Verification email sent."
+    },
+    "profile": {
+      "sectionLabel": "PROFILE",
+      "username": "Username",
+      "usernamePermanent": "PERMANENT",
+      "displayName": "Display name",
+      "userType": "User type",
+      "userTypes": {
+        "student": "Student",
+        "pharmacist": "Pharmacist",
+        "other": "Other"
+      },
+      "country": "Country",
+      "countryNone": "Not set",
+      "institution": "Institution — optional",
+      "bio": "Bio",
+      "bioCounter": "{count} / 280",
+      "save": "Save profile",
+      "saved": "Profile saved",
+      "avatar": {
+        "replace": "REPLACE",
+        "dialogTitle": "Crop your avatar",
+        "zoom": "Zoom",
+        "save": "Save avatar",
+        "cancel": "Cancel",
+        "saved": "Avatar updated",
+        "errors": {
+          "badType": "Pick a PNG, JPEG, or WebP image.",
+          "tooLarge": "That image is over 1 MB after cropping — zoom in on a smaller area or pick a smaller image.",
+          "generic": "Uploading your avatar failed. Your previous avatar is untouched — try again."
+        }
+      }
+    },
+    "appearance": {
+      "sectionLabel": "APPEARANCE",
+      "theme": "Theme",
+      "themes": {
+        "system": "System",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "readerText": "Reader text",
+      "textSizes": {
+        "14": "Reader text: smaller",
+        "16": "Reader text: default",
+        "18": "Reader text: larger"
+      },
+      "helper": "Both follow your account across devices.",
+      "saveError": "Saving your preference failed. Try again."
+    },
+    "aiKeys": {
+      "sectionLabel": "AI KEYS",
+      "comingSoonChip": "COMING SOON",
+      "body": "Bring-your-own-key AI arrives with the AI study suite. You'll add provider keys here — stored on your device by default, and we never bill you for inference."
+    },
+    "data": {
+      "exportLabel": "EXPORT",
+      "exportTitle": "Export my study data",
+      "exportSub": "Highlights, notes, progress, bookmarks — one JSON file.",
+      "exportButton": "Export JSON",
+      "exportNote": "LIMIT 3 / DAY · AI-SOURCED NOTES KEEP THEIR LABEL",
+      "deleteLabel": "DELETE ACCOUNT",
+      "deleteBody": "Deleting your account starts a 14-day grace period, then purges everything in the order the Privacy Policy promises.",
+      "comingSoon": "Export and account deletion arrive later in Phase 1."
+    },
+    "sessions": {
+      "methodsLabel": "SIGN-IN METHODS",
+      "password": "Password",
+      "google": "Google",
+      "chipActive": "ACTIVE",
+      "chipNotSet": "NOT SET",
+      "chipLinked": "LINKED",
+      "chipNotLinked": "NOT LINKED",
+      "chipComingSoon": "COMING SOON",
+      "setPassword": "Set password",
+      "setPasswordSent": "Check your email — we've sent a link to set your password.",
+      "remove": "Remove",
+      "removeTitle": "Remove {method}",
+      "reauthLabel": "Re-enter your password",
+      "confirmRemove": "Remove {method}",
+      "cancel": "Cancel",
+      "methodsHelper": "A method can be removed only while another remains. Every change is confirmed by email.",
+      "googleLinkHint": "Sign in with Google using this email to link it.",
+      "sessionsLabel": "SESSIONS",
+      "signOutEverywhere": "Sign out everywhere",
+      "signOutNote": "Revokes every device — including this one.",
+      "totpLabel": "TWO-FACTOR AUTHENTICATION",
+      "totpRow": "Authenticator app (TOTP)",
+      "methodRemoved": "{method} removed",
+      "errors": {
+        "lastMethod": "You can't remove your only sign-in method.",
+        "needPassword": "Set a password first — then you can remove Google.",
+        "needGoogle": "Link Google first — then you can remove your password.",
+        "badPassword": "That password doesn't match.",
+        "generic": "Something went wrong. Try again."
+      }
+    }
+  },
+  "emails": {
+    "footer": "If this wasn't you, reset your password and review Settings → Sessions & sign-in.",
+    "identityLinked": {
+      "subject": "Google added as a sign-in method",
+      "body": "Google was added as a sign-in method for your ePharmatica account."
+    },
+    "methodRemoved": {
+      "subject": "{method} removed as a sign-in method",
+      "body": "{method} was removed as a sign-in method for your ePharmatica account."
+    }
+  },
   "footer": {
     "legalLabel": "LEGAL",
     "contactLabel": "CONTACT",

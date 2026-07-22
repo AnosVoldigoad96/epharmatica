@@ -7,13 +7,19 @@ import { cx } from '../lib/cx'
  * TextSizeControl — A− / A / A+ three-cell segmented control (STYLE.md §8 S7).
  * 1px line frame, shared inner 1px dividers, selected cell = primary-tint +
  * 1px ink inner outline; 40px cells (44 on coarse pointers). Radiogroup
- * semantics with arrow-key movement and a roving tabindex.
+ * semantics with arrow-key movement and a roving tabindex. `groupLabel` and
+ * `optionLabel` let a caller pass translated accessible names aligned to its
+ * visible label; both default to the English strings.
  */
 export type TextSize = 14 | 16 | 18
 
 export type TextSizeControlProps = {
   value: TextSize
   onChange: (v: TextSize) => void
+  /** Accessible name of the radiogroup. Defaults to 'Text size'. */
+  groupLabel?: string
+  /** Accessible name per option. Defaults to Smaller text / Default / Larger. */
+  optionLabel?: (value: TextSize) => string
 }
 
 const OPTIONS: ReadonlyArray<{ value: TextSize; glyph: string; label: string }> = [
@@ -22,7 +28,12 @@ const OPTIONS: ReadonlyArray<{ value: TextSize; glyph: string; label: string }> 
   { value: 18, glyph: 'A+', label: 'Larger' },
 ]
 
-export function TextSizeControl({ value, onChange }: TextSizeControlProps) {
+export function TextSizeControl({
+  value,
+  onChange,
+  groupLabel = 'Text size',
+  optionLabel,
+}: TextSizeControlProps) {
   const refs = useRef<Array<HTMLButtonElement | null>>([])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -44,7 +55,7 @@ export function TextSizeControl({ value, onChange }: TextSizeControlProps) {
   return (
     <div
       role="radiogroup"
-      aria-label="Text size"
+      aria-label={groupLabel}
       onKeyDown={handleKeyDown}
       className="inline-flex border border-line"
     >
@@ -59,7 +70,7 @@ export function TextSizeControl({ value, onChange }: TextSizeControlProps) {
             type="button"
             role="radio"
             aria-checked={selected}
-            aria-label={option.label}
+            aria-label={optionLabel ? optionLabel(option.value) : option.label}
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(option.value)}
             className={cx(

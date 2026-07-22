@@ -3,6 +3,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { getTranslations } from 'next-intl/server'
 import { waitlistSignupSchema } from '@epharmatica/database'
+import { verifyTurnstile } from '@/lib/security/turnstile'
 
 /*
  * Waitlist signup server action (dev-plan 0.E · S12). Wired as the `action`
@@ -24,8 +25,6 @@ import { waitlistSignupSchema } from '@epharmatica/database'
  * independently of the ui package landing.
  */
 export type WaitlistResult = { ok: true; dateLabel: string } | { ok: false; error: string }
-
-const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 
 /** "18 JUL" — the stamp language (ON THE LIST · 18 JUL), en-GB uppercase. */
 function stampDateLabel(date: Date): string {
@@ -55,26 +54,9 @@ export async function joinWaitlist(data: {
     }
 
     // Turnstile: verify when configured, fail closed; skip when unset (dev).
-    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
-    if (turnstileSecret) {
-      if (!data.turnstileToken) {
-        return { ok: false, error: t('turnstile') }
-      }
-      try {
-        const response = await fetch(TURNSTILE_VERIFY_URL, {
-          method: 'POST',
-          body: new URLSearchParams({
-            secret: turnstileSecret,
-            response: data.turnstileToken,
-          }),
-        })
-        const outcome = (await response.json()) as { success?: boolean }
-        if (!outcome.success) {
-          return { ok: false, error: t('turnstile') }
-        }
-      } catch {
-        return { ok: false, error: t('turnstile') }
-      }
+    // Shared implementation — lib/security/turnstile.ts (extracted in 1.A).
+    if (!(await verifyTurnstile(data.turnstileToken))) {
+      return { ok: false, error: t('turnstile') }
     }
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL

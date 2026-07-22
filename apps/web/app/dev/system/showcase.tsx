@@ -1,16 +1,24 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { Check, CircleAlert, CircleCheck, MessageSquare, StickyNote } from 'lucide-react'
 import {
   ActionBar,
+  AvatarSquare,
   BlisterCell,
   BlisterGrid,
+  Button,
+  Checkbox,
+  Field,
+  fieldClass,
   MonographLabel,
   OfflineBanner,
   ProgressStrip,
   ReadingBar,
+  selectClass,
   SelectionPopover,
+  SelectShell,
+  SegmentedControl,
   Stamp,
   StackedRecord,
   StateGlyph,
@@ -417,7 +425,194 @@ function WaitlistDemo() {
 }
 
 /* ------------------------------------------------------------------------ */
-/* One full set of the 13 primitives                                        */
+/* Form primitives (1.A accounts core)                                      */
+/* ------------------------------------------------------------------------ */
+
+function ButtonDemo() {
+  const { toast } = useToast()
+  const [pending, setPending] = useState(false)
+  const simulatePending = async () => {
+    setPending(true)
+    await sleep(1200)
+    setPending(false)
+    toast({ title: 'Account created.', icon: CircleCheck })
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button onClick={() => toast({ title: 'Primary pressed.' })}>Create account</Button>
+        <Button variant="ghost">Continue with Google</Button>
+        <Button variant="danger">Delete my account</Button>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button size="sm">Save profile</Button>
+        <Button size="sm" variant="ghost">
+          Resend verification email
+        </Button>
+        <Button size="sm" variant="danger">
+          Remove
+        </Button>
+        <Button pending={pending} onClick={simulatePending}>
+          {pending ? 'Creating…' : 'Pending demo'}
+        </Button>
+        <Button disabled>Export JSON</Button>
+      </div>
+      <Note>
+        Primary solid, ghost 1px ink border with tint hover, danger outline filling on hover. md
+        40px / sm 32px, both 44px on coarse pointers. `pending` sets aria-busy + disabled.
+      </Note>
+    </div>
+  )
+}
+
+function FieldDemo() {
+  const id = useId()
+  return (
+    <div className="flex max-w-md flex-col gap-6">
+      <Field label="EMAIL" labelFor={`${id}-email`} hint="We only use this to sign you in.">
+        <input
+          id={`${id}-email`}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="you@example.com"
+          className={`${fieldClass} placeholder:text-ink-2`}
+        />
+      </Field>
+      <Field
+        label="USERNAME"
+        labelFor={`${id}-username`}
+        trailing={<span className="text-primary-strong">✓ AVAILABLE</span>}
+        hint={
+          <span className="text-warn">{"Your username is permanent and can't be changed."}</span>
+        }
+      >
+        <input id={`${id}-username`} defaultValue="ayesha-k" className={fieldClass} />
+      </Field>
+      <Field label="PASSWORD" labelFor={`${id}-password`} required error="At least 10 characters">
+        <input
+          id={`${id}-password`}
+          type="password"
+          defaultValue="short"
+          aria-invalid
+          className={fieldClass}
+        />
+      </Field>
+      <Field label="USER TYPE" labelFor={`${id}-type`}>
+        <SelectShell>
+          <select id={`${id}-type`} defaultValue="student" className={selectClass}>
+            <option value="student">Student</option>
+            <option value="pharmacist">Pharmacist</option>
+            <option value="other">Other</option>
+          </select>
+        </SelectShell>
+      </Field>
+      <Field label="BIO" labelFor={`${id}-bio`} trailing="84 / 280">
+        <textarea
+          id={`${id}-bio`}
+          rows={3}
+          defaultValue="Final-year PharmD candidate — renal pharmacology, antimicrobial stewardship."
+          className={`${fieldClass} h-auto min-h-16 py-2`}
+        />
+      </Field>
+      <Note>
+        Mono label above the control (a real label when labelFor is set), mono trailing slot for
+        inline statuses and counters, 12px hint replaced by the 13px danger error (role=alert). The
+        control carries fieldClass — the same string WaitlistForm uses.
+      </Note>
+    </div>
+  )
+}
+
+function CheckboxDemo() {
+  return (
+    <div className="flex max-w-md flex-col gap-3">
+      <Checkbox
+        name="age-confirm"
+        label={
+          <>
+            {"I'm 13 or older and accept the "}
+            <a href="#dev-system-dark" className="text-primary underline">
+              Terms
+            </a>
+            {' and '}
+            <a href="#dev-system-dark" className="text-primary underline">
+              Privacy Policy
+            </a>
+          </>
+        }
+      />
+      <Checkbox defaultChecked label="Email me a weekly progress summary." />
+      <Note>
+        Whole row is the label; the native input is visually hidden with the drawn 14px box as its
+        peer — checked fills primary with the white glyph, focus draws the square ring. Uncontrolled
+        works.
+      </Note>
+    </div>
+  )
+}
+
+function SegmentedDemo() {
+  const [userType, setUserType] = useState('student')
+  const [themePref, setThemePref] = useState('system')
+  return (
+    <div className="flex flex-col gap-4">
+      <SegmentedControl
+        label="I am a"
+        options={[
+          { value: 'student', label: 'Student' },
+          { value: 'pharmacist', label: 'Pharmacist' },
+          { value: 'other', label: 'Other' },
+        ]}
+        value={userType}
+        onChange={setUserType}
+      />
+      <SegmentedControl
+        label="Theme"
+        options={[
+          { value: 'system', label: 'System' },
+          { value: 'light', label: 'Light' },
+          { value: 'dark', label: 'Dark' },
+        ]}
+        value={themePref}
+        onChange={setThemePref}
+      />
+      <Note>
+        Radiogroup with roving tabindex and arrow-key movement; 1px ink frame, 36px cells (44
+        coarse), selected cell solid primary.
+      </Note>
+    </div>
+  )
+}
+
+// Self-contained demo image (no remote fetch on /dev/system).
+const demoAvatarSrc =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="teal"/><circle cx="32" cy="26" r="11" fill="white"/><rect x="14" y="42" width="36" height="22" fill="white"/></svg>'
+
+function AvatarDemo() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-4">
+        <AvatarSquare name="Ayesha Khan" />
+        <AvatarSquare name="Ayesha Khan" size={64} />
+        <AvatarSquare name="Daniyal" />
+        <AvatarSquare name="Zara Ahmed" src={demoAvatarSrc} />
+        <span className="flex items-center gap-3">
+          <AvatarSquare name="Ayesha Khan" size={32} />
+          <span className="text-[13.5px] text-ink">Ayesha Khan</span>
+        </span>
+      </div>
+      <Note>
+        Square, primary-tint ground, 1px primary border; mono initials (first two words) in
+        primary-strong until a src exists. Decorative — alt is empty and adjacent text carries the
+        name.
+      </Note>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------------ */
+/* One full set of the 13 primitives + the 1.A form primitives              */
 /* ------------------------------------------------------------------------ */
 
 function ThemeSet({ variant }: { variant: 'light' | 'dark' }) {
@@ -548,6 +743,26 @@ function ThemeSet({ variant }: { variant: 'light' | 'dark' }) {
 
         <Section index="13" title="WAITLIST FORM">
           <WaitlistDemo />
+        </Section>
+
+        <Section index="14" title="BUTTON">
+          <ButtonDemo />
+        </Section>
+
+        <Section index="15" title="FIELD + SELECT SHELL">
+          <FieldDemo />
+        </Section>
+
+        <Section index="16" title="CHECKBOX">
+          <CheckboxDemo />
+        </Section>
+
+        <Section index="17" title="SEGMENTED CONTROL">
+          <SegmentedDemo />
+        </Section>
+
+        <Section index="18" title="AVATAR SQUARE">
+          <AvatarDemo />
         </Section>
       </div>
     </ToastProvider>

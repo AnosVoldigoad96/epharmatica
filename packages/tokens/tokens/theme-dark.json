@@ -5,6 +5,7 @@
     "ink": { "value": "#E7ECEC" },
     "ink-2": { "value": "#93A4A8" },
     "line": { "value": "#263135" },
+    "scrim": { "value": "rgba(0, 0, 0, 0.6)" },
     "primary": { "value": "#4FB8AC" },
     "primary-strong": { "value": "#6BCBC0" },
     "primary-tint": { "value": "#12302C" },

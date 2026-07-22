@@ -7,6 +7,15 @@ export const EVENTS = {
   waitlist_joined: 'waitlist_joined',
   preview_gate_viewed: 'preview_gate_viewed',
   preview_gate_signin_clicked: 'preview_gate_signin_clicked',
+  // M2 §10 — accounts core (Phase 1.A). Constants only; the Umami send
+  // helper is still TODO (rules.md §11) — nothing fires these yet.
+  signup_started: 'signup_started',
+  signup_completed: 'signup_completed',
+  oauth_completion_shown: 'oauth_completion_shown',
+  identity_linked: 'identity_linked',
+  email_verified: 'email_verified',
+  signin: 'signin',
+  signout_everywhere: 'signout_everywhere',
 } as const
 
 export type EventName = (typeof EVENTS)[keyof typeof EVENTS]

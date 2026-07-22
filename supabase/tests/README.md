@@ -15,6 +15,7 @@ exits nonzero, so the suite is CI-ready as-is.
 | `04_profiles_privileged_columns.sql` | Owner can edit ordinary fields but cannot change `role`, `is_verified_pharmacist`, `username`, or clear `deletion_requested_at` (BEFORE UPDATE guard)       |
 | `05_audit_log_append_only.sql`       | `audit_log` update/delete denied for `authenticated` **and** `service_role`; admin read works; probe row survives                                           |
 | `06_waitlist.sql`                    | Anon INSERT works; anon/authenticated SELECT and anon DELETE are denied                                                                                     |
+| `07_auth_rate_limits.sql`            | `anon` and `authenticated` get **permission denied** on `auth_rate_limits` (SELECT and INSERT); `service_role` insert + update works (positive control)     |
 
 ## How the probes simulate API roles
 
@@ -49,7 +50,8 @@ psql "$DB_URL" -v ON_ERROR_STOP=1 \
   -f supabase/tests/03_ai_keys_lockdown.sql \
   -f supabase/tests/04_profiles_privileged_columns.sql \
   -f supabase/tests/05_audit_log_append_only.sql \
-  -f supabase/tests/06_waitlist.sql
+  -f supabase/tests/06_waitlist.sql \
+  -f supabase/tests/07_auth_rate_limits.sql
 ```
 
 PowerShell:
