@@ -5,6 +5,10 @@
     "ink": { "value": "#0C1418" },
     "ink-2": { "value": "#51606A" },
     "line": { "value": "#E3E7E8" },
+    "scrim": {
+      "value": "rgba(12, 17, 19, 0.45)",
+      "comment": "dialog scrim — carries its own per-theme value so it dims in BOTH themes (never bg-ink/40)"
+    },
     "primary": {
       "value": "#0E6B63",
       "comment": "primary on paper = 6.3:1 — punctuation, not wallpaper"

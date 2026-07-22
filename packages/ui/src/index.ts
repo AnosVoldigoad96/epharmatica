@@ -1,6 +1,8 @@
-// @epharmatica/ui — the 13 system primitives (STYLE.md §16) + shadcn-owned
-// components. Exports are added as primitives land; consumers import only
-// from this entry point.
+// @epharmatica/ui — the 13 system primitives (STYLE.md §16) + the form
+// primitives (STYLE.md §11). Exports are added as primitives land; consumers
+// import only from this entry point.
+
+// ---- System primitives ----------------------------------------------------
 
 export { MonographLabel } from './system/monograph-label'
 export type { MonographLabelProps } from './system/monograph-label'
@@ -40,3 +42,20 @@ export type { ReadingBarProps } from './system/reading-bar'
 
 export { WaitlistForm } from './system/waitlist-form'
 export type { WaitlistFormProps, WaitlistResult } from './system/waitlist-form'
+
+export { AvatarSquare } from './system/avatar-square'
+export type { AvatarSquareProps } from './system/avatar-square'
+
+// ---- Form primitives (1.A accounts core) ----------------------------------
+
+export { Button } from './form/button'
+export type { ButtonProps } from './form/button'
+
+export { Field, SelectShell, fieldClass, selectClass } from './form/field'
+export type { FieldProps, SelectShellProps } from './form/field'
+
+export { Checkbox } from './form/checkbox'
+export type { CheckboxProps } from './form/checkbox'
+
+export { SegmentedControl } from './form/segmented-control'
+export type { SegmentedControlProps, SegmentedControlOption } from './form/segmented-control'

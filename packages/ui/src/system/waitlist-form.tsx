@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cx } from '../lib/cx'
+import { fieldClass } from '../form/field'
 import { MonographLabel } from './monograph-label'
 import { Stamp } from './stamp'
 
@@ -81,9 +82,6 @@ function loadTurnstile(): Promise<void> {
   }
   return turnstilePromise
 }
-
-const fieldBase =
-  'h-10 w-full min-w-0 border border-line bg-surface px-3 font-sans text-[16px] text-ink focus:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [@media(pointer:coarse)]:h-11'
 
 // §6.7 — one column on touch: field wrappers drop their row flex-basis.
 const coarseColumn = '[@media(pointer:coarse)]:w-full [@media(pointer:coarse)]:flex-none'
@@ -193,7 +191,7 @@ export function WaitlistForm({
             inputMode="email"
             autoComplete="email"
             placeholder={labels.emailPlaceholder}
-            className={cx(fieldBase, 'placeholder:text-ink-2')}
+            className={cx(fieldClass, 'placeholder:text-ink-2')}
           />
         </label>
         <label className={cx('flex min-w-0 flex-[1_1_130px] flex-col gap-2', coarseColumn)}>
@@ -201,7 +199,7 @@ export function WaitlistForm({
             {labels.module}
           </MonographLabel>
           <span className="relative block">
-            <select name="module" className={cx(fieldBase, 'appearance-none pe-8')}>
+            <select name="module" className={cx(fieldClass, 'appearance-none pe-8')}>
               {modules.map((m) => (
                 <option key={m.value} value={m.value}>
                   {m.label}
@@ -223,7 +221,7 @@ export function WaitlistForm({
             {labels.role}
           </MonographLabel>
           <span className="relative block">
-            <select name="role" className={cx(fieldBase, 'appearance-none pe-8')}>
+            <select name="role" className={cx(fieldClass, 'appearance-none pe-8')}>
               {roles.map((r) => (
                 <option key={r.value} value={r.value}>
                   {r.label}

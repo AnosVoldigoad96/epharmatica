@@ -23,9 +23,10 @@ import { Chip } from './_components/chip'
  * the waitlist band stacks (§6).
  *
  * Deliberate deviations from mockup 2a (noted for review):
- * - "Start learning free" points at #waitlist — the reader isn't built yet.
- * - The learning section's "Browse subjects →" link points at #waitlist for
- *   the same reason.
+ * - "Start learning free" points at /auth/sign-up (1.A) — the reader itself
+ *   arrives in 1.C.
+ * - The learning section's "Browse subjects →" link points at #waitlist until
+ *   the reader lands.
  * - YouTube facade tiles are COMING SOON placeholders — the channel launches
  *   with the Phase 0 content track; no fake video titles.
  */
@@ -128,7 +129,7 @@ export default async function LandingPage() {
           </h1>
           <p className="max-w-[52ch] text-[16px] text-ink-2">{t('hero.sub')}</p>
           <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/#waitlist" variant="primary">
+            <ButtonLink href="/auth/sign-up" variant="primary">
               {t('hero.startLearning')}
             </ButtonLink>
             <ButtonLink href="/#waitlist" variant="ghost">
