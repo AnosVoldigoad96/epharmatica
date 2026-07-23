@@ -23,6 +23,11 @@ GoTrue reads templates from `file://` paths inside the `auth` container. Mount
 this dir and point the env at it via a compose override (non-invasive — it
 doesn't touch the upstream `docker-compose.yml`). Run as root on the VPS:
 
+GoTrue fetches `GOTRUE_MAILER_TEMPLATES_*` over **HTTP** (`http.Get`), not from
+disk — a `file://` value gets mangled against `SiteURL` (`https://epharmatica.comfile///…`)
+and GoTrue silently reverts to its default template. So serve the templates with
+a tiny nginx sidecar on the Supabase network and point GoTrue at `http://` URLs:
+
 ```bash
 cd /opt/epharmatica-supabase/supabase-upstream/docker
 mkdir -p volumes/gotrue-templates
@@ -30,21 +35,28 @@ cp /tmp/gotrue-templates/*.html volumes/gotrue-templates/      # files copied up
 
 cat > docker-compose.override.yml <<'YAML'
 services:
-  auth:
+  email-templates:
+    image: nginx:alpine
+    restart: unless-stopped
     volumes:
-      - ./volumes/gotrue-templates:/etc/gotrue-templates:ro
+      - ./volumes/gotrue-templates:/usr/share/nginx/html:ro
+  auth:
     environment:
-      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: file:///etc/gotrue-templates/confirmation.html
-      GOTRUE_MAILER_TEMPLATES_RECOVERY: file:///etc/gotrue-templates/recovery.html
-      GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: file:///etc/gotrue-templates/email_change.html
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: http://email-templates/confirmation.html
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: http://email-templates/recovery.html
+      GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: http://email-templates/email_change.html
 YAML
 
-docker compose -p epharmatica-supabase up -d --no-deps --force-recreate auth
+docker compose -p epharmatica-supabase up -d --no-deps --force-recreate email-templates auth
 ```
 
 `docker compose` auto-merges `docker-compose.override.yml` from the working dir,
-so subsequent `up` commands keep the templates. To restyle, edit the HTML here,
-copy up, and recreate `auth` again.
+so subsequent `up` commands keep the sidecar + templates. To restyle, edit the
+HTML here, copy up, and recreate (nginx serves the mount live — no image rebuild).
+
+> **Never** pass `--remove-orphans` to `docker compose` in this project — the
+> `epharmatica-cloudflared` tunnel carries the project label but isn't in the
+> compose file, and `--remove-orphans` would delete it and take the site offline.
 
 ## Gotchas already hit (documented so they aren't rediscovered)
 
@@ -54,3 +66,6 @@ copy up, and recreate `auth` again.
 - Without these token_hash templates GoTrue uses its default `/verify` redirect,
   which hands the app a `?code=` needing a PKCE verifier that isn't present on an
   email-link click → "link expired or already used".
+- After a signup confirmation the app callback (`type=email`) clears the
+  just-verified session and redirects to `/auth/sign-in?verified=1` — an explicit
+  "email verified — sign in" state rather than a silent drop on the home page.

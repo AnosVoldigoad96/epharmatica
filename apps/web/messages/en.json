@@ -205,7 +205,7 @@
         "signedOut": "You've been signed out on every device.",
         "linkBlocked": "An account with this email exists but isn't verified. Verify it first, then sign in with Google to connect them.",
         "linkError": "That link has expired or was already used. Request a new one.",
-        "verified": "Email verified — you're all set."
+        "verified": "Email verified — sign in below to continue."
       }
     },
     "complete": {

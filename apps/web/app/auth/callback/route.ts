@@ -151,6 +151,15 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // (c2) Email-signup confirmation (our confirmation template links with
+    // type=email): don't silently drop the user on the home page. Clear the
+    // just-minted session and send them to sign in with an explicit "email
+    // verified" notice — a clear success state instead of a silent redirect.
+    if (type === 'email') {
+      await supabase.auth.signOut({ scope: 'local' })
+      return to('/auth/sign-in?verified=1')
+    }
+
     // (d) Recovery sessions continue to the new-password form.
     if (type === 'recovery') {
       return to('/auth/reset-password')
