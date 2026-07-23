@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Confirm your email</title>
+  </head>
+  <body style="margin: 0; padding: 0; background: #f1efe9; -webkit-text-size-adjust: 100%">
+    <!-- preheader (hidden) -->
+    <div
+      style="
+        display: none;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        color: #f1efe9;
+        font-size: 1px;
+        line-height: 1px;
+      "
+    >
+      Confirm your email to activate your ePharmatica account.
+    </div>
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background: #f1efe9"
+    >
+      <tr>
+        <td align="center" style="padding: 34px 16px">
+          <table
+            role="presentation"
+            width="484"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              max-width: 484px;
+              width: 100%;
+              background: #ffffff;
+              border: 1px solid #e4e1d9;
+              border-top: 3px solid #0e6b63;
+            "
+          >
+            <tr>
+              <td style="padding: 28px 34px 0 34px">
+                <span
+                  style="
+                    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    font-size: 18px;
+                    font-weight: 800;
+                    letter-spacing: 0.06em;
+                    color: #0c1418;
+                  "
+                  >ePharmatica</span
+                >
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 16px 34px 0 34px">
+                <div style="border-top: 1px solid #ece9e2; font-size: 0; line-height: 0">
+                  &nbsp;
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 22px 34px 0 34px">
+                <span
+                  style="
+                    font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.14em;
+                    text-transform: uppercase;
+                    color: #0e6b63;
+                  "
+                  >Verify your email</span
+                >
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 34px 0 34px">
+                <h1
+                  style="
+                    margin: 0;
+                    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    font-size: 23px;
+                    font-weight: 700;
+                    letter-spacing: -0.01em;
+                    color: #0c1418;
+                  "
+                >
+                  Confirm your email
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 14px 34px 0 34px">
+                <p
+                  style="
+                    margin: 0;
+                    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    font-size: 15px;
+                    line-height: 1.65;
+                    color: #48504f;
+                  "
+                >
+                  Welcome to ePharmatica — structured, reviewed pharmacy study material and a
+                  professional community. Confirm this address to activate your account.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 26px 34px 0 34px">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background: #0e6b63">
+                      <a
+                        href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/"
+                        style="
+                          display: inline-block;
+                          padding: 13px 28px;
+                          font-family:
+                            -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                          font-size: 15px;
+                          font-weight: 600;
+                          color: #ffffff;
+                          text-decoration: none;
+                        "
+                        >Confirm email &rarr;</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 20px 34px 0 34px">
+                <p
+                  style="
+                    margin: 0;
+                    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.6;
+                    color: #8a8f8c;
+                  "
+                >
+                  This link expires in 24 hours and works once. If the button doesn't open, paste
+                  this into your browser:
+                </p>
+                <p
+                  style="
+                    margin: 8px 0 0 0;
+                    font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+                    font-size: 12px;
+                    line-height: 1.5;
+                    color: #0e6b63;
+                    word-break: break-all;
+                  "
+                >
+                  {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 26px 34px 30px 34px">
+                <div
+                  style="
+                    border-top: 1px solid #ece9e2;
+                    font-size: 0;
+                    line-height: 0;
+                    margin-bottom: 16px;
+                  "
+                >
+                  &nbsp;
+                </div>
+                <p
+                  style="
+                    margin: 0;
+                    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    font-size: 12px;
+                    line-height: 1.6;
+                    color: #9aa09d;
+                  "
+                >
+                  You received this because someone signed up for ePharmatica with this address. If
+                  it wasn't you, ignore this email — no account exists until it's confirmed.
+                </p>
+                <p
+                  style="
+                    margin: 12px 0 0 0;
+                    font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+                    font-size: 11px;
+                    letter-spacing: 0.06em;
+                    color: #b4b8b4;
+                  "
+                >
+                  EPHARMATICA ·
+                  <a href="https://epharmatica.com" style="color: #b4b8b4; text-decoration: none"
+                    >epharmatica.com</a
+                  >
+                  ·
+                  <a
+                    href="mailto:support@epharmatica.com"
+                    style="color: #b4b8b4; text-decoration: none"
+                    >support@epharmatica.com</a
+                  >
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
