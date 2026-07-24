@@ -245,6 +245,7 @@
       "badCredentials": "Email or password doesn't match.",
       "emailNotConfirmed": "Verify your email first — check your inbox for the link.",
       "passwordTooWeak": "That password is too easy to guess — make it longer or less predictable.",
+      "staffPasswordTooWeak": "Staff accounts need a stronger password — at least 12 characters and hard to guess.",
       "usernameTaken": "That username was just taken — pick another.",
       "usernameUnavailable": "That username isn't available — pick another.",
       "tooManyAttempts": "Too many attempts. Wait about {minutes} min and try again.",
@@ -381,6 +382,30 @@
       "signOutNote": "Revokes every device — including this one.",
       "totpLabel": "TWO-FACTOR AUTHENTICATION",
       "totpRow": "Authenticator app (TOTP)",
+      "totpIntro": "Add an authenticator app to require a 6-digit code alongside your password. Optional for staff accounts for now — strongly recommended.",
+      "totpChipUnverified": "UNVERIFIED",
+      "totpNameLabel": "Device name",
+      "totpNamePlaceholder": "e.g. Personal phone",
+      "totpAdd": "Add authenticator",
+      "totpScanTitle": "Connect your authenticator",
+      "totpScanHelp": "Scan the QR code with your authenticator app — or enter the secret manually — then type the 6-digit code it shows.",
+      "totpQrAlt": "QR code for authenticator app enrollment",
+      "totpSecretLabel": "SECRET",
+      "totpCopySecret": "Copy secret",
+      "totpCopied": "Secret copied",
+      "totpCodeLabel": "6-digit code",
+      "totpVerify": "Verify and activate",
+      "totpCancel": "Cancel",
+      "totpEnrolled": "Authenticator connected",
+      "totpRemove": "Remove",
+      "totpRemoveTitle": "Remove {name}",
+      "totpRemoveNote": "Signing in will no longer ask this device for a code.",
+      "totpConfirmRemove": "Remove authenticator",
+      "totpRemoved": "Authenticator removed",
+      "totpRecoveryNote": "There are no recovery codes for authenticator sign-in. If you lose your device, an administrator must remove the authenticator from your account before you can sign in again.",
+      "totpLoadError": "Loading your authenticators failed. Reload the page.",
+      "totpError": "Two-factor error: {message}",
+      "mfaDisabledHint": "Two-factor enrollment isn't switched on for the authentication server yet — ask an administrator to enable TOTP.",
       "methodRemoved": "{method} removed",
       "errors": {
         "lastMethod": "You can't remove your only sign-in method.",
@@ -997,6 +1022,10 @@
     "methodRemoved": {
       "subject": "{method} removed as a sign-in method",
       "body": "{method} was removed as a sign-in method for your ePharmatica account."
+    },
+    "staffSignIn": {
+      "subject": "New sign-in to your staff account",
+      "body": "There was a new sign-in to your ePharmatica staff account at {timestamp}."
     }
   },
   "footer": {

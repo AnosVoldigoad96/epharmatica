@@ -64,6 +64,7 @@ export const AUDIT_ACTIONS = {
   settings_ai_model_updated: 'settings.ai_model_updated',
   settings_site_updated: 'settings.site_updated',
   settings_reserved_updated: 'settings.reserved_updated',
+  settings_audit_exported: 'settings.audit_exported',
 } as const
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS]

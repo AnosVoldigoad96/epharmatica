@@ -11,6 +11,12 @@
 /** Minimum acceptable score for user passwords (securities.md §6). */
 export const MIN_PASSWORD_SCORE = 2
 
+/** Staff floor (M4 §13): any role above `user` needs ≥ 12 characters… */
+export const STAFF_MIN_PASSWORD_LENGTH = 12
+
+/** …and zxcvbn ≥ 3 — the compensating control for optional 2FA (R-M4a). */
+export const STAFF_MIN_PASSWORD_SCORE = 3
+
 export type PasswordScore = 0 | 1 | 2 | 3 | 4
 
 type Checker = { check: (password: string, userInputs?: (string | number)[]) => { score: number } }
