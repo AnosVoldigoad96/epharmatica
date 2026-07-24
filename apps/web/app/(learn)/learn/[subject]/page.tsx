@@ -72,7 +72,10 @@ export default async function SubjectPage({ params }: { params: Params }) {
 
       <ol className="border border-line bg-surface">
         {subject.chapters.map((chapter, index) => {
-          const units = chapter.topics.reduce((sum, topic) => sum + topic.subtopics.length, 0)
+          // Units = topic subtopics + the chapter's direct pages (020).
+          const units =
+            chapter.topics.reduce((sum, topic) => sum + topic.subtopics.length, 0) +
+            chapter.leaves.length
           return (
             <li key={chapter.id} className="border-b border-line last:border-b-0">
               <Link

@@ -39,6 +39,8 @@ export type PublishedChapter = {
   name: string
   slug: string
   topics: PublishedTopic[]
+  /** Published pages attached DIRECTLY to the chapter (flexible leaves, 020). */
+  leaves: PublishedSubtopicCell[]
 }
 
 export type PublishedSubject = {
@@ -78,7 +80,9 @@ export const getPublishedTree = cache(async (): Promise<PublishedTree> => {
       .order('name'),
     supabase
       .from('subtopics')
-      .select('id, topic_id, title, slug, reading_minutes, primary_video_url, sort_order')
+      .select(
+        'id, topic_id, chapter_id, title, slug, reading_minutes, primary_video_url, sort_order',
+      )
       .eq('status', 'published')
       .order('sort_order')
       .order('title'),
@@ -94,10 +98,12 @@ export const getPublishedTree = cache(async (): Promise<PublishedTree> => {
       semester: topic.semester,
       subtopics: (subtopics.data ?? [])
         .filter((subtopic) => subtopic.topic_id === topic.id)
-        .map(({ topic_id: _t, sort_order: _s, ...cell }) => cell),
+        .map(({ topic_id: _t, chapter_id: _c, sort_order: _s, ...cell }) => cell),
     }))
     .filter((topic) => topic.subtopics.length > 0)
 
+  // A chapter is visible with published topics OR published direct leaves
+  // (flexible leaves, 020) — still the one M1-6 rule, pruned at read time.
   const chapterNodes: (PublishedChapter & { subject_id: string })[] = (chapters.data ?? [])
     .map((chapter) => ({
       id: chapter.id,
@@ -107,8 +113,11 @@ export const getPublishedTree = cache(async (): Promise<PublishedTree> => {
       topics: topicNodes
         .filter((topic) => topic.chapter_id === chapter.id)
         .map(({ chapter_id: _c, ...topic }) => topic),
+      leaves: (subtopics.data ?? [])
+        .filter((subtopic) => subtopic.chapter_id === chapter.id)
+        .map(({ topic_id: _t, chapter_id: _c, sort_order: _s, ...cell }) => cell),
     }))
-    .filter((chapter) => chapter.topics.length > 0)
+    .filter((chapter) => chapter.topics.length > 0 || chapter.leaves.length > 0)
 
   return (subjects.data ?? [])
     .map((subject) => ({
@@ -152,6 +161,19 @@ export function findTopic(
   return topic ? { ...found, topic } : null
 }
 
+/** A chapter-attached page (flexible leaves, 020) — the 3-segment reader. */
+export function findChapterPage(
+  tree: PublishedTree,
+  subjectSlug: string,
+  chapterSlug: string,
+  pageSlug: string,
+): { subject: PublishedSubject; chapter: PublishedChapter; page: PublishedSubtopicCell } | null {
+  const found = findChapter(tree, subjectSlug, chapterSlug)
+  if (!found) return null
+  const page = found.chapter.leaves.find((candidate) => candidate.slug === pageSlug)
+  return page ? { ...found, page } : null
+}
+
 export type ReaderNeighbor = {
   title: string
   href: string
@@ -164,7 +186,8 @@ export type ReaderPayload = {
   readingMinutes: number
   publishedAt: string | null
   semester: number | null
-  path: { subject: PublishedSubject; chapter: PublishedChapter; topic: PublishedTopic }
+  /** topic is null for chapter-attached pages (flexible leaves, 020). */
+  path: { subject: PublishedSubject; chapter: PublishedChapter; topic: PublishedTopic | null }
   /** The blocks this viewer receives — TRUNCATED for anonymous (I3). */
   blocks: Content
   gated: boolean
@@ -175,6 +198,34 @@ export type ReaderPayload = {
 }
 
 const learnHref = (...segments: string[]) => `/learn/${segments.join('/')}`
+
+/**
+ * The publish-snapshot load both readers share: published row only, schema
+ * validation, and the server-side anonymous truncation (D8/I3 — gated
+ * blocks are never serialized).
+ */
+async function loadPublishedSnapshot(cellId: string, viewer: 'anon' | 'member') {
+  const supabase = await createClient()
+  const { data: row } = await supabase
+    .from('subtopics')
+    .select('id, published_content, preview_block_count, published_at, reading_minutes')
+    .eq('id', cellId)
+    .eq('status', 'published')
+    .maybeSingle()
+  if (!row) return null
+
+  const validated = validateContent(row.published_content)
+  if (!validated.ok) return null
+  const full = validated.content
+
+  const previewCount = Math.min(
+    row.preview_block_count ?? defaultPreviewBlockCount(full),
+    full.length,
+  )
+  const gated = viewer === 'anon' && full.length > previewCount
+  const blocks = viewer === 'anon' ? full.slice(0, previewCount) : full
+  return { row, blocks, gated, totalBlocks: full.length }
+}
 
 /**
  * The reader composition (M1 §5.2): resolves the 4-segment path against
@@ -200,25 +251,8 @@ export async function getReaderPayload(
   const cell = topic.subtopics[cellIndex]
   if (!cell) return null
 
-  const supabase = await createClient()
-  const { data: row } = await supabase
-    .from('subtopics')
-    .select('id, published_content, preview_block_count, published_at, reading_minutes')
-    .eq('id', cell.id)
-    .eq('status', 'published')
-    .maybeSingle()
-  if (!row) return null
-
-  const validated = validateContent(row.published_content)
-  if (!validated.ok) return null
-  const full = validated.content
-
-  const previewCount = Math.min(
-    row.preview_block_count ?? defaultPreviewBlockCount(full),
-    full.length,
-  )
-  const gated = viewer === 'anon' && full.length > previewCount
-  const blocks = viewer === 'anon' ? full.slice(0, previewCount) : full
+  const snapshot = await loadPublishedSnapshot(cell.id, viewer)
+  if (!snapshot) return null
 
   const siblings = topic.subtopics.map((sibling) => ({
     title: sibling.title,
@@ -297,16 +331,16 @@ export async function getReaderPayload(
   }
 
   return {
-    subtopicId: row.id,
+    subtopicId: snapshot.row.id,
     title: cell.title,
     slug: subtopicSlug,
-    readingMinutes: row.reading_minutes,
-    publishedAt: row.published_at,
+    readingMinutes: snapshot.row.reading_minutes,
+    publishedAt: snapshot.row.published_at,
     semester: topic.semester ?? subject.default_semester,
     path: { subject, chapter, topic },
-    blocks,
-    gated,
-    totalBlocks: full.length,
+    blocks: snapshot.blocks,
+    gated: snapshot.gated,
+    totalBlocks: snapshot.totalBlocks,
     siblings,
     prev,
     next,
@@ -314,36 +348,95 @@ export async function getReaderPayload(
 }
 
 /**
- * 301 resolution over slug_history (M1 §4): given the requested segments
- * that missed the current tree, find where that slug USED to live and
- * rebuild today's URL from the entity id. Entity-id rebuilding follows
- * rename/move chains naturally. Returns the new path or null.
+ * The chapter-page reader (flexible leaves, 020): resolves the 3-segment
+ * path /learn/[subject]/[chapter]/[page] against the chapter's direct
+ * leaves. Siblings are the chapter's OTHER pages; prev/next traverse the
+ * chapter's pages sequence only (founder memo — never interleaved with the
+ * chapter's topics). Same snapshot + anonymous truncation as the 4-segment
+ * reader.
  */
-export async function resolveLearn301(segments: string[]): Promise<string | null> {
-  if (segments.length === 0 || segments.length > 4) return null
-  const level = (['subject', 'chapter', 'topic', 'subtopic'] as const)[segments.length - 1]
-  if (!level) return null
-  const oldSlug = segments[segments.length - 1]
-  const parentPath = segments.slice(0, -1).join('/')
+export async function getChapterPageReaderPayload(
+  subjectSlug: string,
+  chapterSlug: string,
+  pageSlug: string,
+  viewer: 'anon' | 'member',
+): Promise<ReaderPayload | null> {
+  const tree = await getPublishedTree()
+  const found = findChapterPage(tree, subjectSlug, chapterSlug, pageSlug)
+  if (!found) return null
+  const { subject, chapter, page } = found
 
+  const snapshot = await loadPublishedSnapshot(page.id, viewer)
+  if (!snapshot) return null
+
+  const cellIndex = chapter.leaves.findIndex((cell) => cell.id === page.id)
+  const siblings = chapter.leaves.map((sibling) => ({
+    title: sibling.title,
+    slug: sibling.slug,
+    href: learnHref(subject.slug, chapter.slug, sibling.slug),
+    current: sibling.slug === pageSlug,
+  }))
+
+  const prevCell = chapter.leaves[cellIndex - 1]
+  const nextCell = chapter.leaves[cellIndex + 1]
+
+  return {
+    subtopicId: snapshot.row.id,
+    title: page.title,
+    slug: pageSlug,
+    readingMinutes: snapshot.row.reading_minutes,
+    publishedAt: snapshot.row.published_at,
+    semester: subject.default_semester,
+    path: { subject, chapter, topic: null },
+    blocks: snapshot.blocks,
+    gated: snapshot.gated,
+    totalBlocks: snapshot.totalBlocks,
+    siblings,
+    prev: prevCell
+      ? { title: prevCell.title, href: learnHref(subject.slug, chapter.slug, prevCell.slug) }
+      : null,
+    next: nextCell
+      ? { title: nextCell.title, href: learnHref(subject.slug, chapter.slug, nextCell.slug) }
+      : null,
+  }
+}
+
+type SlugHistoryLevel = 'subject' | 'chapter' | 'topic' | 'subtopic'
+
+/** Latest slug_history hit for (level, old slug, parent path) — or null. */
+async function slugHistoryEntityId(
+  level: SlugHistoryLevel,
+  oldSlug: string,
+  parentPath: string,
+): Promise<string | null> {
   const supabase = await createClient()
   const { data: rows } = await supabase
     .from('slug_history')
     .select('entity_id, created_at')
     .eq('level', level)
-    .eq('old_slug', oldSlug ?? '')
+    .eq('old_slug', oldSlug)
     .eq('parent_path', parentPath)
     .order('created_at', { ascending: false })
     .limit(1)
-  const entityId = rows?.[0]?.entity_id
-  if (!entityId) return null
+  return rows?.[0]?.entity_id ?? null
+}
 
+/**
+ * Today's URL for an entity id — the rebuild half of the 301. Subtopics may
+ * live under a topic (4 segments) or directly under a chapter (3 segments,
+ * flexible leaves 020) — the walk covers both.
+ */
+async function currentLearnHref(level: SlugHistoryLevel, entityId: string): Promise<string | null> {
   const tree = await getPublishedTree()
   for (const subject of tree) {
     if (level === 'subject' && subject.id === entityId) return learnHref(subject.slug)
     for (const chapter of subject.chapters) {
       if (level === 'chapter' && chapter.id === entityId) {
         return learnHref(subject.slug, chapter.slug)
+      }
+      if (level === 'subtopic') {
+        const leaf = chapter.leaves.find((candidate) => candidate.id === entityId)
+        if (leaf) return learnHref(subject.slug, chapter.slug, leaf.slug)
       }
       for (const topic of chapter.topics) {
         if (level === 'topic' && topic.id === entityId) {
@@ -355,6 +448,35 @@ export async function resolveLearn301(segments: string[]): Promise<string | null
         }
       }
     }
+  }
+  return null
+}
+
+/**
+ * 301 resolution over slug_history (M1 §4): given the requested segments
+ * that missed the current tree, find where that slug USED to live and
+ * rebuild today's URL from the entity id. Entity-id rebuilding follows
+ * rename/move chains naturally. Returns the new path or null.
+ *
+ * A 3-segment miss is ambiguous under flexible leaves (020): the tail was
+ * either a chapter-attached page OR a topic sharing the same 2-segment
+ * parent path — the page is tried first, then the topic.
+ */
+export async function resolveLearn301(segments: string[]): Promise<string | null> {
+  if (segments.length === 0 || segments.length > 4) return null
+  const oldSlug = segments[segments.length - 1] ?? ''
+  const parentPath = segments.slice(0, -1).join('/')
+
+  const levels: SlugHistoryLevel[] =
+    segments.length === 3
+      ? ['subtopic', 'topic']
+      : [(['subject', 'chapter', 'topic', 'subtopic'] as const)[segments.length - 1] ?? 'subject']
+
+  for (const level of levels) {
+    const entityId = await slugHistoryEntityId(level, oldSlug, parentPath)
+    if (!entityId) continue
+    const href = await currentLearnHref(level, entityId)
+    if (href) return href
   }
   return null
 }

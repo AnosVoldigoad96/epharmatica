@@ -42,7 +42,12 @@ export default async function AdminSubtopicPage({ params }: { params: Promise<{ 
   return (
     <div className="max-w-5xl">
       <Crumbs
-        segments={[detail.path.subjectName, detail.path.chapterName, detail.path.topicName]}
+        segments={[
+          detail.path.subjectName,
+          detail.path.chapterName,
+          // Chapter-attached pages (020) have no topic in the path.
+          ...(detail.path.topicName !== null ? [detail.path.topicName] : []),
+        ]}
       />
       <div className="mb-5 flex flex-wrap items-baseline gap-3">
         <h1 className="font-display text-[19px] font-bold">{detail.title}</h1>

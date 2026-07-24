@@ -39,6 +39,8 @@ export type ChapterNode = {
   sort_order: number
   updated_at: string
   topics: TopicNode[]
+  /** Content pages attached DIRECTLY to the chapter (flexible leaves, 020). */
+  leaves: SubtopicSummary[]
 }
 
 export type SubjectNode = {
@@ -65,13 +67,19 @@ export function topicRollup(topic: TopicNode): Rollup {
 }
 
 export function chapterRollup(chapter: ChapterNode): Rollup {
-  return chapter.topics.reduce(
+  const fromTopics = chapter.topics.reduce(
     (acc, topic) => {
       const rollup = topicRollup(topic)
       return { published: acc.published + rollup.published, total: acc.total + rollup.total }
     },
     { published: 0, total: 0 },
   )
+  // Direct leaves count into the chapter roll-up (dot states unchanged).
+  return {
+    published:
+      fromTopics.published + chapter.leaves.filter((leaf) => leaf.status === 'published').length,
+    total: fromTopics.total + chapter.leaves.length,
+  }
 }
 
 export function subjectRollup(subject: SubjectNode): Rollup {
@@ -120,6 +128,30 @@ export function findTopic(
   return null
 }
 
+/** Locate a page anywhere — under a topic OR attached directly to a chapter. */
+export function findSubtopic(
+  tree: ContentTree,
+  id: string,
+): {
+  subject: SubjectNode
+  chapter: ChapterNode
+  /** null for chapter-attached pages (flexible leaves). */
+  topic: TopicNode | null
+  subtopic: SubtopicSummary
+} | null {
+  for (const subject of tree) {
+    for (const chapter of subject.chapters) {
+      const leaf = chapter.leaves.find((candidate) => candidate.id === id)
+      if (leaf) return { subject, chapter, topic: null, subtopic: leaf }
+      for (const topic of chapter.topics) {
+        const subtopic = topic.subtopics.find((candidate) => candidate.id === id)
+        if (subtopic) return { subject, chapter, topic, subtopic }
+      }
+    }
+  }
+  return null
+}
+
 /** Public /learn path for a node — the consequence sheets' URL lines. */
 export function learnPath(segments: string[]): string {
   return `/learn/${segments.join('/')}`
@@ -133,7 +165,10 @@ export function publishedSubtopicIds(node: SubjectNode | ChapterNode | TopicNode
       .map((subtopic) => subtopic.id)
   }
   if ('topics' in node) {
-    return node.topics.flatMap((topic) => publishedSubtopicIds(topic))
+    return [
+      ...node.topics.flatMap((topic) => publishedSubtopicIds(topic)),
+      ...node.leaves.filter((leaf) => leaf.status === 'published').map((leaf) => leaf.id),
+    ]
   }
   return node.chapters.flatMap((chapter) => publishedSubtopicIds(chapter))
 }

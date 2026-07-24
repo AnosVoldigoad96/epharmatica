@@ -27,6 +27,11 @@ export type MoveTarget = {
   current: boolean
   /** Public path segments of the destination parent (for the new-URL line). */
   pathSegments: string[]
+  /**
+   * Subtopic destinations only: 'chapter' attaches the page directly to the
+   * chapter (flexible leaves, 020). Omitted/'topic' = the classic reparent.
+   */
+  parentLevel?: 'topic' | 'chapter'
 }
 
 export type ListRow = {
@@ -52,4 +57,10 @@ export type ListEditorData = {
   moveTargets: MoveTarget[]
   /** Role is content_manager+ — shows Move… and the rename ceremony. */
   canManage: boolean
+  /**
+   * Chapter list only (flexible leaves, 020): content pages attached
+   * directly to the chapter, rendered as a second group AFTER the topics —
+   * separate sort space, own move targets, KIND chips distinguish rows.
+   */
+  pages?: { rows: ListRow[]; moveTargets: MoveTarget[] }
 }

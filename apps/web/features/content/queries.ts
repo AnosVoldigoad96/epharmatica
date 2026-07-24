@@ -29,6 +29,7 @@ export type ReviewQueueEntry = {
   subtopicId: string
   title: string
   subjectName: string
+  /** Chapter name for chapter-attached pages (flexible leaves). */
   topicName: string
   /** When it entered in_review (latest such event) — the age-chip clock. */
   waitingSince: string
@@ -49,6 +50,16 @@ export async function getReviewQueue(): Promise<ReviewQueueEntry[]> {
   const inReview: Omit<ReviewQueueEntry, 'waitingSince' | 'waitingDays' | 'claimedBy'>[] = []
   for (const subject of tree) {
     for (const chapter of subject.chapters) {
+      for (const leaf of chapter.leaves) {
+        if (leaf.status === 'in_review') {
+          inReview.push({
+            subtopicId: leaf.id,
+            title: leaf.title,
+            subjectName: subject.name,
+            topicName: chapter.name,
+          })
+        }
+      }
       for (const topic of chapter.topics) {
         for (const subtopic of topic.subtopics) {
           if (subtopic.status === 'in_review') {
@@ -183,7 +194,13 @@ export type SubtopicDetail = {
   preview_block_count: number | null
   published_at: string | null
   updated_at: string
-  path: { subjectName: string; chapterName: string; topicName: string; semester: number | null }
+  /** topicName is null for chapter-attached pages (flexible leaves). */
+  path: {
+    subjectName: string
+    chapterName: string
+    topicName: string | null
+    semester: number | null
+  }
   revisions: RevisionSummary[]
   events: ReviewEventSummary[]
   claimedBy: { id: string; username: string } | null
@@ -197,7 +214,7 @@ export async function getSubtopicDetail(id: string): Promise<SubtopicDetail | nu
   const { data: row } = await supabase
     .from('subtopics')
     .select(
-      'id, title, slug, status, content, reading_minutes, primary_video_url, preview_block_count, published_at, updated_at, topic_id',
+      'id, title, slug, status, content, reading_minutes, primary_video_url, preview_block_count, published_at, updated_at, topic_id, chapter_id',
     )
     .eq('id', id)
     .maybeSingle()
@@ -206,6 +223,15 @@ export async function getSubtopicDetail(id: string): Promise<SubtopicDetail | nu
   let path: SubtopicDetail['path'] | null = null
   for (const subject of tree) {
     for (const chapter of subject.chapters) {
+      // Chapter-attached page (flexible leaves): no topic in the path.
+      if (row.chapter_id !== null && chapter.id === row.chapter_id) {
+        path = {
+          subjectName: subject.name,
+          chapterName: chapter.name,
+          topicName: null,
+          semester: subject.default_semester,
+        }
+      }
       for (const topic of chapter.topics) {
         if (topic.id === row.topic_id) {
           path = {
@@ -365,7 +391,9 @@ export const getContentTree = cache(async (): Promise<ContentTree> => {
       .order('name'),
     supabase
       .from('subtopics')
-      .select('id, topic_id, title, slug, status, sort_order, updated_at, reading_minutes')
+      .select(
+        'id, topic_id, chapter_id, title, slug, status, sort_order, updated_at, reading_minutes',
+      )
       .order('sort_order')
       .order('title'),
   ])
@@ -374,12 +402,16 @@ export const getContentTree = cache(async (): Promise<ContentTree> => {
     ...topic,
     subtopics: (subtopics.data ?? [])
       .filter((subtopic) => subtopic.topic_id === topic.id)
-      .map(({ topic_id: _topicId, ...subtopic }) => subtopic),
+      .map(({ topic_id: _topicId, chapter_id: _chapterId, ...subtopic }) => subtopic),
   }))
 
   const chapterNodes = (chapters.data ?? []).map((chapter) => ({
     ...chapter,
     topics: topicNodes.filter((topic) => topic.chapter_id === chapter.id),
+    // Flexible leaves (020): pages attached directly to the chapter.
+    leaves: (subtopics.data ?? [])
+      .filter((subtopic) => subtopic.chapter_id === chapter.id)
+      .map(({ topic_id: _topicId, chapter_id: _chapterId, ...subtopic }) => subtopic),
   }))
 
   return (subjects.data ?? []).map((subject) => ({

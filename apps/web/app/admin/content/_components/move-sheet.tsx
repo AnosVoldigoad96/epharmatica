@@ -15,6 +15,10 @@ import type { ListRow, MoveTarget } from './list-types'
  * highlight re-anchor count (fetched staff-side), cache scope — and the
  * typed `move` confirmation for published nodes. Draft nodes move without
  * ceremony: no consequences, no typed word.
+ *
+ * Page destinations (flexible leaves, 020) come in two groups: chapters
+ * (the page attaches directly — targets carry parentLevel 'chapter',
+ * grouped first under their own label) and the classic topic list.
  */
 export function MoveSheet({
   level,
@@ -62,19 +66,24 @@ export function MoveSheet({
 
   const groups = useMemo(() => {
     const map = new Map<string, MoveTarget[]>()
+    // Chapter destinations (direct-page attach, 020) group first under
+    // their own label; everything else keeps its subject grouping.
+    const chapterTargets = targets.filter((candidate) => candidate.parentLevel === 'chapter')
+    if (chapterTargets.length > 0) map.set(t('move.chapterGroup'), chapterTargets)
     for (const candidate of targets) {
+      if (candidate.parentLevel === 'chapter') continue
       const list = map.get(candidate.group) ?? []
       list.push(candidate)
       map.set(candidate.group, list)
     }
     return [...map.entries()]
-  }, [targets])
+  }, [targets, t])
 
   const submit = () => {
     if (!target) return
     setError(null)
     startTransition(async () => {
-      const result = await moveNode(level, row.id, target.id, typed)
+      const result = await moveNode(level, row.id, target.id, typed, target.parentLevel ?? 'topic')
       if (!result.ok) return setError(result.error)
       toast({ title: t('toasts.moved') })
       onClose()

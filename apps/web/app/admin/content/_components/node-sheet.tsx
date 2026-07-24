@@ -8,6 +8,7 @@ import type { ContentLevel } from '@epharmatica/database'
 import { Button, Field, MonographLabel, fieldClass, useToast } from '@epharmatica/ui'
 import {
   createChapter,
+  createChapterPage,
   createSubject,
   createSubtopic,
   createTopic,
@@ -33,6 +34,12 @@ type NodeSheetProps = {
   mode: 'create' | 'edit'
   parentId: string | null
   row?: ListRow
+  /**
+   * Subtopics only: 'chapter' creates the page as a DIRECT chapter leaf
+   * (flexible leaves, 020). The shared chapter namespace means a clashing
+   * topic slug also surfaces as the slugTaken copy (23505).
+   */
+  parentLevel?: 'topic' | 'chapter'
 }
 
 function levelFields(level: ContentLevel) {
@@ -52,6 +59,7 @@ export function NodeSheet({
   mode,
   parentId,
   row,
+  parentLevel,
 }: NodeSheetProps) {
   const t = useTranslations('admin.content')
   const router = useRouter()
@@ -116,7 +124,9 @@ export function NodeSheet({
               ? await createChapter(parentId ?? '', payload)
               : level === 'topic'
                 ? await createTopic(parentId ?? '', payload)
-                : await createSubtopic(parentId ?? '', payload)
+                : parentLevel === 'chapter'
+                  ? await createChapterPage(parentId ?? '', payload)
+                  : await createSubtopic(parentId ?? '', payload)
         if (!result.ok) return setError(result.error)
         return finish(t('toasts.created'))
       }

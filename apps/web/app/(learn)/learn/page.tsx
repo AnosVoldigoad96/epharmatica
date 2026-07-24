@@ -29,12 +29,14 @@ export default async function LearnIndexPage() {
   // replaces the time-based revalidate net).
   const tree = await getPublishedTree()
 
+  // Units = topic subtopics + chapters' direct pages (flexible leaves, 020).
   const unitCount = tree.reduce(
     (sum, subject) =>
       sum +
       subject.chapters.reduce(
         (chapterSum, chapter) =>
           chapterSum +
+          chapter.leaves.length +
           chapter.topics.reduce((topicSum, topic) => topicSum + topic.subtopics.length, 0),
         0,
       ),
