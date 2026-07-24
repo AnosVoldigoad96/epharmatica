@@ -11,13 +11,17 @@
  */
 import 'server-only'
 
+import type { Json } from '@epharmatica/database'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getClientIpHash } from '@/lib/security/hash'
 
 /**
- * M2 audit action taxonomy — constants only, `entity.action` style.
- * Entities: `auth` for auth events, `profiles` for profile/prefs/avatar;
- * `entity_id` is the user id in both cases.
+ * Audit action taxonomy — constants only, `entity.action` style.
+ * M2 entities: `auth` (auth events), `profiles` (profile/prefs/avatar) —
+ * `entity_id` is the user id. M4 entities land with their surfaces
+ * (1.B-2…1.B-5): `content` (tree + workflow, entity_id = node id),
+ * `media`, `preview_link`, `review`, `users` (admin-on-user actions),
+ * `settings` (flags/registry/site metadata, entity_id = natural key).
  */
 export const AUDIT_ACTIONS = {
   signup_completed: 'auth.signup_completed',
@@ -38,24 +42,26 @@ export const AUDIT_ACTIONS = {
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS]
 
-export type AuditEntity = 'auth' | 'profiles'
+export type AuditEntity =
+  'auth' | 'profiles' | 'content' | 'media' | 'preview_link' | 'review' | 'users' | 'settings'
+
+export type AuditEntry = {
+  action: AuditAction
+  actorId?: string | null
+  entity: AuditEntity
+  entityId?: string | null
+  meta?: Record<string, Json | undefined>
+}
 
 /**
  * Append an audit_log row (service role — API roles have no insert policy).
  * `meta` must stay PII-free: no emails, no raw IPs (securities.md §13).
  */
-export async function writeAudit(entry: {
-  action: AuditAction
-  actorId?: string | null
-  entity: AuditEntity
-  entityId?: string | null
-  meta?: Record<string, unknown>
-}): Promise<void> {
+export async function writeAudit(entry: AuditEntry): Promise<void> {
   try {
     const ipHash = await getClientIpHash()
     const supabase = createAdminClient()
 
-    // Placeholder Database type — cast payloads until gen:types runs.
     await supabase.from('audit_log').insert({
       action: entry.action,
       actor_id: entry.actorId ?? null,
@@ -63,9 +69,29 @@ export async function writeAudit(entry: {
       entity_id: entry.entityId ?? null,
       meta: entry.meta ?? {},
       ip_hash: ipHash,
-    } as never)
+    })
   } catch {
     // TODO(pino): route audit-write failures to the logger once observability
     // lands — never break an auth flow on an audit insert failure.
   }
+}
+
+/**
+ * withAudit() — the I8 wrapper every mutating /admin action flows through.
+ *
+ * Runs the mutation, then writes the audit row (actor, action, entity/id,
+ * before/after meta where cheap — pass them in `meta`, hashed IP added
+ * here). A failed mutation writes nothing; audit-write failures never fail
+ * a succeeded mutation (same posture as writeAudit — the swallow keeps
+ * content ops alive, the TODO above routes failures to pino when it lands).
+ * `entry` may be a function of the mutation result for ids only known
+ * after insert.
+ */
+export async function withAudit<T>(
+  entry: AuditEntry | ((result: T) => AuditEntry),
+  mutate: () => Promise<T>,
+): Promise<T> {
+  const result = await mutate()
+  await writeAudit(typeof entry === 'function' ? entry(result) : entry)
+  return result
 }

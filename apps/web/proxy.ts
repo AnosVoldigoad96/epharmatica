@@ -19,10 +19,13 @@ import { NextResponse } from 'next/server'
  * mid-OAuth — the callback's exchangeCodeForSession then fails with a missing
  * verifier. Auth routes manage their own cookies via their own server clients.
  *
- * TODO(Phase 1 · 1.B): hard-block /admin/** without a staff role — the proxy
- *   layer of the three-layer gate (proxy role gate + per-page permission map
- *   + RLS), defense-in-depth on top of RLS (M4; ARCHITECTURE §5).
+ * 1.B: /admin/** is hard-blocked without a staff role — the proxy layer of
+ * the three-layer gate (proxy role gate + per-page permission map + RLS),
+ * defense-in-depth on top of RLS (M4 §4; ARCHITECTURE §5). The role read
+ * runs on the user's own cookie-bound session under RLS
+ * (`profiles_select_own`) — no service key in the proxy, ever.
  */
+import { isStaffRole } from '@/features/admin/permissions'
 export default async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
 
@@ -53,7 +56,29 @@ export default async function proxy(request: NextRequest) {
 
   // Refreshes the session when the access token has expired; do not run code
   // between client creation and getUser() (canonical pattern — subtle bugs).
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Layer 1 of the /admin gate: any non-staff request is turned away here.
+  // Sections and page-level roles are the permission map's job (layer 2).
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (!user) {
+      const signIn = new URL('/auth/sign-in', request.url)
+      signIn.searchParams.set('next', request.nextUrl.pathname)
+      return NextResponse.redirect(signIn)
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (!profile || !isStaffRole(profile.role)) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
 
   return response
 }
