@@ -4,6 +4,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @source '../../../packages/ui/src';
+@source '../../../packages/editor/src';
 
 /*
  * Base layer per STYLE.md §16 — locked Pharmacopoeia system.

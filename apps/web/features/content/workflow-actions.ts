@@ -251,6 +251,32 @@ export async function restoreRevision(revisionId: string): Promise<ActionResult>
 }
 
 // ---------------------------------------------------------------------------
+// Preview gate override (M1 §5.4: author override, minimum 1; null = default
+// rule). preview_block_count is not workflow-guarded — author+ territory.
+// ---------------------------------------------------------------------------
+
+export async function updatePreviewBlockCount(
+  subtopicId: string,
+  count: number | null,
+): Promise<ActionResult> {
+  const t = await getTranslations('admin.content.errors')
+  const gate = await requireRoles(AUTHORING_ROLES)
+  if (!gate.ok) return gate
+
+  if (count !== null && (!Number.isInteger(count) || count < 1 || count > 50)) {
+    return { ok: false, error: t('saveFailed') }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('subtopics')
+    .update({ preview_block_count: count })
+    .eq('id', subtopicId)
+  if (error) return failureFrom(new DbActionError(error))
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
 // Revision content for the side-by-side diff sheet (staff read, no limit).
 // ---------------------------------------------------------------------------
 
