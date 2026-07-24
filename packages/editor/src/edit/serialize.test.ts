@@ -278,6 +278,137 @@ describe('fromEditorValue (the single save path)', () => {
   })
 })
 
+describe('fromEditorValue — editor-v2 artifacts (slash / dnd / selection)', () => {
+  it('drops an open slash_input element mid-paragraph (empty query)', () => {
+    const value = [
+      {
+        id: 'p1',
+        type: 'p',
+        children: [
+          { text: 'dose ' },
+          { type: 'slash_input', children: [{ text: '' }] },
+          { text: ' daily' },
+        ],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        { id: 'p1', type: 'p', children: [{ text: 'dose ' }, { text: ' daily' }] },
+      ])
+    }
+  })
+
+  it('unwraps a slash_input carrying query text instead of losing it', () => {
+    const value = [
+      {
+        id: 'p1',
+        type: 'p',
+        children: [{ text: 'see ' }, { type: 'slash_input', children: [{ text: 'tabl' }] }],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        { id: 'p1', type: 'p', children: [{ text: 'see ' }, { text: 'tabl' }] },
+      ])
+    }
+  })
+
+  it('keeps the canonical single empty run for an empty paragraph', () => {
+    const value = [
+      { id: 'p1', type: 'p', children: [{ type: 'slash_input', children: [{ text: '' }] }] },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([{ id: 'p1', type: 'p', children: [{ text: '' }] }])
+    }
+  })
+
+  it('strips dnd/slash/selection editor-state props from blocks and leaves', () => {
+    const value = [
+      {
+        id: 'p1',
+        type: 'p',
+        isDragging: true,
+        dropLine: 'bottom',
+        __slashOpen: true,
+        selection: { anchor: { path: [0, 0], offset: 1 } },
+        children: [{ text: 'stable', dragOver: '', selected: false }],
+      },
+      {
+        id: 'li-1',
+        type: 'p',
+        listStyleType: 'decimal',
+        listStart: 3,
+        listRestartPolite: 3,
+        children: [{ text: 'step' }],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        { id: 'p1', type: 'p', children: [{ text: 'stable' }] },
+        { id: 'li-1', type: 'p', listStyleType: 'decimal', children: [{ text: 'step' }] },
+      ])
+    }
+  })
+
+  it('round-trips a full document containing every artifact at once', () => {
+    const value = [
+      {
+        id: 'h',
+        type: 'h2',
+        dropLine: 'top',
+        children: [{ text: 'Heading' }],
+      },
+      {
+        id: 'p1',
+        type: 'p',
+        isDragging: true,
+        children: [
+          { text: 'before ' },
+          { type: 'slash_input', children: [{ text: 'call' }] },
+          { text: ' after' },
+        ],
+      },
+      {
+        id: 'co',
+        type: 'callout',
+        variant: 'warning',
+        children: [
+          {
+            type: 'p',
+            children: [{ text: 'body ' }, { type: 'slash_input', children: [{ text: '' }] }],
+          },
+        ],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        { id: 'h', type: 'h2', children: [{ text: 'Heading' }] },
+        {
+          id: 'p1',
+          type: 'p',
+          children: [{ text: 'before ' }, { text: 'call' }, { text: ' after' }],
+        },
+        {
+          id: 'co',
+          type: 'callout',
+          variant: 'warning',
+          children: [{ type: 'p', children: [{ text: 'body ' }] }],
+        },
+      ])
+    }
+  })
+})
+
 describe('toEditorValue (mount-time deserialization)', () => {
   it('seeds indent: 1 on flat list items so the list plugin keeps them', () => {
     const content: Content = [

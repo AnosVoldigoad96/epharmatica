@@ -491,13 +491,19 @@
         "subtopic": "subtopic"
       },
       "newButton": "New {levelName}",
+      "newPageButton": "New content page",
       "columns": {
         "ord": "Ord",
+        "kind": "Kind",
         "nameSlug": "Name / slug",
         "status": "Status",
         "sem": "Sem",
         "updated": "Updated",
         "actions": "Actions"
+      },
+      "kind": {
+        "topic": "Topic",
+        "page": "Page"
       },
       "chips": {
         "published": "{published}/{total} published",
@@ -547,6 +553,7 @@
         "title": "Move “{name}”",
         "titlePublished": "Move “{name}” — published {levelName}",
         "destination": "Destination — legal targets only",
+        "chapterGroup": "Chapters (as direct page)",
         "currentTag": "Current",
         "typeToConfirm": "Type move to confirm",
         "confirm": "Move {levelName}"
@@ -710,6 +717,17 @@
           "insertVideo": "Video (YouTube)",
           "insertImage": "Image",
           "imageDisabledNote": "Images arrive with the media library (next slice)",
+          "slashMenuLabel": "Insert block",
+          "slashInputLabel": "Filter blocks",
+          "slashGroupBlocks": "Blocks",
+          "slashGroupCallouts": "Callouts",
+          "slashGroupMedia": "Media",
+          "slashNoResults": "No results",
+          "emptyPlaceholder": "Type / for commands…",
+          "dragHandleLabel": "Drag to reorder block",
+          "undo": "Undo",
+          "redo": "Redo",
+          "floatingToolbarLabel": "Text formatting",
           "videoUrlPlaceholder": "YouTube URL",
           "videoCaptionPlaceholder": "Caption (required)",
           "videoInsert": "Insert video",
@@ -1178,7 +1196,8 @@
       "defaultSemesterChip": "Default sem {semester}"
     },
     "chapter": {
-      "videoChip": "▶ Video"
+      "videoChip": "▶ Video",
+      "pagesHeading": "Pages"
     },
     "topic": {
       "continue": "Continue — {title}",
@@ -1191,6 +1210,7 @@
       "unitChip": "Unit {index} · {total}",
       "siblingsAria": "Units in this topic",
       "topicLabel": "Topic · {name}",
+      "chapterLabel": "Chapter · {name}",
       "minutesChip": "{minutes} min read",
       "updatedChip": "Updated {date}",
       "onThisPage": "On this page",

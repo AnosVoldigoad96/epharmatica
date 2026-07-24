@@ -53,6 +53,27 @@ export type SubtopicEditorLabels = {
   /** Title/tooltip on the disabled Image button (media library lands next slice). */
   imageDisabledNote: string
 
+  /** Slash command menu ("/" at the caret). */
+  slashMenuLabel: string
+  slashInputLabel: string
+  slashGroupBlocks: string
+  slashGroupCallouts: string
+  slashGroupMedia: string
+  slashNoResults: string
+
+  /** Empty-document placeholder on the first paragraph. */
+  emptyPlaceholder: string
+
+  /** Drag handle (block gutter). */
+  dragHandleLabel: string
+
+  /** History controls. */
+  undo: string
+  redo: string
+
+  /** Floating selection toolbar. */
+  floatingToolbarLabel: string
+
   /** Video insert mini-form. */
   videoUrlPlaceholder: string
   videoCaptionPlaceholder: string
@@ -113,6 +134,22 @@ export const DEFAULT_EDITOR_LABELS: SubtopicEditorLabels = {
   insertVideo: 'Video (YouTube)',
   insertImage: 'Image',
   imageDisabledNote: 'Images arrive with the media library (next slice)',
+
+  slashMenuLabel: 'Insert block',
+  slashInputLabel: 'Filter blocks',
+  slashGroupBlocks: 'Blocks',
+  slashGroupCallouts: 'Callouts',
+  slashGroupMedia: 'Media',
+  slashNoResults: 'No results',
+
+  emptyPlaceholder: 'Type / for commands…',
+
+  dragHandleLabel: 'Drag to reorder block',
+
+  undo: 'Undo',
+  redo: 'Redo',
+
+  floatingToolbarLabel: 'Text formatting',
 
   videoUrlPlaceholder: 'YouTube URL',
   videoCaptionPlaceholder: 'Caption (required)',

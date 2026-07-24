@@ -33,7 +33,12 @@ import { validateContent } from '../schema/validate'
  *  - Void children are coerced to `[{ text: '' }]`.
  *  - Unknown TOP-LEVEL block types are rejected (never silently dropped —
  *    a save must not lose content); unknown inline wrappers are flattened
- *    to their text runs.
+ *    to their text runs. Editor-time inline elements (the slash-command
+ *    `slash_input` combobox) are exactly such wrappers: their query text is
+ *    unwrapped, the element itself never reaches storage.
+ *  - Stray EMPTY text runs left behind by flattened editor-time elements
+ *    are dropped from inline children (a lone empty run survives — that is
+ *    the canonical empty paragraph).
  */
 
 export type FromEditorValueResult = { ok: true; content: Content } | { ok: false; errors: string[] }
@@ -105,7 +110,11 @@ function toInlineNodes(children: unknown): InlineNode[] {
 
 const ensureInline = (children: unknown): InlineNode[] => {
   const nodes = toInlineNodes(children)
-  return nodes.length > 0 ? nodes : [{ text: '' }]
+  // Flattened editor-time inline elements (slash_input & co.) leave stray
+  // empty text runs behind — drop them; coerce to the canonical single
+  // empty run when nothing meaningful remains.
+  const meaningful = nodes.filter((node) => 'type' in node || node.text !== '')
+  return meaningful.length > 0 ? meaningful : [{ text: '' }]
 }
 
 function toNestedParagraphs(children: unknown): NestedParagraph[] {
