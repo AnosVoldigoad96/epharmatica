@@ -422,7 +422,16 @@
       "previewHeading": "Preview links",
       "previewLinksLabel": "Active draft preview links",
       "auditHeading": "Recent admin activity",
-      "auditEmpty": "No audit entries yet."
+      "auditEmpty": "No audit entries yet.",
+      "gateHeading": "Phase-1 content gate",
+      "gateSubjectLine": "{name}: {published} published · {inReview} in review · {draft} drafts",
+      "gateTarget": "Target: ≥2 subjects with ≥25 published subtopics through review.",
+      "gateMet": "Phase-1 gate met",
+      "queueOldest": "Oldest waiting {days} days",
+      "quickHeading": "Quick actions",
+      "quickContent": "Open content tree",
+      "quickReview": "Open review queue",
+      "quickMedia": "Open media library"
     },
     "content": {
       "rail": {
@@ -764,6 +773,219 @@
         "notFound": "That asset no longer exists.",
         "deleteBlocked": "{count, plural, one {Can't delete — used in # subtopic.} other {Can't delete — used in # subtopics.}}"
       }
+    },
+    "users": {
+      "title": "Users",
+      "search": {
+        "label": "Search",
+        "placeholder": "Username, display name, or email",
+        "button": "Search",
+        "hint": "Matches username, display name, and email — 30 newest matches.",
+        "idleBody": "Search for a user to see their card and actions.",
+        "emptyLabel": "No matches",
+        "emptyBody": "No users match that search."
+      },
+      "columns": {
+        "user": "User",
+        "role": "Role",
+        "email": "Email",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "chips": {
+        "unverified": "Unverified",
+        "deletion": "Deletion requested"
+      },
+      "roles": {
+        "user": "User",
+        "author": "Author",
+        "reviewer": "Reviewer",
+        "content_manager": "Content manager",
+        "blog_editor": "Blog editor",
+        "moderator": "Moderator",
+        "jobs_manager": "Jobs manager",
+        "support": "Support",
+        "admin": "Admin",
+        "super_admin": "Super admin"
+      },
+      "actions": {
+        "assignRole": "Assign role…",
+        "forceRename": "Force-rename…"
+      },
+      "assign": {
+        "title": "Assign role — {username}",
+        "roleLabel": "New role",
+        "roleHint": "Only roles below your own rank are assignable.",
+        "confirmLabel": "Type {username} to confirm",
+        "confirmHint": "Granting super admin requires typing the target's username exactly.",
+        "confirm": "Assign role",
+        "cancel": "Cancel"
+      },
+      "rename": {
+        "title": "Force-rename — {username}",
+        "usernameLabel": "New username",
+        "usernameHint": "3–20 characters — lowercase letters, numbers, _ or -, starting and ending with a letter or number.",
+        "reasonLabel": "Reason",
+        "reasonHint": "Required. The user is notified by email; the audit log records only its length.",
+        "consequence": "“{username}” is quarantined for 90 days — no one can claim it, including the user.",
+        "confirm": "Rename",
+        "cancel": "Cancel",
+        "email": {
+          "subject": "Your ePharmatica username was changed",
+          "body": "An administrator changed your username from “{oldUsername}” to “{newUsername}”.\n\nReason: {reason}\n\nYour old username is held for 90 days and cannot be claimed by anyone. Questions? Contact support@epharmatica.com."
+        }
+      },
+      "grace": {
+        "heading": "Deletion grace period",
+        "readOnly": "Read-only",
+        "columns": {
+          "user": "User",
+          "email": "Email",
+          "requested": "Requested"
+        },
+        "empty": "No accounts are awaiting deletion.",
+        "note": "Purge runs on the policy schedule — it cannot be expedited from here."
+      },
+      "toasts": {
+        "roleAssigned": "Role assigned.",
+        "renamed": "Renamed — the user was notified."
+      },
+      "errors": {
+        "confirmationRequired": "Type the target's username to confirm.",
+        "confirmationMismatch": "That doesn't match the target's username.",
+        "rankRules": "Rank rules block that — you can't change your own role, touch peers or above, or grant a rank at or above your own.",
+        "reasonRequired": "A reason is required for a force-rename.",
+        "usernameInvalid": "3–20 characters — lowercase letters, numbers, _ or -, starting and ending with a letter or number.",
+        "usernameTaken": "That username is already taken.",
+        "usernameReserved": "That username is reserved.",
+        "usernameQuarantined": "That username is quarantined."
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "flags": {
+        "heading": "Feature flags",
+        "columns": {
+          "key": "Key",
+          "description": "Description",
+          "phase": "Phase",
+          "state": "State"
+        },
+        "on": "On",
+        "off": "Off",
+        "toggle": "Toggle {key}",
+        "note": "Flips are audited and bust the flags cache tag.",
+        "empty": "No flags."
+      },
+      "models": {
+        "heading": "AI model registry",
+        "add": "Add model",
+        "columns": {
+          "ord": "Ord",
+          "model": "Provider / model",
+          "label": "Label",
+          "default": "Default",
+          "active": "Active",
+          "actions": "Actions"
+        },
+        "defaultChip": "Default",
+        "setDefault": "Set default",
+        "activeChip": "Active",
+        "inactiveChip": "Inactive",
+        "deactivate": "Deactivate",
+        "activate": "Activate",
+        "edit": "Edit",
+        "moveUp": "Move {label} up",
+        "moveDown": "Move {label} down",
+        "empty": "No models registered.",
+        "sheet": {
+          "addTitle": "Add model",
+          "editTitle": "Edit “{label}”",
+          "provider": "Provider",
+          "providerHint": "Slug, e.g. openai, anthropic, gemini, openrouter, groq.",
+          "modelId": "Model ID",
+          "modelIdHint": "Exactly as the provider's API expects it.",
+          "label": "Label",
+          "labelHint": "Shown in the model picker.",
+          "tierNote": "Tier note",
+          "tierNoteHint": "Optional — e.g. “Generous free tier”.",
+          "save": "Save model",
+          "cancel": "Cancel"
+        }
+      },
+      "site": {
+        "heading": "Site metadata",
+        "titleLabel": "Site title",
+        "descriptionLabel": "Site description",
+        "socialImageLabel": "Social image URL",
+        "socialImageHint": "Absolute URL for link previews — leave empty for none.",
+        "contactsLabel": "Contact addresses",
+        "save": "Save site metadata"
+      },
+      "reserved": {
+        "heading": "Reserved usernames",
+        "hint": "Blocked at signup and rename — routes, brand, and staff terms.",
+        "addPlaceholder": "handle",
+        "add": "Add",
+        "remove": "Remove {handle}",
+        "empty": "No reserved usernames."
+      },
+      "registry": {
+        "heading": "Personal-data registry",
+        "readOnly": "Read-only",
+        "columns": {
+          "table": "Table",
+          "module": "Module",
+          "step": "Step",
+          "notes": "Notes"
+        },
+        "empty": "No registry entries.",
+        "note": "Writes ride migrations — each module registers its tables; the purge cron follows step order."
+      },
+      "toasts": {
+        "flagSaved": "Flag saved.",
+        "modelSaved": "Model saved.",
+        "modelDefault": "Default set.",
+        "modelActive": "Model updated.",
+        "reordered": "Order saved.",
+        "siteSaved": "Site metadata saved.",
+        "reservedAdded": "Reserved.",
+        "reservedRemoved": "Removed."
+      },
+      "errors": {
+        "modelFieldsRequired": "Provider, model ID, and label are required.",
+        "modelDuplicate": "That provider + model ID is already registered.",
+        "unknownSetting": "Unknown setting — the roster rides migrations.",
+        "handleInvalid": "3–20 characters — lowercase letters, numbers, _ or -.",
+        "handleExists": "Already reserved.",
+        "reorderStale": "The list changed under you — refresh and try again."
+      }
+    },
+    "audit": {
+      "title": "Audit log",
+      "filters": {
+        "actor": "Actor",
+        "action": "Action",
+        "entity": "Entity",
+        "from": "From",
+        "to": "To",
+        "apply": "Apply filters",
+        "clear": "Clear",
+        "anyActor": "Any actor",
+        "anyAction": "Any action",
+        "anyEntity": "Any entity"
+      },
+      "columns": {
+        "when": "When",
+        "actor": "Actor",
+        "action": "Action",
+        "entity": "Entity",
+        "meta": "Meta"
+      },
+      "exportCsv": "Export CSV",
+      "openEntity": "Open",
+      "empty": "No audit entries match.",
+      "retentionNote": "12 months hot — older entries export to R2 yearly, then prune."
     }
   },
   "emails": {
