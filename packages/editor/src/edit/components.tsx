@@ -1,16 +1,16 @@
 'use client'
 
 import type { TElement } from 'platejs'
+import { NodeApi } from 'platejs'
 import type { PlateElementProps, PlateLeafProps } from 'platejs/react'
 import { PlateElement, PlateLeaf } from 'platejs/react'
-import { createContext, useContext } from 'react'
 
 import { CALLOUT_LABELS, DRUG_CARD_FIELD_LABELS } from '../schema/labels'
 import type { CalloutVariant, DrugCardFieldKey } from '../schema/types'
 import { CALLOUT_VARIANTS, DRUG_CARD_FIELD_KEYS } from '../schema/types'
 import { parseYouTubeUrl, youTubeThumbnailUrl } from '../schema/youtube'
-import type { SubtopicEditorLabels } from './labels'
-import { DEFAULT_EDITOR_LABELS } from './labels'
+import { useEditorLabels } from './context'
+import { SlashInputElement } from './slash-input'
 
 /**
  * Editing-surface node components. Styling uses the app's semantic tokens
@@ -22,13 +22,7 @@ import { DEFAULT_EDITOR_LABELS } from './labels'
  * variants, Drug Card fields) reuse CALLOUT_LABELS / DRUG_CARD_FIELD_LABELS.
  */
 
-const EditorLabelsContext = createContext<SubtopicEditorLabels>(DEFAULT_EDITOR_LABELS)
-
-export const EditorLabelsProvider = EditorLabelsContext.Provider
-
-export function useEditorLabels(): SubtopicEditorLabels {
-  return useContext(EditorLabelsContext)
-}
+export { EditorLabelsProvider, useEditorLabels } from './context'
 
 /* ----------------------------------------------------------------- utils */
 
@@ -51,17 +45,36 @@ const chromeInputClass =
 /* ---------------------------------------------------------------- blocks */
 
 export function ParagraphElement(props: PlateElementProps) {
+  const labels = useEditorLabels()
   const element = props.element as TElement & { indent?: unknown; listStyleType?: unknown }
   const indent = typeof element.indent === 'number' ? element.indent : 0
+  // Notion-style hint on the empty FIRST paragraph only ("Type / for
+  // commands…"). Space is not reserved — the hint is absolutely positioned,
+  // so its appearance never shifts the text (zero CLS).
+  const showPlaceholder =
+    props.path.length === 1 &&
+    props.path[0] === 0 &&
+    element.listStyleType === undefined &&
+    element.children.length === 1 &&
+    NodeApi.string(element) === ''
   return (
     <PlateElement
       {...props}
       // div, not p: flat list items render their <ul>/<ol>/<li> wrapper
       // (ListPlugin belowNodes) inside the block — invalid inside a <p>.
       as="div"
-      className="my-2 text-ink"
+      className="relative my-2 text-ink"
       style={indent > 1 ? { marginInlineStart: `${(indent - 1) * 1.5}rem` } : undefined}
     >
+      {showPlaceholder ? (
+        <span
+          contentEditable={false}
+          aria-hidden
+          className="pointer-events-none absolute start-0 top-0 select-none text-ink-2 opacity-60"
+        >
+          {labels.emptyPlaceholder}
+        </span>
+      ) : null}
       {props.children}
     </PlateElement>
   )
@@ -390,4 +403,5 @@ export const editorComponents = {
   video: VideoElement,
   toc: TocElement,
   drug_card: DrugCardElement,
+  slash_input: SlashInputElement,
 }

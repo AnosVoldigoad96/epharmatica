@@ -1,45 +1,54 @@
 'use client'
 
+import { flip, offset, shift, useFloatingToolbar, useFloatingToolbarState } from '@platejs/floating'
 import { unwrapLink, upsertLink } from '@platejs/link'
-import { indentList, outdentList, someList, toggleList } from '@platejs/list'
-import { insertTable } from '@platejs/table'
-import type { TElement } from 'platejs'
-import { nanoid, PathApi } from 'platejs'
-import type { PlateEditor } from 'platejs/react'
-import { Plate, PlateContent, useEditorRef, useEditorSelector, usePlateEditor } from 'platejs/react'
+import { indentList, outdentList, someList } from '@platejs/list'
+import { nanoid } from 'platejs'
+import {
+  Plate,
+  PlateContent,
+  useEditorId,
+  useEditorRef,
+  useEditorSelector,
+  useEventEditorValue,
+  usePlateEditor,
+} from 'platejs/react'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { DndProvider } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 
-import { CALLOUT_LABELS } from '../schema/labels'
-import type { CalloutVariant, Content } from '../schema/types'
-import { CALLOUT_VARIANTS } from '../schema/types'
+import type { Content } from '../schema/types'
 import { parseYouTubeUrl } from '../schema/youtube'
 import { EditorLabelsProvider, editorComponents } from './components'
+import type { EditorBridges, PickedImage } from './context'
+import { EditorBridgesProvider } from './context'
 import { editorKit } from './editor-kit'
+import type { InsertItem } from './insert-items'
+import { buildInsertItems, insertBlockNode, insertItemGroups } from './insert-items'
 import type { SubtopicEditorLabels } from './labels'
 import { DEFAULT_EDITOR_LABELS } from './labels'
 import { fromEditorValue, toEditorValue } from './serialize'
 
 /**
- * <SubtopicEditor/> — the admin editing surface (M4). Autosaves every
- * `autosaveMs` (default 30s, M4 §5.4) and on editor blur; every save goes
- * through fromEditorValue → validateContent, so unvalidated JSON never
- * reaches `onSave`.
+ * <SubtopicEditor/> — the admin editing surface (M4), Notion-grade:
+ *
+ *  - "/" slash commands over the full insert roster (insert-items.ts);
+ *  - drag & reorder of top-level blocks (six-dot gutter handle, drop line);
+ *  - a floating selection toolbar for marks + link;
+ *  - markdown autoformat (editor-kit input rules);
+ *  - a slim fixed toolbar: block type · insert · undo/redo · status pill.
+ *
+ * Autosaves every `autosaveMs` (default 30s, M4 §5.4) and on editor blur;
+ * every save goes through fromEditorValue → validateContent, so unvalidated
+ * JSON never reaches `onSave`.
  */
 
 export type EditorSaveResult = { ok: boolean; error?: string }
 
 export type EditorStatus = 'clean' | 'dirty' | 'saving' | 'saved' | 'error'
 
-/** What the app's media-library picker resolves with (M4 §6 — the Plate
- * image block's picker IS the library; the schema requires asset_id). */
-export type PickedImage = {
-  asset_id: string
-  url: string
-  alt: string
-  width: number
-  height: number
-}
+export type { PickedImage }
 
 export type SubtopicEditorProps = {
   /** `[]` allowed — the editor seeds one empty paragraph. */
@@ -168,76 +177,39 @@ function MarkButton({
   )
 }
 
-function ListControls({ labels }: { labels: SubtopicEditorLabels }) {
+function UndoRedoButtons({ labels }: { labels: SubtopicEditorLabels }) {
   const editor = useEditorRef()
-  const bulleted = useEditorSelector((ed) => someList(ed, 'disc'), [])
-  const numbered = useEditorSelector((ed) => someList(ed, 'decimal'), [])
-  const inList = bulleted || numbered
+  const canUndo = useEditorSelector((ed) => ed.history.undos.length > 0, [])
+  const canRedo = useEditorSelector((ed) => ed.history.redos.length > 0, [])
   return (
     <>
       <ToolbarButton
-        label={labels.listBulleted}
-        pressed={bulleted}
+        label={labels.undo}
+        disabled={!canUndo}
         onClick={() => {
-          toggleList(editor, { listStyleType: 'disc' })
+          editor.undo()
           editor.tf.focus()
         }}
       >
-        •≡
+        ↺
       </ToolbarButton>
       <ToolbarButton
-        label={labels.listNumbered}
-        pressed={numbered}
+        label={labels.redo}
+        disabled={!canRedo}
         onClick={() => {
-          toggleList(editor, { listStyleType: 'decimal' })
+          editor.redo()
           editor.tf.focus()
         }}
       >
-        1≡
-      </ToolbarButton>
-      <ToolbarButton
-        label={labels.listIndent}
-        disabled={!inList}
-        onClick={() => {
-          indentList(editor)
-          editor.tf.focus()
-        }}
-      >
-        →
-      </ToolbarButton>
-      <ToolbarButton
-        label={labels.listOutdent}
-        disabled={!inList}
-        onClick={() => {
-          outdentList(editor)
-          editor.tf.focus()
-        }}
-      >
-        ←
+        ↻
       </ToolbarButton>
     </>
   )
 }
 
-/** Inserts a block after the current top-level block (or at the end). */
-function insertBlockBelow(editor: PlateEditor, node: TElement) {
-  const entry = editor.api.block({ highest: true })
-  if (entry) {
-    editor.tf.insertNodes(node, { at: PathApi.next(entry[1]), select: true })
-  } else {
-    editor.tf.insertNodes(node, { select: true })
-  }
-}
+/* ---------------------------------------------------------- insert menu */
 
-function InsertMenu({
-  labels,
-  onOpenVideoForm,
-  onPickImage,
-}: {
-  labels: SubtopicEditorLabels
-  onOpenVideoForm: () => void
-  onPickImage?: () => Promise<PickedImage | null>
-}) {
+function InsertMenu({ labels, bridges }: { labels: SubtopicEditorLabels; bridges: EditorBridges }) {
   const editor = useEditorRef()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
@@ -251,100 +223,141 @@ function InsertMenu({
     return () => document.removeEventListener('mousedown', onPointerDown)
   }, [open])
 
-  const item = (label: string, onPick: () => void, disabled = false, title?: string) => (
-    <button
-      type="button"
-      disabled={disabled}
-      title={title ?? label}
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={() => {
-        setOpen(false)
-        onPick()
-      }}
-      className="block w-full whitespace-nowrap px-3 py-1.5 text-left font-mono text-xs text-ink hover:bg-paper disabled:opacity-40"
-    >
-      {label}
-    </button>
-  )
+  const items = useMemo(() => buildInsertItems(labels, bridges), [labels, bridges])
+  const groups = insertItemGroups(labels)
+    .map((group) => ({ ...group, items: items.filter((item) => item.group === group.group) }))
+    .filter((group) => group.items.length > 0)
+
+  const pick = (item: InsertItem) => {
+    setOpen(false)
+    item.run(editor)
+  }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div
+      ref={rootRef}
+      className="relative"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && open) {
+          event.stopPropagation()
+          setOpen(false)
+          editor.tf.focus()
+        }
+      }}
+    >
       <ToolbarButton label={labels.insertMenu} pressed={open} onClick={() => setOpen(!open)}>
         + {labels.insertMenu}
       </ToolbarButton>
       {open ? (
-        <div className="absolute left-0 top-full z-20 mt-px min-w-48 border border-ink bg-surface py-1 shadow-none">
-          {item(labels.insertTable, () => {
-            insertTable(editor, { colCount: 3, rowCount: 3, header: true })
-            editor.tf.focus()
-          })}
-          <p className="select-none px-3 pb-0.5 pt-1.5 font-mono text-[10px] uppercase tracking-widest text-ink-2">
-            {labels.insertCallout}
-          </p>
-          {CALLOUT_VARIANTS.map((variant: CalloutVariant) => (
-            <button
-              key={variant}
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => {
-                setOpen(false)
-                insertBlockBelow(editor, {
-                  type: 'callout',
-                  variant,
-                  children: [{ type: 'p', children: [{ text: '' }] }],
-                })
-                editor.tf.focus()
-              }}
-              className="block w-full whitespace-nowrap px-3 py-1 pl-6 text-left font-mono text-xs text-ink hover:bg-paper"
-            >
-              {CALLOUT_LABELS[variant]}
-            </button>
+        <div className="absolute start-0 top-full z-20 mt-px max-h-96 min-w-48 overflow-y-auto border border-ink bg-surface py-1 shadow-none">
+          {groups.map((group) => (
+            <div key={group.group}>
+              <p className="select-none px-3 pb-0.5 pt-1.5 font-mono text-[10px] uppercase tracking-widest text-ink-2">
+                {group.label}
+              </p>
+              {group.items.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  disabled={item.disabled}
+                  title={item.disabledNote ?? item.label}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => pick(item)}
+                  className="block w-full whitespace-nowrap px-3 py-1.5 text-start font-mono text-xs text-ink hover:bg-paper disabled:opacity-40"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           ))}
-          {item(labels.insertCodeBlock, () => {
-            insertBlockBelow(editor, {
-              type: 'code_block',
-              children: [{ type: 'code_line', children: [{ text: '' }] }],
-            })
-            editor.tf.focus()
-          })}
-          {item(labels.insertToc, () => {
-            insertBlockBelow(editor, { type: 'toc', children: [{ text: '' }] })
-            editor.tf.focus()
-          })}
-          {item(labels.insertDrugCard, () => {
-            insertBlockBelow(editor, {
-              type: 'drug_card',
-              fields: { generic_name: '' },
-              children: [{ text: '' }],
-            })
-          })}
-          {item(labels.insertVideo, onOpenVideoForm)}
-          {item(
-            labels.insertImage,
-            () => {
-              if (!onPickImage) return
-              void onPickImage().then((picked) => {
-                if (!picked) return
-                insertBlockBelow(editor, {
-                  type: 'img',
-                  url: picked.url,
-                  alt: picked.alt,
-                  asset_id: picked.asset_id,
-                  width: picked.width,
-                  height: picked.height,
-                  children: [{ text: '' }],
-                })
-                editor.tf.focus()
-              })
-            },
-            !onPickImage,
-            onPickImage ? undefined : labels.imageDisabledNote,
-          )}
         </div>
       ) : null}
     </div>
   )
 }
+
+/* ------------------------------------------------- floating selection bar */
+
+/**
+ * Floating toolbar above the text selection (marks + link), positioned by
+ * @platejs/floating over a virtual element that follows the selection rect.
+ */
+function FloatingToolbar({
+  labels,
+  onOpenLinkPanel,
+}: {
+  labels: SubtopicEditorLabels
+  onOpenLinkPanel: () => void
+}) {
+  const editor = useEditorRef()
+  const editorId = useEditorId()
+  const focusedEditorId = useEventEditorValue('focus')
+  const hasLink = useEditorSelector((ed) => !!ed.api.some({ match: { type: 'a' } }), [])
+
+  const state = useFloatingToolbarState({
+    editorId,
+    focusedEditorId,
+    floatingOptions: {
+      placement: 'top',
+      middleware: [
+        offset(8),
+        flip({ fallbackPlacements: ['bottom-start', 'top-start', 'bottom'], padding: 8 }),
+        shift({ padding: 8 }),
+      ],
+    },
+  })
+  const { clickOutsideRef, hidden, props: rootProps, ref: floatingRef } = useFloatingToolbar(state)
+
+  if (hidden) return null
+  return (
+    <div ref={clickOutsideRef}>
+      <div
+        ref={floatingRef}
+        {...rootProps}
+        role="toolbar"
+        aria-label={labels.floatingToolbarLabel}
+        className="z-30 flex items-center gap-0.5 border border-ink bg-surface p-0.5 shadow-none"
+      >
+        <MarkButton mark="bold" label={labels.markBold}>
+          <span className="font-bold">B</span>
+        </MarkButton>
+        <MarkButton mark="italic" label={labels.markItalic}>
+          <span className="italic">I</span>
+        </MarkButton>
+        <MarkButton mark="underline" label={labels.markUnderline}>
+          <span className="underline">U</span>
+        </MarkButton>
+        <MarkButton mark="strikethrough" label={labels.markStrikethrough}>
+          <span className="line-through">S</span>
+        </MarkButton>
+        <MarkButton mark="code" label={labels.markCode}>
+          {'</>'}
+        </MarkButton>
+        <MarkButton mark="sub" clears="sup" label={labels.markSubscript}>
+          x₂
+        </MarkButton>
+        <MarkButton mark="sup" clears="sub" label={labels.markSuperscript}>
+          x²
+        </MarkButton>
+        <ToolbarButton label={labels.linkAdd} onClick={onOpenLinkPanel}>
+          ⌁
+        </ToolbarButton>
+        <ToolbarButton
+          label={labels.linkRemove}
+          disabled={!hasLink}
+          onClick={() => {
+            unwrapLink(editor)
+            editor.tf.focus()
+          }}
+        >
+          ⌀
+        </ToolbarButton>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------ panel rows */
 
 function LinkRow({ labels, onClose }: { labels: SubtopicEditorLabels; onClose: () => void }) {
   const editor = useEditorRef()
@@ -354,6 +367,7 @@ function LinkRow({ labels, onClose }: { labels: SubtopicEditorLabels; onClose: (
       <input
         autoFocus
         placeholder={labels.linkUrlPlaceholder}
+        aria-label={labels.linkUrlPlaceholder}
         value={url}
         onChange={(event) => setUrl(event.target.value)}
         onKeyDown={(event) => {
@@ -402,7 +416,7 @@ function VideoRow({ labels, onClose }: { labels: SubtopicEditorLabels; onClose: 
       setInvalid(true)
       return
     }
-    insertBlockBelow(editor, {
+    insertBlockNode(editor, {
       type: 'video',
       url: url.trim(),
       caption: [{ text: caption }],
@@ -421,6 +435,9 @@ function VideoRow({ labels, onClose }: { labels: SubtopicEditorLabels; onClose: 
           setUrl(event.target.value)
           setInvalid(false)
         }}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') onClose()
+        }}
         className={`${inputClass} w-72`}
       />
       <input
@@ -428,6 +445,9 @@ function VideoRow({ labels, onClose }: { labels: SubtopicEditorLabels; onClose: 
         aria-label={labels.videoCaptionPlaceholder}
         value={caption}
         onChange={(event) => setCaption(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') onClose()
+        }}
         className={`${inputClass} w-72`}
       />
       <button
@@ -461,19 +481,21 @@ const STATUS_TONE: Record<EditorStatus, string> = {
   error: 'text-danger',
 }
 
+/* ------------------------------------------------------------- toolbar */
+
 function Toolbar({
   labels,
   status,
-  onPickImage,
+  bridges,
+  panel,
+  onClosePanel,
 }: {
   labels: SubtopicEditorLabels
   status: EditorStatus
-  onPickImage?: () => Promise<PickedImage | null>
+  bridges: EditorBridges
+  panel: 'link' | 'video' | null
+  onClosePanel: () => void
 }) {
-  const editor = useEditorRef()
-  const hasLink = useEditorSelector((ed) => !!ed.api.some({ match: { type: 'a' } }), [])
-  const [panel, setPanel] = useState<'link' | 'video' | null>(null)
-
   const statusLabel: Record<EditorStatus, string> = {
     clean: labels.statusClean,
     dirty: labels.statusDirty,
@@ -483,61 +505,19 @@ function Toolbar({
   }
 
   return (
-    <div className="sticky top-0 z-10 border-b border-ink bg-surface">
+    <div className="sticky top-0 z-20 border-b border-ink bg-surface">
       <div className="flex flex-wrap items-center gap-1 px-2 py-1">
         <BlockTypeSelect labels={labels} />
-        <MarkButton mark="bold" label={labels.markBold}>
-          <span className="font-bold">B</span>
-        </MarkButton>
-        <MarkButton mark="italic" label={labels.markItalic}>
-          <span className="italic">I</span>
-        </MarkButton>
-        <MarkButton mark="underline" label={labels.markUnderline}>
-          <span className="underline">U</span>
-        </MarkButton>
-        <MarkButton mark="strikethrough" label={labels.markStrikethrough}>
-          <span className="line-through">S</span>
-        </MarkButton>
-        <MarkButton mark="code" label={labels.markCode}>
-          {'</>'}
-        </MarkButton>
-        <MarkButton mark="sub" clears="sup" label={labels.markSubscript}>
-          x₂
-        </MarkButton>
-        <MarkButton mark="sup" clears="sub" label={labels.markSuperscript}>
-          x²
-        </MarkButton>
-        <ListControls labels={labels} />
-        <ToolbarButton
-          label={labels.linkAdd}
-          pressed={panel === 'link'}
-          onClick={() => setPanel(panel === 'link' ? null : 'link')}
-        >
-          ⌁
-        </ToolbarButton>
-        <ToolbarButton
-          label={labels.linkRemove}
-          disabled={!hasLink}
-          onClick={() => {
-            unwrapLink(editor)
-            editor.tf.focus()
-          }}
-        >
-          ⌀
-        </ToolbarButton>
-        <InsertMenu
-          labels={labels}
-          onOpenVideoForm={() => setPanel('video')}
-          onPickImage={onPickImage}
-        />
+        <InsertMenu labels={labels} bridges={bridges} />
+        <UndoRedoButtons labels={labels} />
         <span
           className={`ml-auto select-none font-mono text-[10px] uppercase tracking-widest ${STATUS_TONE[status]}`}
         >
           {statusLabel[status]}
         </span>
       </div>
-      {panel === 'link' ? <LinkRow labels={labels} onClose={() => setPanel(null)} /> : null}
-      {panel === 'video' ? <VideoRow labels={labels} onClose={() => setPanel(null)} /> : null}
+      {panel === 'link' ? <LinkRow labels={labels} onClose={onClosePanel} /> : null}
+      {panel === 'video' ? <VideoRow labels={labels} onClose={onClosePanel} /> : null}
     </div>
   )
 }
@@ -571,6 +551,7 @@ export function SubtopicEditor({
 
   const [status, setStatusState] = useState<EditorStatus>('clean')
   const [errorText, setErrorText] = useState<string | null>(null)
+  const [panel, setPanel] = useState<'link' | 'video' | null>(null)
 
   const statusRef = useRef<EditorStatus>('clean')
   const dirtyRef = useRef(false)
@@ -582,6 +563,15 @@ export function SubtopicEditor({
   onStatusChangeRef.current = onStatusChange
   // Latest-save/schedule refs so timers and DOM handlers never go stale.
   const saveRef = useRef<() => Promise<void>>(() => Promise.resolve())
+
+  // Slash menu + insert menu reach the app through these bridges.
+  const bridges = useMemo<EditorBridges>(
+    () => ({
+      openVideoForm: () => setPanel('video'),
+      pickImage: onPickImage,
+    }),
+    [onPickImage],
+  )
 
   const setStatus = useCallback((next: EditorStatus) => {
     if (statusRef.current === next) return
@@ -653,22 +643,50 @@ export function SubtopicEditor({
 
   return (
     <EditorLabelsProvider value={labels}>
-      <Plate editor={editor} onValueChange={markDirty}>
-        <div className="border border-ink bg-surface">
-          <Toolbar labels={labels} status={status} onPickImage={onPickImage} />
-          {status === 'error' ? (
-            <p className="border-b border-line bg-surface px-3 py-1.5 font-mono text-[11px] text-danger">
-              {labels.validationErrorPrefix}
-              {errorText ? `: ${errorText}` : ''}
-            </p>
-          ) : null}
-          <PlateContent
-            aria-label={labels.editorAriaLabel}
-            className="min-h-[320px] w-full max-w-none bg-surface p-5 text-ink focus:outline-none"
-            onBlur={() => void saveRef.current()}
-          />
-        </div>
-      </Plate>
+      <EditorBridgesProvider value={bridges}>
+        {/* Self-contained DnD context: block drag & reorder never leaks
+            outside the editor. */}
+        <DndProvider backend={HTML5Backend}>
+          <Plate editor={editor} onValueChange={markDirty}>
+            <div className="border border-ink bg-surface">
+              <Toolbar
+                labels={labels}
+                status={status}
+                bridges={bridges}
+                panel={panel}
+                onClosePanel={() => setPanel(null)}
+              />
+              {status === 'error' ? (
+                <p className="border-b border-line bg-surface px-3 py-1.5 font-mono text-[11px] text-danger">
+                  {labels.validationErrorPrefix}
+                  {errorText ? `: ${errorText}` : ''}
+                </p>
+              ) : null}
+              <FloatingToolbar labels={labels} onOpenLinkPanel={() => setPanel('link')} />
+              <PlateContent
+                aria-label={labels.editorAriaLabel}
+                // ps-12 reserves the drag-handle gutter: handles appear on
+                // hover without any layout shift (zero CLS).
+                className="min-h-[320px] w-full max-w-none bg-surface p-5 ps-12 text-ink focus:outline-none"
+                onBlur={() => void saveRef.current()}
+                onKeyDown={(event) => {
+                  // Tab / Shift+Tab indent flat list items (Notion-style);
+                  // everything else keeps native tab order.
+                  if (
+                    event.key === 'Tab' &&
+                    !event.defaultPrevented &&
+                    (someList(editor, 'disc') || someList(editor, 'decimal'))
+                  ) {
+                    event.preventDefault()
+                    if (event.shiftKey) outdentList(editor)
+                    else indentList(editor)
+                  }
+                }}
+              />
+            </div>
+          </Plate>
+        </DndProvider>
+      </EditorBridgesProvider>
     </EditorLabelsProvider>
   )
 }

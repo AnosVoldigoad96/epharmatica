@@ -11,11 +11,23 @@ import {
   UnderlinePlugin,
 } from '@platejs/basic-nodes/react'
 import { CodeBlockPlugin } from '@platejs/code-block/react'
+import { DndPlugin } from '@platejs/dnd'
 import { LinkPlugin } from '@platejs/link/react'
+import { toggleList } from '@platejs/list'
 import { ListPlugin } from '@platejs/list/react'
+import { SlashPlugin } from '@platejs/slash-command/react'
 import { TablePlugin } from '@platejs/table/react'
-import { NodeIdPlugin } from 'platejs'
+import type { SlateEditor } from 'platejs'
+import {
+  createBlockFenceInputRule,
+  createBlockStartInputRule,
+  createMarkInputRule,
+  NodeIdPlugin,
+  TrailingBlockPlugin,
+} from 'platejs'
 import { createPlatePlugin } from 'platejs/react'
+
+import { BlockDraggable } from './draggable'
 
 /**
  * The Plate v53 plugin kit, configured to OUR block schema (schema/types.ts)
@@ -79,6 +91,90 @@ export const DrugCardPlugin = createPlatePlugin({
   node: { isElement: true, isVoid: true },
 })
 
+/* --------------------------------------------------- markdown input rules */
+
+/**
+ * Markdown autoformat, v53-style: explicit `inputRules` on one plugin (the
+ * former AutoformatPlugin is an inert compatibility shim in v53 and throws
+ * when combined with input rules). ONLY rules that land inside OUR schema:
+ *
+ *  - `#`/`##` + space → h2/h3 (h1 stays reserved for the page title),
+ *    `>` + space → flat blockquote (set, not wrap — the schema has no
+ *    nested paragraphs under blockquote);
+ *  - `-`/`*` + space → bulleted, `1.` + space → numbered (flat list props);
+ *  - ` ``` ` fence → code_block; backtick pair → inline `code` mark;
+ *  - `**bold**` / `*italic*` marks.
+ *
+ * Block conversions are gated to TOP-LEVEL paragraphs so callout bodies,
+ * table cells, and code lines never morph into schema-invalid nesting.
+ */
+
+const inTopLevelParagraph = ({ editor }: { editor: SlateEditor }): boolean => {
+  const entry = editor.api.block()
+  return entry !== undefined && entry[0].type === 'p' && entry[1].length === 1
+}
+
+const blockConversionRule = (match: string, type: 'h2' | 'h3' | 'blockquote') =>
+  createBlockStartInputRule({
+    match,
+    trigger: ' ',
+    enabled: inTopLevelParagraph,
+    apply: ({ editor }, ruleMatch) => {
+      editor.tf.delete({ at: ruleMatch.range })
+      const entry = editor.api.block({ highest: true })
+      if (entry && (entry[0].listStyleType !== undefined || entry[0].indent !== undefined)) {
+        editor.tf.unsetNodes(['listStyleType', 'indent', 'listStart'], { at: entry[1] })
+      }
+      editor.tf.setNodes({ type }, { match: (node) => editor.api.isBlock(node) })
+      return true
+    },
+  })
+
+const listConversionRule = (match: RegExp, listStyleType: 'disc' | 'decimal') =>
+  createBlockStartInputRule({
+    match,
+    trigger: ' ',
+    enabled: inTopLevelParagraph,
+    apply: ({ editor }, ruleMatch) => {
+      editor.tf.delete({ at: ruleMatch.range })
+      toggleList(editor, { listStyleType })
+      return true
+    },
+  })
+
+export const MarkdownRulesPlugin = createPlatePlugin({
+  key: 'epharm_markdown',
+  inputRules: [
+    blockConversionRule('#', 'h2'),
+    blockConversionRule('##', 'h3'),
+    blockConversionRule('>', 'blockquote'),
+    listConversionRule(/^[-*]$/, 'disc'),
+    listConversionRule(/^\d{1,3}\.$/, 'decimal'),
+    // ``` on an otherwise-empty paragraph → code block.
+    createBlockFenceInputRule({
+      fence: '```',
+      block: 'p',
+      on: 'match',
+      priority: 100,
+      enabled: inTopLevelParagraph,
+      apply: ({ editor }, match) => {
+        editor.tf.withoutNormalizing(() => {
+          editor.tf.removeNodes({ at: match.path })
+          editor.tf.insertNodes(
+            { type: 'code_block', children: [{ type: 'code_line', children: [{ text: '' }] }] },
+            { at: match.path, select: true },
+          )
+        })
+        return true
+      },
+    }),
+    // Marks — bold before italic so `**` wins the shared `*` trigger.
+    createMarkInputRule({ start: '**', end: '*', trigger: '*', mark: 'bold' }),
+    createMarkInputRule({ start: '*', trigger: '*', mark: 'italic' }),
+    createMarkInputRule({ start: '`', trigger: '`', mark: 'code' }),
+  ],
+})
+
 export const editorKit = [
   // Blocks (paragraph comes from the core BaseParagraphPlugin, type 'p').
   H2Plugin,
@@ -106,6 +202,23 @@ export const editorKit = [
   VideoPlugin,
   TocPlugin,
   DrugCardPlugin,
+  // "/" slash commands — inserts an inline-void `slash_input` combobox at
+  // the caret (rendered by SlashInputElement); never triggers inside code
+  // blocks. The input element is editor-time only: the serializer flattens
+  // unknown inline wrappers, so it can never reach storage.
+  SlashPlugin.configure({
+    options: {
+      triggerQuery: (editor) => !editor.api.some({ match: { type: ['code_block'] } }),
+    },
+  }),
+  // Drag & reorder for top-level blocks (six-dot gutter handle, drop line).
+  DndPlugin.configure({
+    render: { aboveNodes: BlockDraggable },
+  }),
+  // Markdown autoformat (input rules — see MarkdownRulesPlugin above).
+  MarkdownRulesPlugin,
+  // A trailing empty paragraph is always available at the document end.
+  TrailingBlockPlugin,
   // Stable block ids for highlight anchors (M1 §5.5).
   NodeIdPlugin.configure({
     options: {
