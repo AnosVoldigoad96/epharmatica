@@ -1171,18 +1171,21 @@ export type Database = {
       admin_search_users: {
         Args: { p_query: string }
         Returns: {
-          id: string
-          username: string
-          display_name: string
-          role: Database['public']['Enums']['app_role']
-          email: string
-          email_confirmed_at: string | null
           created_at: string
-          deletion_requested_at: string | null
+          deletion_requested_at: string
+          display_name: string
+          email: string
+          email_confirmed_at: string
+          id: string
+          role: Database['public']['Enums']['app_role']
+          username: string
         }[]
       }
       admin_set_role: {
-        Args: { p_new_role: Database['public']['Enums']['app_role']; p_target: string }
+        Args: {
+          p_new_role: Database['public']['Enums']['app_role']
+          p_target: string
+        }
         Returns: undefined
       }
       auth_rate_limit_hit: {
@@ -1208,7 +1211,11 @@ export type Database = {
         Returns: Json
       }
       publish_subtopic: {
-        Args: { p_primary_video_url: string; p_reading_minutes: number; p_subtopic_id: string }
+        Args: {
+          p_primary_video_url: string
+          p_reading_minutes: number
+          p_subtopic_id: string
+        }
         Returns: undefined
       }
       refresh_media_refs: {
@@ -1223,21 +1230,18 @@ export type Database = {
         }
         Returns: string[]
       }
-      restore_revision: {
-        Args: { p_revision_id: string }
-        Returns: string
-      }
+      restore_revision: { Args: { p_revision_id: string }; Returns: string }
       role_rank: {
         Args: { p_role: Database['public']['Enums']['app_role'] }
         Returns: number
       }
       staff_directory: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
-          id: string
-          username: string
           display_name: string
+          id: string
           role: Database['public']['Enums']['app_role']
+          username: string
         }[]
       }
       transition_subtopic: {
