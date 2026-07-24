@@ -1136,6 +1136,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _subtopic_author_of_record: {
+        Args: { p_subtopic_id: string }
+        Returns: string
+      }
       auth_rate_limit_hit: {
         Args: { p_bucket: string; p_identifier: string; p_window_start: string }
         Returns: number
@@ -1158,6 +1162,10 @@ export type Database = {
         Args: { p_ip_hash: string; p_token: string; p_ua: string }
         Returns: Json
       }
+      publish_subtopic: {
+        Args: { p_primary_video_url: string; p_reading_minutes: number; p_subtopic_id: string }
+        Returns: undefined
+      }
       rename_content_node: {
         Args: {
           p_entity_id: string
@@ -1165,6 +1173,23 @@ export type Database = {
           p_new_slug: string
         }
         Returns: string[]
+      }
+      restore_revision: {
+        Args: { p_revision_id: string }
+        Returns: string
+      }
+      staff_directory: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          username: string
+          display_name: string
+          role: Database['public']['Enums']['app_role']
+        }[]
+      }
+      transition_subtopic: {
+        Args: { p_action: string; p_comment?: string; p_subtopic_id: string }
+        Returns: undefined
       }
       username_available: { Args: { candidate: string }; Returns: boolean }
     }

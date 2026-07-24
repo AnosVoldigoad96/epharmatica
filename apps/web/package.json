@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@epharmatica/database": "workspace:*",
+    "@epharmatica/editor": "workspace:*",
     "@epharmatica/tokens": "workspace:*",
     "@epharmatica/ui": "workspace:*",
     "@supabase/ssr": "^0.12.3",

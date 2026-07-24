@@ -151,8 +151,7 @@ export function subtopicListData(
     status: { kind: 'own', status: subtopic.status },
     semester: null,
     updatedAt: subtopic.updated_at,
-    // The subtopic editor lands with 1.B-3 — no Open target yet.
-    openHref: null,
+    openHref: `/admin/content/subtopic/${subtopic.id}`,
     publishedBeneath: subtopic.status === 'published' ? 1 : 0,
     pathSegments: [subject.slug, chapter.slug, topic.slug, subtopic.slug],
     form: { name: subtopic.title, slug: subtopic.slug },
