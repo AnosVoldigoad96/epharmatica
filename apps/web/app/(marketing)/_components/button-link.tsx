@@ -23,17 +23,21 @@ export function ButtonLink({
   variant = 'primary',
   size = 'md',
   className,
+  umamiEvent,
   children,
 }: {
   href: string
   variant?: keyof typeof VARIANT_CLASSES
   size?: keyof typeof SIZE_CLASSES
   className?: string
+  /** Declarative Umami event (a constant from lib/observability/events). */
+  umamiEvent?: string
   children: ReactNode
 }) {
   return (
     <Link
       href={href}
+      data-umami-event={umamiEvent}
       className={`inline-flex items-center justify-center gap-2 whitespace-nowrap border font-medium ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className ?? ''}`}
     >
       {children}

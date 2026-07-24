@@ -45,15 +45,24 @@ export async function readerPageMetadata(
   if (!payload) return {}
   const t = await getTranslations('learn.meta')
   // SEO derives from title + preview text ONLY (M1 §5.4) — payload.blocks is
-  // already the anonymous preview.
+  // already the anonymous preview. OG/Twitter carry the same pair (1.C-3):
+  // text metadata only, no og-image generation.
   const previewText = getPlainText(payload.blocks).replace(/\s+/g, ' ').trim()
   const description =
     previewText.length > 160 ? `${previewText.slice(0, 157).trimEnd()}…` : previewText
+  const title = t('entityTitle', { name: payload.title })
   return {
-    title: { absolute: t('entityTitle', { name: payload.title }) },
+    title: { absolute: title },
     description: description || undefined,
     robots: { index: true, follow: true },
     alternates: { canonical },
+    openGraph: {
+      title,
+      description: description || undefined,
+      type: 'article',
+      url: canonical,
+    },
+    twitter: { card: 'summary', title, description: description || undefined },
   }
 }
 
