@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { getTranslations } from 'next-intl/server'
@@ -34,7 +35,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   // AAL step-up (M4-5): a session with a verified-but-unpassed factor must
   // clear the TOTP challenge before any admin surface renders.
   if (await mfaStepUpRequired()) {
-    redirect('/auth/mfa?next=%2Fadmin')
+    const requested = (await headers()).get('x-pathname') ?? '/admin'
+    redirect(`/auth/mfa?next=${encodeURIComponent(requested)}`)
   }
 
   const t = await getTranslations('admin.shell')
