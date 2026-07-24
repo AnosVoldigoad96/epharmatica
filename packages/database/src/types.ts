@@ -1210,6 +1210,10 @@ export type Database = {
         Args: { p_ip_hash: string; p_token: string; p_ua: string }
         Returns: Json
       }
+      prune_audit_log: {
+        Args: { p_from: string; p_to: string }
+        Returns: number
+      }
       publish_subtopic: {
         Args: {
           p_primary_video_url: string

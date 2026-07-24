@@ -56,7 +56,7 @@ delete from public.waitlist_signups
  where email = 'rls-probe@example.com';
 
 delete from public.audit_log
- where action = 'rls_probe';
+ where action in ('rls_probe', 'rls_probe_aged');
 
 delete from public.handle_quarantine
  where handle like 'rls-%';

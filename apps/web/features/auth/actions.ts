@@ -17,9 +17,15 @@ import {
   setEmailVerifiedMirror,
 } from '@/lib/auth/admin-ops'
 import { sanitizeNextPath } from '@/lib/auth/redirect'
+import { sendEmail } from '@/lib/integrations/email'
 import { AUDIT_ACTIONS, writeAudit } from '@/lib/observability/audit'
 import { getClientIpHash, hmacHash, identifierHash } from '@/lib/security/hash'
-import { MIN_PASSWORD_SCORE, passwordStrength } from '@/lib/security/password-strength'
+import {
+  MIN_PASSWORD_SCORE,
+  STAFF_MIN_PASSWORD_LENGTH,
+  STAFF_MIN_PASSWORD_SCORE,
+  passwordStrength,
+} from '@/lib/security/password-strength'
 import { enforceRateLimit } from '@/lib/security/rate-limit'
 import { verifyTurnstile } from '@/lib/security/turnstile'
 import { createClient } from '@/lib/supabase/server'
@@ -60,6 +66,29 @@ async function ipIdentifier(): Promise<string> {
 /** Whole minutes for the tooManyAttempts copy — never "0 min". */
 function retryMinutes(retryAfterSeconds: number): number {
   return Math.max(1, Math.ceil(retryAfterSeconds / 60))
+}
+
+/**
+ * The caller's OWN profiles.role read under RLS (`profiles_select_own`) —
+ * the staff detector for the §13 compensating controls (password floor,
+ * sign-in notification). Null on any failure: the staff branches degrade to
+ * plain-user behavior rather than blocking auth.
+ */
+async function ownProfileRole(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<string | null> {
+  try {
+    const { data } = await supabase.from('profiles').select('role').eq('id', userId).maybeSingle()
+    return data?.role ?? null
+  } catch {
+    return null
+  }
+}
+
+/** Any role above plain `user` (M4 §13 — mirrors features/admin/permissions). */
+function isStaff(role: string | null): boolean {
+  return role !== null && role !== 'user'
 }
 
 /**
@@ -251,7 +280,8 @@ export async function signUpWithEmail(data: {
  * §10); errors map to non-enumerating copy. On success the
  * `profiles.email_verified_at` mirror is caught up if GoTrue confirmed the
  * email while the mirror was still null (e.g. verification link opened on
- * another device).
+ * another device), and staff accounts get a best-effort sign-in
+ * notification email (M4 §13).
  */
 export async function signInWithEmail(data: {
   email: string
@@ -312,6 +342,24 @@ export async function signInWithEmail(data: {
       entity: 'auth',
       entityId: user.id,
     })
+
+    // Staff sign-in notification (M4 §13, compensating control for optional
+    // 2FA) — best-effort, NEVER blocks a successful sign-in. Privacy posture:
+    // coarse timestamp only, no IP/UA in the body (hashed-only elsewhere).
+    try {
+      if (user.email && isStaff(await ownProfileRole(supabase, user.id))) {
+        const tEmails = await getTranslations('emails')
+        const timestamp = `${new Date().toISOString().replace('T', ' ').slice(0, 16)} UTC`
+        await sendEmail({
+          to: user.email,
+          subject: tEmails('staffSignIn.subject'),
+          text: `${tEmails('staffSignIn.body', { timestamp })}\n\n${tEmails('footer')}`,
+        })
+      }
+    } catch {
+      // RESEND_API_KEY unset degrades silently inside sendEmail; anything
+      // else lands here — the sign-in already succeeded either way.
+    }
 
     return { ok: true }
   } catch {
@@ -510,7 +558,8 @@ export async function requestPasswordReset(data: {
 /**
  * Set the new password from the reset-password page — requires the recovery
  * session minted by the callback route. Strength is re-checked server-side
- * (the form gates client-side too).
+ * (the form gates client-side too); staff accounts additionally clear the
+ * M4 §13 floor (≥ 12 chars, zxcvbn ≥ 3).
  */
 export async function updatePassword(data: { password: string }): Promise<ActionResult> {
   const t = await getTranslations('auth.errors')
@@ -535,6 +584,17 @@ export async function updatePassword(data: { password: string }): Promise<Action
     const { score } = await passwordStrength(parsed.data.password, [user.email ?? ''])
     if (score < MIN_PASSWORD_SCORE) {
       return { ok: false, error: t('passwordTooWeak') }
+    }
+
+    // Staff floor (M4 §13, compensating control for optional 2FA): any role
+    // above `user` needs ≥ 12 chars AND zxcvbn ≥ 3 on every set/reset path.
+    if (isStaff(await ownProfileRole(supabase, user.id))) {
+      if (
+        parsed.data.password.length < STAFF_MIN_PASSWORD_LENGTH ||
+        score < STAFF_MIN_PASSWORD_SCORE
+      ) {
+        return { ok: false, error: t('staffPasswordTooWeak') }
+      }
     }
 
     // Distinguish a Google-first user setting their FIRST password (no email

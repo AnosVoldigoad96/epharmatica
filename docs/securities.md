@@ -113,6 +113,7 @@ The RLS/security suite runs in CI against a migrated shadow DB. A feature is inc
 - Workflow engine: subtopic workflow columns (status/published_at/derived fields) are API-immutable — authors cannot self-publish by direct update; transitions run only through the definer RPCs with the M4 §5.5 matrix inside (reviewer cannot publish, author of record cannot review their own draft, request_changes requires a comment, publish only from approved + snapshots a revision + auto-revokes preview links, restore adds a new revision) (probe 11)
 - Media usage scans: `refresh_media_refs` is the only non-service write path to `media_refs` — staff-only, replace-all per (subtopic, source) slice, unknown asset ids skipped, unknown sources rejected (probe 12)
 - Users admin: `admin_search_users` admin+ only (emails visible, passwords nonexistent by construction); `admin_set_role` rank rules — self-elevation, peer-touch, and over-grant all fail, super_admin-grants-super_admin works; `admin_force_rename` quarantines the vacated handle for 90 days atomically; `site_settings` public-read/admin-write (probe 13)
+- Audit retention: `prune_audit_log` execute denied to anon/authenticated (append-only stands for interactive roles); service_role-only; refuses ranges inside the 12-month hot window (probe 14)
 - Yearly audit-export cron produces a valid R2 object from a seeded aged year
 
 **M5 (five non-negotiables + extras)**
