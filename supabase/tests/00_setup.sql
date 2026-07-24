@@ -14,6 +14,7 @@
 --   topic    f0000000-0000-4000-a000-000000000012
 --   subtopic published f0000000-0000-4000-a000-000000000013
 --   subtopic draft     f0000000-0000-4000-a000-000000000014
+--   topic 2 (move target) f0000000-0000-4000-a000-000000000015
 --   preview link valid   f0000000-0000-4000-a000-000000000020  (token: rls-probe-preview-token)
 --   preview link expired f0000000-0000-4000-a000-000000000021  (token: rls-probe-expired-token)
 --   preview link revoked f0000000-0000-4000-a000-000000000022  (token: rls-probe-revoked-token)
@@ -41,6 +42,13 @@ delete from public.subjects
 
 delete from public.media_assets
  where path like 'rls-probe/%';
+
+delete from public.slug_history
+ where entity_id in ('f0000000-0000-4000-a000-000000000011',
+                     'f0000000-0000-4000-a000-000000000012',
+                     'f0000000-0000-4000-a000-000000000013',
+                     'f0000000-0000-4000-a000-000000000014',
+                     'f0000000-0000-4000-a000-000000000015');
 
 delete from public.waitlist_signups
  where email = 'rls-probe@example.com';
@@ -124,7 +132,10 @@ values ('f0000000-0000-4000-a000-000000000011',
 insert into public.topics (id, chapter_id, name, slug, description, semester, sort_order)
 values ('f0000000-0000-4000-a000-000000000012',
         'f0000000-0000-4000-a000-000000000011',
-        'RLS Probe Topic', 'rls-probe-topic', 'Fixture topic for RLS probes.', 1, 1);
+        'RLS Probe Topic', 'rls-probe-topic', 'Fixture topic for RLS probes.', 1, 1),
+       ('f0000000-0000-4000-a000-000000000015',
+        'f0000000-0000-4000-a000-000000000011',
+        'RLS Probe Topic Two', 'rls-probe-topic-2', 'Move… destination fixture.', 1, 2);
 
 insert into public.subtopics
   (id, topic_id, title, slug, content, plain_text, headings_text,
