@@ -7,6 +7,7 @@ import { fromStoredPrefs } from '@epharmatica/database'
 import { MonographLabel, ToastProvider } from '@epharmatica/ui'
 import { ThemeSync } from '@/features/account/components/theme-sync'
 import { getAdminProfile } from '@/features/admin/queries'
+import { mfaStepUpRequired } from '@/lib/auth/mfa'
 import { AdminNav } from './_components/admin-nav'
 
 /*
@@ -28,6 +29,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const profile = await getAdminProfile()
   if (!profile) {
     redirect('/')
+  }
+
+  // AAL step-up (M4-5): a session with a verified-but-unpassed factor must
+  // clear the TOTP challenge before any admin surface renders.
+  if (await mfaStepUpRequired()) {
+    redirect('/auth/mfa?next=%2Fadmin')
   }
 
   const t = await getTranslations('admin.shell')

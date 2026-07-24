@@ -46,7 +46,8 @@ export type AvailabilityResult = { ok: true; available: boolean } | { ok: false;
 
 export type SignUpResult = { ok: true; signedIn: boolean } | { ok: false; error: string }
 
-export type SignInResult = { ok: true } | { ok: false; error: string; canResend?: boolean }
+export type SignInResult =
+  { ok: true; mfaRequired?: boolean } | { ok: false; error: string; canResend?: boolean }
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
 
@@ -359,6 +360,19 @@ export async function signInWithEmail(data: {
     } catch {
       // RESEND_API_KEY unset degrades silently inside sendEmail; anything
       // else lands here — the sign-in already succeeded either way.
+    }
+
+    // AAL step-up (M4-5): enrolling a factor does not make GoTrue block
+    // sign-ins — the app must check the assurance level and demand the
+    // code. Anyone WITH a verified factor gets challenged; enforcement of
+    // enrollment itself stays off (R-M4a).
+    try {
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
+        return { ok: true, mfaRequired: true }
+      }
+    } catch {
+      // AAL probe failure never blocks a successful sign-in.
     }
 
     return { ok: true }

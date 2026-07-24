@@ -252,6 +252,15 @@
       "sessionExpired": "Your session expired. Sign in again.",
       "profileExists": "Your account is already set up.",
       "resetLinkRequired": "Open the reset link from your email first."
+    },
+    "mfa": {
+      "title": "Enter your code",
+      "help": "Your account has two-factor authentication. Enter the 6-digit code from your authenticator app.",
+      "codeLabel": "Authentication code",
+      "verify": "Verify code",
+      "wrongCode": "That code didn't match — try the current one.",
+      "error": "Couldn't start the check. Try again.",
+      "signOut": "Sign out instead"
     }
   },
   "settings": {

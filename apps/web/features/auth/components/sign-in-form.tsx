@@ -51,7 +51,7 @@ export function SignInForm({ next }: { next: string }) {
     try {
       const result = await signInWithEmail({ email, password, next })
       if (result.ok) {
-        router.push(next)
+        router.push(result.mfaRequired ? withNext('/auth/mfa', next) : next)
         router.refresh()
       } else {
         setError(result.error)

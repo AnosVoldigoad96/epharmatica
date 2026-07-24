@@ -5,6 +5,7 @@ import { ToastProvider } from '@epharmatica/ui'
 import { ThemeSync } from '@/features/account/components/theme-sync'
 import { VerifyEmailBanner } from '@/features/account/components/verify-email-banner'
 import { getOwnProfile, getSessionUser } from '@/features/account/queries'
+import { mfaStepUpRequired } from '@/lib/auth/mfa'
 import { Topnav } from './_components/topnav'
 
 /*
@@ -28,6 +29,12 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   const profile = await getOwnProfile()
   if (!profile) {
     redirect('/auth/complete?next=%2Fsettings%2Fprofile')
+  }
+
+  // AAL step-up (M4-5): verified-but-unpassed factor → the TOTP challenge
+  // gates the account surfaces too (settings hold keys and data controls).
+  if (await mfaStepUpRequired()) {
+    redirect('/auth/mfa?next=%2Fsettings%2Fprofile')
   }
 
   const prefs = fromStoredPrefs(profile.prefs)
