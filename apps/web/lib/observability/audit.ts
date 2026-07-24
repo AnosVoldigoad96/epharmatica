@@ -38,6 +38,11 @@ export const AUDIT_ACTIONS = {
   profile_updated: 'profiles.profile_updated',
   avatar_updated: 'profiles.avatar_updated',
   prefs_updated: 'profiles.prefs_updated',
+  node_created: 'content.node_created',
+  node_updated: 'content.node_updated',
+  node_renamed: 'content.node_renamed',
+  node_moved: 'content.node_moved',
+  nodes_reordered: 'content.nodes_reordered',
 } as const
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS]

@@ -1141,10 +1141,30 @@ export type Database = {
         Returns: number
       }
       can_feature: { Args: { feature_key: string }; Returns: boolean }
+      count_affected_highlights: {
+        Args: { p_subtopic_ids: string[] }
+        Returns: number
+      }
       has_role: { Args: { required_roles: string[] }; Returns: boolean }
+      move_content_node: {
+        Args: {
+          p_entity_id: string
+          p_level: Database['public']['Enums']['content_level']
+          p_new_parent_id: string
+        }
+        Returns: string[]
+      }
       open_preview_link: {
         Args: { p_ip_hash: string; p_token: string; p_ua: string }
         Returns: Json
+      }
+      rename_content_node: {
+        Args: {
+          p_entity_id: string
+          p_level: Database['public']['Enums']['content_level']
+          p_new_slug: string
+        }
+        Returns: string[]
       }
       username_available: { Args: { candidate: string }; Returns: boolean }
     }

@@ -1,0 +1,698 @@
+'use server'
+
+import { getTranslations } from 'next-intl/server'
+import {
+  chapterMetadataSchema,
+  slugSchema,
+  subjectMetadataSchema,
+  subtopicCreateSchema,
+  topicMetadataSchema,
+} from '@epharmatica/database'
+import type { ContentLevel } from '@epharmatica/database'
+import { getAdminProfile } from '@/features/admin/queries'
+import type { AdminProfile } from '@/features/admin/queries'
+import { AUDIT_ACTIONS, withAudit } from '@/lib/observability/audit'
+import { identifierHash } from '@/lib/security/hash'
+import { enforceRateLimit } from '@/lib/security/rate-limit'
+import { createClient } from '@/lib/supabase/server'
+import { enqueueReanchor, revalidateContentTags } from './cache'
+import { getContentTree } from './queries'
+import { findChapter, findSubject, findTopic, publishedSubtopicIds } from './tree'
+import type { ContentTree } from './tree'
+
+/*
+ * Content-tree server actions (M4 §5.1–§5.3 · dev-plan 1.B-2). Account
+ * conventions throughout: discriminated-union results, never throw to the
+ * client, copy via getTranslations, shared Zod schemas.
+ *
+ * Three-layer posture: every action re-checks the staff role (friendly
+ * errors), RLS staff_write remains the authority underneath, and the
+ * ceremonial paths (Move…, published renames) run through the
+ * content_manager+ SECURITY DEFINER RPCs from migration 013 — atomic
+ * reparent/rename + slug_history in one transaction. Every mutation is
+ * rate-limited (admin_mutation bucket, M4 §4) and runs INSIDE withAudit()
+ * (I8) — a failed mutation throws and writes no audit row.
+ */
+
+export type ActionResult = { ok: true } | { ok: false; error: string }
+export type CreateResult = { ok: true; id: string } | { ok: false; error: string }
+
+type DbErrorShape = { code?: string; message?: string } | null
+
+/** Carries the Postgres error out of withAudit's mutate callback. */
+class DbActionError extends Error {
+  constructor(public readonly dbError: DbErrorShape) {
+    super(dbError?.message ?? 'database error')
+  }
+}
+
+type StaffCheck = { ok: true; profile: AdminProfile } | { ok: false; error: string }
+
+const AUTHORING_ROLES = ['author', 'content_manager', 'admin', 'super_admin'] as const
+const MANAGER_ROLES = ['content_manager', 'admin', 'super_admin'] as const
+
+async function requireRoles(roles: readonly string[]): Promise<StaffCheck> {
+  const t = await getTranslations('admin.content.errors')
+  const profile = await getAdminProfile()
+  if (!profile || !roles.includes(profile.role)) {
+    return { ok: false, error: t('forbidden') }
+  }
+  const decision = await enforceRateLimit('admin_mutation', identifierHash(profile.id))
+  if (!decision.allowed) {
+    return { ok: false, error: t('rateLimited') }
+  }
+  return { ok: true, profile }
+}
+
+async function failureFrom(err: unknown): Promise<{ ok: false; error: string }> {
+  const t = await getTranslations('admin.content.errors')
+  const dbError = err instanceof DbActionError ? err.dbError : null
+  if (dbError?.code === '23505') return { ok: false, error: t('slugTaken') }
+  return { ok: false, error: t('saveFailed') }
+}
+
+async function nextSortOrder(
+  table: 'subjects' | 'chapters' | 'topics' | 'subtopics',
+  parentColumn: 'subject_id' | 'chapter_id' | 'topic_id' | null,
+  parentId: string | null,
+): Promise<number> {
+  const supabase = await createClient()
+  let query = supabase.from(table).select('sort_order').order('sort_order', { ascending: false })
+  // .filter: the parent column varies by table, which defeats .eq's typing.
+  if (parentColumn && parentId) query = query.filter(parentColumn, 'eq', parentId)
+  const { data } = await query.limit(1).maybeSingle()
+  return (data?.sort_order ?? 0) + 1
+}
+
+type CreateSpec = {
+  level: ContentLevel
+  parentId: string | null
+  slug: string
+  insert: () => Promise<{ data: { id: string } | null; error: DbErrorShape }>
+}
+
+/** Shared create path: insert inside withAudit; creates fire no tags (M1-6). */
+async function createNode(profile: AdminProfile, spec: CreateSpec): Promise<CreateResult> {
+  try {
+    const id = await withAudit<string>(
+      (createdId) => ({
+        action: AUDIT_ACTIONS.node_created,
+        actorId: profile.id,
+        entity: 'content',
+        entityId: createdId,
+        meta: { level: spec.level, parent_id: spec.parentId, slug: spec.slug },
+      }),
+      async () => {
+        const { data, error } = await spec.insert()
+        if (error || !data) throw new DbActionError(error)
+        return data.id
+      },
+    )
+    return { ok: true, id }
+  } catch (err) {
+    return failureFrom(err)
+  }
+}
+
+export async function createSubject(values: unknown): Promise<CreateResult> {
+  const gate = await requireRoles(AUTHORING_ROLES)
+  if (!gate.ok) return gate
+
+  const parsed = subjectMetadataSchema.safeParse(values)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
+
+  const supabase = await createClient()
+  const sortOrder = await nextSortOrder('subjects', null, null)
+  return createNode(gate.profile, {
+    level: 'subject',
+    parentId: null,
+    slug: parsed.data.slug,
+    insert: async () =>
+      supabase
+        .from('subjects')
+        .insert({
+          name: parsed.data.name,
+          slug: parsed.data.slug,
+          description: parsed.data.description,
+          icon: parsed.data.icon,
+          default_semester: parsed.data.defaultSemester ?? null,
+          sort_order: sortOrder,
+        })
+        .select('id')
+        .single(),
+  })
+}
+
+export async function createChapter(subjectId: string, values: unknown): Promise<CreateResult> {
+  const gate = await requireRoles(AUTHORING_ROLES)
+  if (!gate.ok) return gate
+
+  const parsed = chapterMetadataSchema.safeParse(values)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
+
+  const supabase = await createClient()
+  const sortOrder = await nextSortOrder('chapters', 'subject_id', subjectId)
+  return createNode(gate.profile, {
+    level: 'chapter',
+    parentId: subjectId,
+    slug: parsed.data.slug,
+    insert: async () =>
+      supabase
+        .from('chapters')
+        .insert({
+          subject_id: subjectId,
+          name: parsed.data.name,
+          slug: parsed.data.slug,
+          sort_order: sortOrder,
+        })
+        .select('id')
+        .single(),
+  })
+}
+
+export async function createTopic(chapterId: string, values: unknown): Promise<CreateResult> {
+  const gate = await requireRoles(AUTHORING_ROLES)
+  if (!gate.ok) return gate
+
+  const parsed = topicMetadataSchema.safeParse(values)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
+
+  const supabase = await createClient()
+  const sortOrder = await nextSortOrder('topics', 'chapter_id', chapterId)
+  return createNode(gate.profile, {
+    level: 'topic',
+    parentId: chapterId,
+    slug: parsed.data.slug,
+    insert: async () =>
+      supabase
+        .from('topics')
+        .insert({
+          chapter_id: chapterId,
+          name: parsed.data.name,
+          slug: parsed.data.slug,
+          description: parsed.data.description,
+          semester: parsed.data.semester ?? null,
+          sort_order: sortOrder,
+        })
+        .select('id')
+        .single(),
+  })
+}
+
+export async function createSubtopic(topicId: string, values: unknown): Promise<CreateResult> {
+  const gate = await requireRoles(AUTHORING_ROLES)
+  if (!gate.ok) return gate
+
+  const parsed = subtopicCreateSchema.safeParse(values)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
+
+  const supabase = await createClient()
+  const sortOrder = await nextSortOrder('subtopics', 'topic_id', topicId)
+  return createNode(gate.profile, {
+    level: 'subtopic',
+    parentId: topicId,
+    slug: parsed.data.slug,
+    insert: async () =>
+      supabase
+        .from('subtopics')
+        .insert({
+          topic_id: topicId,
+          title: parsed.data.title,
+          slug: parsed.data.slug,
+          sort_order: sortOrder,
+        })
+        .select('id')
+        .single(),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Metadata updates (author+) — name/description/semester/icon, NEVER slug
+// (renames have their own ceremony below). Visible nodes revalidate tags.
+// ---------------------------------------------------------------------------
+
+export async function updateNodeMetadata(
+  level: ContentLevel,
+  id: string,
+  values: unknown,
+): Promise<ActionResult> {
+  const gate = await requireRoles(AUTHORING_ROLES)
+  if (!gate.ok) return gate
+
+  const supabase = await createClient()
+  const tree = await getContentTree()
+
+  let update: () => Promise<{ error: DbErrorShape }>
+  let fireTags: () => void = () => {}
+
+  if (level === 'subject') {
+    const parsed = subjectMetadataSchema.omit({ slug: true }).safeParse(values)
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+    }
+    update = async () =>
+      supabase
+        .from('subjects')
+        .update({
+          name: parsed.data.name,
+          description: parsed.data.description,
+          icon: parsed.data.icon,
+          default_semester: parsed.data.defaultSemester ?? null,
+        })
+        .eq('id', id)
+    const subject = findSubject(tree, id)
+    if (subject && publishedSubtopicIds(subject).length > 0) {
+      fireTags = () => revalidateContentTags({ subjectSlugs: [subject.slug] })
+    }
+  } else if (level === 'chapter') {
+    const parsed = chapterMetadataSchema.omit({ slug: true }).safeParse(values)
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+    }
+    update = async () => supabase.from('chapters').update({ name: parsed.data.name }).eq('id', id)
+    const found = findChapter(tree, id)
+    if (found && publishedSubtopicIds(found.chapter).length > 0) {
+      fireTags = () =>
+        revalidateContentTags({ chapterIds: [id], subjectSlugs: [found.subject.slug] })
+    }
+  } else if (level === 'topic') {
+    const parsed = topicMetadataSchema.omit({ slug: true }).safeParse(values)
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+    }
+    update = async () =>
+      supabase
+        .from('topics')
+        .update({
+          name: parsed.data.name,
+          description: parsed.data.description,
+          semester: parsed.data.semester ?? null,
+        })
+        .eq('id', id)
+    const found = findTopic(tree, id)
+    if (found && publishedSubtopicIds(found.topic).length > 0) {
+      fireTags = () =>
+        revalidateContentTags({
+          topicIds: [id],
+          chapterIds: [found.chapter.id],
+          subjectSlugs: [found.subject.slug],
+        })
+    }
+  } else {
+    const parsed = subtopicCreateSchema.omit({ slug: true }).safeParse(values)
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+    }
+    update = async () =>
+      supabase.from('subtopics').update({ title: parsed.data.title }).eq('id', id)
+  }
+
+  try {
+    await withAudit(
+      {
+        action: AUDIT_ACTIONS.node_updated,
+        actorId: gate.profile.id,
+        entity: 'content',
+        entityId: id,
+        meta: { level },
+      },
+      async () => {
+        const { error } = await update()
+        if (error) throw new DbActionError(error)
+      },
+    )
+  } catch (err) {
+    return failureFrom(err)
+  }
+
+  fireTags()
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// Slug rename — plain while nothing beneath is published (author+); the
+// ceremony (consequence sheet → content_manager+ RPC → 301 history) after.
+// ---------------------------------------------------------------------------
+
+export async function renameNodeSlug(
+  level: ContentLevel,
+  id: string,
+  newSlug: unknown,
+  confirmed: boolean,
+): Promise<ActionResult> {
+  const t = await getTranslations('admin.content.errors')
+
+  const parsedSlug = slugSchema.safeParse(newSlug)
+  if (!parsedSlug.success) {
+    return { ok: false, error: parsedSlug.error.issues[0]?.message ?? 'Invalid slug' }
+  }
+  const slug = parsedSlug.data
+
+  const tree = await getContentTree()
+  const affected = affectedPublishedIds(tree, level, id)
+  if (affected === null) return { ok: false, error: t('notFound') }
+
+  if (affected.length === 0) {
+    // Free rename: nothing published beneath — plain update, author+.
+    const gate = await requireRoles(AUTHORING_ROLES)
+    if (!gate.ok) return gate
+
+    const supabase = await createClient()
+    try {
+      await withAudit(
+        {
+          action: AUDIT_ACTIONS.node_renamed,
+          actorId: gate.profile.id,
+          entity: 'content',
+          entityId: id,
+          meta: { level, new_slug: slug, ceremony: false },
+        },
+        async () => {
+          const { error } = await supabase.from(tableFor(level)).update({ slug }).eq('id', id)
+          if (error) throw new DbActionError(error)
+        },
+      )
+    } catch (err) {
+      return failureFrom(err)
+    }
+    return { ok: true }
+  }
+
+  // Ceremony: published beneath — the consequence sheet must be confirmed.
+  if (!confirmed) return { ok: false, error: t('confirmationRequired') }
+  const gate = await requireRoles(MANAGER_ROLES)
+  if (!gate.ok) return gate
+
+  const supabase = await createClient()
+  try {
+    const affectedIds = await withAudit<string[]>(
+      (result) => ({
+        action: AUDIT_ACTIONS.node_renamed,
+        actorId: gate.profile.id,
+        entity: 'content',
+        entityId: id,
+        meta: { level, new_slug: slug, ceremony: true, affected: result.length },
+      }),
+      async () => {
+        const { data, error } = await supabase.rpc('rename_content_node', {
+          p_level: level,
+          p_entity_id: id,
+          p_new_slug: slug,
+        })
+        if (error) throw new DbActionError(error)
+        return data ?? []
+      },
+    )
+    fireTagsForNode(tree, level, id, affectedIds)
+  } catch (err) {
+    return failureFrom(err)
+  }
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// Move… (content_manager+, M4 §5.3) — typed confirmation for published
+// nodes; atomic RPC; tags + re-anchor hand-off after.
+// ---------------------------------------------------------------------------
+
+export async function moveNode(
+  level: ContentLevel,
+  id: string,
+  newParentId: string,
+  typedConfirmation: string,
+): Promise<ActionResult> {
+  const t = await getTranslations('admin.content.errors')
+  const gate = await requireRoles(MANAGER_ROLES)
+  if (!gate.ok) return gate
+
+  const tree = await getContentTree()
+  const affected = affectedPublishedIds(tree, level, id)
+  if (affected === null) return { ok: false, error: t('notFound') }
+
+  // Typed `move` confirmation for published nodes (M4 §5.3, exact word).
+  if (affected.length > 0 && typedConfirmation.trim() !== 'move') {
+    return { ok: false, error: t('typeMoveToConfirm') }
+  }
+
+  const supabase = await createClient()
+  try {
+    const affectedIds = await withAudit<string[]>(
+      (result) => ({
+        action: AUDIT_ACTIONS.node_moved,
+        actorId: gate.profile.id,
+        entity: 'content',
+        entityId: id,
+        meta: { level, to_parent: newParentId, affected: result.length },
+      }),
+      async () => {
+        const { data, error } = await supabase.rpc('move_content_node', {
+          p_level: level,
+          p_entity_id: id,
+          p_new_parent_id: newParentId,
+        })
+        if (error) throw new DbActionError(error)
+        return data ?? []
+      },
+    )
+    fireTagsForNode(tree, level, id, affectedIds)
+    // The destination's ancestors change too (blister lists, counts).
+    fireTagsForParent(tree, level, newParentId)
+    enqueueReanchor(affectedIds)
+  } catch (err) {
+    return failureFrom(err)
+  }
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// Reorder (author+): full ordered id list for one parent (up/down + drag).
+// ---------------------------------------------------------------------------
+
+export async function reorderNodes(
+  level: ContentLevel,
+  parentId: string | null,
+  orderedIds: string[],
+): Promise<ActionResult> {
+  const t = await getTranslations('admin.content.errors')
+  const gate = await requireRoles(AUTHORING_ROLES)
+  if (!gate.ok) return gate
+
+  const tree = await getContentTree()
+  const current = siblingIds(tree, level, parentId)
+  if (
+    current === null ||
+    current.length !== orderedIds.length ||
+    !current.every((memberId) => orderedIds.includes(memberId))
+  ) {
+    return { ok: false, error: t('reorderStale') }
+  }
+
+  const supabase = await createClient()
+  try {
+    await withAudit(
+      {
+        action: AUDIT_ACTIONS.nodes_reordered,
+        actorId: gate.profile.id,
+        entity: 'content',
+        entityId: parentId,
+        meta: { level, count: orderedIds.length },
+      },
+      async () => {
+        for (const [index, nodeId] of orderedIds.entries()) {
+          const { error } = await supabase
+            .from(tableFor(level))
+            .update({ sort_order: index + 1 })
+            .eq('id', nodeId)
+          if (error) throw new DbActionError(error)
+        }
+      },
+    )
+  } catch (err) {
+    return failureFrom(err)
+  }
+
+  if (parentId) fireTagsForParent(tree, level, parentId)
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// Consequence-sheet data (staff): highlight count over affected subtopics.
+// ---------------------------------------------------------------------------
+
+export type ConsequencesResult =
+  { ok: true; affectedSubtopics: number; highlightCount: number } | { ok: false; error: string }
+
+export async function getNodeConsequences(
+  level: ContentLevel,
+  id: string,
+): Promise<ConsequencesResult> {
+  const t = await getTranslations('admin.content.errors')
+  const profile = await getAdminProfile()
+  if (!profile) return { ok: false, error: t('forbidden') }
+
+  const tree = await getContentTree()
+  const affected = affectedPublishedIds(tree, level, id)
+  if (affected === null) return { ok: false, error: t('notFound') }
+  if (affected.length === 0) {
+    return { ok: true, affectedSubtopics: 0, highlightCount: 0 }
+  }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('count_affected_highlights', {
+    p_subtopic_ids: affected,
+  })
+  if (error) return { ok: false, error: t('saveFailed') }
+
+  return { ok: true, affectedSubtopics: affected.length, highlightCount: data ?? 0 }
+}
+
+// ---------------------------------------------------------------------------
+// Local helpers (pure, over the fetched tree)
+// ---------------------------------------------------------------------------
+
+function tableFor(level: ContentLevel): 'subjects' | 'chapters' | 'topics' | 'subtopics' {
+  if (level === 'subject') return 'subjects'
+  if (level === 'chapter') return 'chapters'
+  if (level === 'topic') return 'topics'
+  return 'subtopics'
+}
+
+function affectedPublishedIds(tree: ContentTree, level: ContentLevel, id: string): string[] | null {
+  if (level === 'subject') {
+    const subject = findSubject(tree, id)
+    return subject ? publishedSubtopicIds(subject) : null
+  }
+  if (level === 'chapter') {
+    const found = findChapter(tree, id)
+    return found ? publishedSubtopicIds(found.chapter) : null
+  }
+  if (level === 'topic') {
+    const found = findTopic(tree, id)
+    return found ? publishedSubtopicIds(found.topic) : null
+  }
+  for (const subject of tree) {
+    for (const chapter of subject.chapters) {
+      for (const topic of chapter.topics) {
+        const subtopic = topic.subtopics.find((candidate) => candidate.id === id)
+        if (subtopic) return subtopic.status === 'published' ? [subtopic.id] : []
+      }
+    }
+  }
+  return null
+}
+
+function siblingIds(
+  tree: ContentTree,
+  level: ContentLevel,
+  parentId: string | null,
+): string[] | null {
+  if (level === 'subject') return tree.map((subject) => subject.id)
+  if (level === 'chapter') {
+    const subject = parentId ? findSubject(tree, parentId) : null
+    return subject ? subject.chapters.map((chapter) => chapter.id) : null
+  }
+  if (level === 'topic') {
+    const found = parentId ? findChapter(tree, parentId) : null
+    return found ? found.chapter.topics.map((topic) => topic.id) : null
+  }
+  const found = parentId ? findTopic(tree, parentId) : null
+  return found ? found.topic.subtopics.map((subtopic) => subtopic.id) : null
+}
+
+/** Fire the ancestor tag cascade for a node (ARCH §6). */
+function fireTagsForNode(
+  tree: ContentTree,
+  level: ContentLevel,
+  id: string,
+  affectedSubtopicIds: string[],
+): void {
+  if (level === 'subject') {
+    const subject = findSubject(tree, id)
+    if (subject) {
+      revalidateContentTags({
+        subjectSlugs: [subject.slug],
+        chapterIds: subject.chapters.map((chapter) => chapter.id),
+        topicIds: subject.chapters.flatMap((chapter) => chapter.topics.map((topic) => topic.id)),
+        subtopicIds: affectedSubtopicIds,
+        sitemap: true,
+      })
+    }
+    return
+  }
+  if (level === 'chapter') {
+    const found = findChapter(tree, id)
+    if (found) {
+      revalidateContentTags({
+        subjectSlugs: [found.subject.slug],
+        chapterIds: [id],
+        topicIds: found.chapter.topics.map((topic) => topic.id),
+        subtopicIds: affectedSubtopicIds,
+        sitemap: true,
+      })
+    }
+    return
+  }
+  if (level === 'topic') {
+    const found = findTopic(tree, id)
+    if (found) {
+      revalidateContentTags({
+        subjectSlugs: [found.subject.slug],
+        chapterIds: [found.chapter.id],
+        topicIds: [id],
+        subtopicIds: affectedSubtopicIds,
+        sitemap: true,
+      })
+    }
+    return
+  }
+  for (const subject of tree) {
+    for (const chapter of subject.chapters) {
+      for (const topic of chapter.topics) {
+        if (topic.subtopics.some((subtopic) => subtopic.id === id)) {
+          revalidateContentTags({
+            subjectSlugs: [subject.slug],
+            chapterIds: [chapter.id],
+            topicIds: [topic.id],
+            subtopicIds: [id],
+            sitemap: true,
+          })
+          return
+        }
+      }
+    }
+  }
+}
+
+/** Fire tags for a DESTINATION parent after a move (its lists changed). */
+function fireTagsForParent(tree: ContentTree, level: ContentLevel, parentId: string): void {
+  if (level === 'subtopic') {
+    const found = findTopic(tree, parentId)
+    if (found) {
+      revalidateContentTags({
+        subjectSlugs: [found.subject.slug],
+        chapterIds: [found.chapter.id],
+        topicIds: [parentId],
+      })
+    }
+    return
+  }
+  if (level === 'topic') {
+    const found = findChapter(tree, parentId)
+    if (found) {
+      revalidateContentTags({ subjectSlugs: [found.subject.slug], chapterIds: [parentId] })
+    }
+    return
+  }
+  if (level === 'chapter') {
+    const subject = findSubject(tree, parentId)
+    if (subject) revalidateContentTags({ subjectSlugs: [subject.slug] })
+  }
+}

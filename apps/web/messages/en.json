@@ -423,6 +423,110 @@
       "previewLinksLabel": "Active draft preview links",
       "auditHeading": "Recent admin activity",
       "auditEmpty": "No audit entries yet."
+    },
+    "content": {
+      "rail": {
+        "label": "Tree — read-only rail",
+        "legend": "Amber dot = drafts inside · teal = all published"
+      },
+      "headings": {
+        "subjects": "Subjects",
+        "chaptersIn": "Chapters in {name}",
+        "topicsIn": "Topics in {name}",
+        "subtopicsIn": "Subtopics in {name}"
+      },
+      "levelNames": {
+        "subject": "subject",
+        "chapter": "chapter",
+        "topic": "topic",
+        "subtopic": "subtopic"
+      },
+      "newButton": "New {levelName}",
+      "columns": {
+        "ord": "Ord",
+        "nameSlug": "Name / slug",
+        "status": "Status",
+        "sem": "Sem",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "chips": {
+        "published": "{published}/{total} published",
+        "draft": "Draft",
+        "status": {
+          "draft": "Draft",
+          "in_review": "In review",
+          "changes_requested": "Changes requested",
+          "approved": "Approved",
+          "published": "Published",
+          "archived": "Archived"
+        }
+      },
+      "actions": {
+        "edit": "Edit",
+        "move": "Move…",
+        "open": "Open ›"
+      },
+      "reorder": {
+        "moveUp": "Move {name} up",
+        "moveDown": "Move {name} down"
+      },
+      "slugHelper": "Slugs stay editable until anything beneath is published — after that, renaming opens the consequence sheet.",
+      "emptyLabel": "Empty state",
+      "emptyBody": "Nothing here yet. Create the first {levelName}.",
+      "sheet": {
+        "createTitle": "New {levelName}",
+        "editTitle": "Edit “{name}”",
+        "name": "Name",
+        "title": "Title",
+        "slug": "Slug",
+        "newSlug": "New slug",
+        "slugHint": "Lowercase letters, numbers, and single hyphens.",
+        "slugLockedHint": "Locked — published content lives beneath this slug.",
+        "renameSlug": "Rename slug…",
+        "confirmRename": "Rename with 301",
+        "description": "Description",
+        "icon": "Icon",
+        "semester": "Semester",
+        "defaultSemester": "Default semester",
+        "semesterHint": "1–10, optional.",
+        "create": "Create {levelName}",
+        "save": "Save changes",
+        "cancel": "Cancel"
+      },
+      "move": {
+        "title": "Move “{name}”",
+        "titlePublished": "Move “{name}” — published {levelName}",
+        "destination": "Destination — legal targets only",
+        "currentTag": "Current",
+        "typeToConfirm": "Type move to confirm",
+        "confirm": "Move {levelName}"
+      },
+      "consequences": {
+        "heading": "Consequences — read before confirming",
+        "urlLine": "URL changes with a permanent 301:",
+        "highlightsPending": "Counting affected highlights…",
+        "highlightsLine": "{count, plural, =0 {No highlights re-anchor.} one {# highlight re-anchors in an async job; failures become recoverable orphans.} other {# highlights re-anchor in an async job; failures become recoverable orphans.}}",
+        "cacheLineMove": "Cache tags fire for the {levelName}, both parents, and the sitemap.",
+        "cacheLineRename": "Cache tags fire for the {levelName}, every path beneath it, and the sitemap."
+      },
+      "toasts": {
+        "created": "Created.",
+        "saved": "Saved.",
+        "renamed": "Renamed.",
+        "moved": "Moved.",
+        "reordered": "Order saved."
+      },
+      "errors": {
+        "forbidden": "Your role can't do that.",
+        "rateLimited": "Too many changes at once — wait a minute and try again.",
+        "slugTaken": "That slug is already used here.",
+        "saveFailed": "Couldn't save. Try again.",
+        "notFound": "That item no longer exists.",
+        "confirmationRequired": "Review the consequences and confirm first.",
+        "typeMoveToConfirm": "Type move to confirm.",
+        "reorderStale": "The list changed under you — refresh and try again."
+      }
     }
   },
   "emails": {

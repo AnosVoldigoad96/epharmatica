@@ -27,6 +27,9 @@ export const AUTH_RATE_LIMITS = {
   signin: { limit: 10, windowSeconds: 900 },
   reset: { limit: 3, windowSeconds: 3600 },
   username_check: { limit: 30, windowSeconds: 60 },
+  // M4 §4: admin mutations, keyed by hashed staff user id — generous enough
+  // for editing with 30s autosave, tight enough to stop runaway scripts.
+  admin_mutation: { limit: 60, windowSeconds: 300 },
 } as const
 
 export type AuthRateLimitBucket = keyof typeof AUTH_RATE_LIMITS
