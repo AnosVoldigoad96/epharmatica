@@ -236,6 +236,88 @@ export type Database = {
           },
         ]
       }
+      content_discussion_replies: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          discussion_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          discussion_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          discussion_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'content_discussion_replies_discussion_id_fkey'
+            columns: ['discussion_id']
+            isOneToOne: false
+            referencedRelation: 'content_discussions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      content_discussions: {
+        Row: {
+          block_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          snapshot: string | null
+          status: string
+          subtopic_id: string
+          suggested_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          block_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          snapshot?: string | null
+          status?: string
+          subtopic_id: string
+          suggested_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          block_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          snapshot?: string | null
+          status?: string
+          subtopic_id?: string
+          suggested_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'content_discussions_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            isOneToOne: false
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       content_review_events: {
         Row: {
           actor_id: string | null

@@ -114,6 +114,7 @@ The RLS/security suite runs in CI against a migrated shadow DB. A feature is inc
 - Media usage scans: `refresh_media_refs` is the only non-service write path to `media_refs` — staff-only, replace-all per (subtopic, source) slice, unknown asset ids skipped, unknown sources rejected (probe 12)
 - Users admin: `admin_search_users` admin+ only (emails visible, passwords nonexistent by construction); `admin_set_role` rank rules — self-elevation, peer-touch, and over-grant all fail, super_admin-grants-super_admin works; `admin_force_rename` quarantines the vacated handle for 90 days atomically; `site_settings` public-read/admin-write (probe 13)
 - Audit retention: `prune_audit_log` execute denied to anon/authenticated (append-only stands for interactive roles); service_role-only; refuses ranges inside the 12-month hot window (probe 14)
+- Review discussions: staff-only read/insert, creator-stamped, no delete path for API roles (editorial record); suggestion kind requires text; authors may resolve reviewers' discussions (probe 15)
 - Yearly audit-export cron produces a valid R2 object from a seeded aged year
 
 **M5 (five non-negotiables + extras)**

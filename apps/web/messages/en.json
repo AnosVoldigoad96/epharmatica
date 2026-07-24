@@ -726,6 +726,43 @@
         "create": "Create preview link",
         "helper": "7-day expiry · single subtopic · watermark · publishing revokes automatically."
       },
+      "discussions": {
+        "heading": "Discussions",
+        "openCount": "{count} open",
+        "empty": "No discussions yet.",
+        "selectHint": "Select a block in the preview to comment — authors: use the read-only view.",
+        "selectedBlock": "Selected block",
+        "kindLabel": "Kind",
+        "kindComment": "Comment",
+        "kindSuggestion": "Suggestion",
+        "bodyPlaceholder": "What needs attention?",
+        "suggestionPlaceholder": "Proposed replacement text",
+        "openComment": "Open comment",
+        "suggestChange": "Suggest change",
+        "cancel": "Cancel",
+        "jump": "Jump",
+        "missing": "Missing",
+        "copy": "Copy suggestion",
+        "copied": "Suggestion copied.",
+        "reply": "Reply",
+        "replyPlaceholder": "Reply…",
+        "resolve": "Resolve",
+        "reopen": "Reopen",
+        "resolvedHeading": "Resolved · {count}",
+        "helper": "Anchored to blocks — threads live outside the document and never publish.",
+        "toasts": {
+          "opened": "Discussion opened.",
+          "replied": "Reply posted.",
+          "resolved": "Resolved.",
+          "reopened": "Reopened."
+        },
+        "errors": {
+          "blockRequired": "Select a block first.",
+          "bodyRequired": "Write a message first.",
+          "suggestionRequired": "A suggestion needs the proposed text.",
+          "tooLong": "That message is too long."
+        }
+      },
       "mediaPicker": {
         "title": "Insert image from the media library",
         "search": "Search",
