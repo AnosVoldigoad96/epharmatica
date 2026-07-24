@@ -27,6 +27,14 @@ export type StaffCheck = { ok: true; profile: AdminProfile } | { ok: false; erro
 export const AUTHORING_ROLES = ['author', 'content_manager', 'admin', 'super_admin'] as const
 export const REVIEWING_ROLES = ['reviewer', 'content_manager', 'admin', 'super_admin'] as const
 export const MANAGER_ROLES = ['content_manager', 'admin', 'super_admin'] as const
+/** All five content roles — discussions (1.B-3c) are open to every one of them. */
+export const CONTENT_ROLES = [
+  'author',
+  'reviewer',
+  'content_manager',
+  'admin',
+  'super_admin',
+] as const
 
 export async function requireRoles(roles: readonly string[]): Promise<StaffCheck> {
   const t = await getTranslations('admin.content.errors')

@@ -267,6 +267,78 @@ export async function getSubtopicDetail(id: string): Promise<SubtopicDetail | nu
   }
 }
 
+export type DiscussionReply = {
+  id: string
+  /** Username via the staff directory; null when the author left. */
+  author: string | null
+  body: string
+  createdAt: string
+}
+
+export type DiscussionThread = {
+  id: string
+  blockId: string
+  snapshot: string | null
+  kind: 'comment' | 'suggestion'
+  suggestedText: string | null
+  status: 'open' | 'resolved'
+  /** Username via the staff directory; null when the creator left. */
+  createdBy: string | null
+  createdAt: string
+  replies: DiscussionReply[]
+}
+
+/**
+ * Review discussions for a subtopic (1.B-3c): open first, newest first
+ * (matching the 018 index), replies oldest-first inside each thread,
+ * usernames resolved through the staff directory.
+ */
+export async function getDiscussions(subtopicId: string): Promise<DiscussionThread[]> {
+  const supabase = await createClient()
+  const staff = await getStaffDirectory()
+
+  const { data: rows } = await supabase
+    .from('content_discussions')
+    .select('id, block_id, snapshot, kind, suggested_text, status, created_by, created_at')
+    .eq('subtopic_id', subtopicId)
+    .order('status', { ascending: true })
+    .order('created_at', { ascending: false })
+  if (!rows || rows.length === 0) return []
+
+  const { data: replyRows } = await supabase
+    .from('content_discussion_replies')
+    .select('id, discussion_id, author_id, body, created_at')
+    .in(
+      'discussion_id',
+      rows.map((row) => row.id),
+    )
+    .order('created_at', { ascending: true })
+
+  const replies = new Map<string, DiscussionReply[]>()
+  for (const reply of replyRows ?? []) {
+    const list = replies.get(reply.discussion_id) ?? []
+    list.push({
+      id: reply.id,
+      author: reply.author_id ? (staff.get(reply.author_id)?.username ?? null) : null,
+      body: reply.body,
+      createdAt: reply.created_at,
+    })
+    replies.set(reply.discussion_id, list)
+  }
+
+  return rows.map((row) => ({
+    id: row.id,
+    blockId: row.block_id,
+    snapshot: row.snapshot,
+    kind: row.kind === 'suggestion' ? 'suggestion' : 'comment',
+    suggestedText: row.suggested_text,
+    status: row.status === 'resolved' ? 'resolved' : 'open',
+    createdBy: row.created_by ? (staff.get(row.created_by)?.username ?? null) : null,
+    createdAt: row.created_at,
+    replies: replies.get(row.id) ?? [],
+  }))
+}
+
 /**
  * The whole tree with subtopic summaries — powers the rail AND the list
  * editors (content volume is small by design; roll-ups compute at read
