@@ -152,18 +152,22 @@ values ('f0000000-0000-4000-a000-000000000012',
 
 insert into public.subtopics
   (id, topic_id, title, slug, content, plain_text, headings_text,
+   published_content, published_plain_text, published_headings_text,
    reading_minutes, sort_order, status, published_at)
 values
   ('f0000000-0000-4000-a000-000000000013',
    'f0000000-0000-4000-a000-000000000012',
    'Published Probe Subtopic', 'published-probe-subtopic',
    '[{"type":"p","children":[{"text":"Published fixture body."}]}]'::jsonb,
-   'Published fixture body.', '', 1, 1, 'published', now()),
+   'Published fixture body.', '',
+   '[{"type":"p","children":[{"text":"Published fixture body."}]}]'::jsonb,
+   'Published fixture body.', '',
+   1, 1, 'published', now()),
   ('f0000000-0000-4000-a000-000000000014',
    'f0000000-0000-4000-a000-000000000012',
    'Draft Probe Subtopic', 'draft-probe-subtopic',
    '[{"type":"p","children":[{"text":"Draft fixture body — must never leak."}]}]'::jsonb,
-   'Draft fixture body — must never leak.', '', 1, 2, 'draft', null);
+   'Draft fixture body — must never leak.', '', null, '', '', 1, 2, 'draft', null);
 
 -- ---------------------------------------------------------------------------
 -- Study data for both users (owner-isolation probes)
