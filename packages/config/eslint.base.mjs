@@ -25,7 +25,9 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['slate', 'slate-*', '@udecode/*'],
+              // platejs/@platejs are the post-rename names of the @udecode
+              // Plate packages (v49+) — same invariant, current spelling.
+              group: ['slate', 'slate-*', '@udecode/*', 'platejs', 'platejs/*', '@platejs/*'],
               message:
                 'Invariant I4: editor internals are only touched inside @epharmatica/editor. Import from @epharmatica/editor instead.',
             },

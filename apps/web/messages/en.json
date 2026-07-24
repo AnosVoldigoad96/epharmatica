@@ -255,11 +255,26 @@
   },
   "settings": {
     "meta": {
-      "profile": { "title": "Profile settings", "description": "Your profile on ePharmatica." },
-      "appearance": { "title": "Appearance", "description": "Theme and reader text size." },
-      "aiKeys": { "title": "AI keys", "description": "Bring-your-own-key AI settings." },
-      "data": { "title": "Your data", "description": "Export and deletion." },
-      "sessions": { "title": "Sessions & sign-in", "description": "Sign-in methods and sessions." }
+      "profile": {
+        "title": "Profile settings",
+        "description": "Your profile on ePharmatica."
+      },
+      "appearance": {
+        "title": "Appearance",
+        "description": "Theme and reader text size."
+      },
+      "aiKeys": {
+        "title": "AI keys",
+        "description": "Bring-your-own-key AI settings."
+      },
+      "data": {
+        "title": "Your data",
+        "description": "Export and deletion."
+      },
+      "sessions": {
+        "title": "Sessions & sign-in",
+        "description": "Sign-in methods and sessions."
+      }
     },
     "nav": {
       "heading": "SETTINGS",
@@ -374,6 +389,40 @@
         "badPassword": "That password doesn't match.",
         "generic": "Something went wrong. Try again."
       }
+    }
+  },
+  "admin": {
+    "shell": {
+      "title": "ePharmatica Admin",
+      "backToSite": "Back to site",
+      "stagingBanner": "Staging — this is not production"
+    },
+    "nav": {
+      "heading": "Admin",
+      "dashboard": "Dashboard",
+      "content": "Content",
+      "media": "Media",
+      "users": "Users",
+      "settings": "Settings",
+      "audit": "Audit"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "contentHeading": "Content",
+      "status": {
+        "draft": "Drafts",
+        "in_review": "In review",
+        "changes_requested": "Changes requested",
+        "approved": "Approved",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "queueHeading": "Review queue",
+      "queueDepthLabel": "Subtopics awaiting review",
+      "previewHeading": "Preview links",
+      "previewLinksLabel": "Active draft preview links",
+      "auditHeading": "Recent admin activity",
+      "auditEmpty": "No audit entries yet."
     }
   },
   "emails": {
