@@ -72,7 +72,12 @@ export { FIXTURE_DOCUMENT } from './fixtures'
  * separate export path is needed.
  */
 export { SubtopicEditor } from './edit/subtopic-editor'
-export type { EditorSaveResult, EditorStatus, SubtopicEditorProps } from './edit/subtopic-editor'
+export type {
+  EditorSaveResult,
+  EditorStatus,
+  PickedImage,
+  SubtopicEditorProps,
+} from './edit/subtopic-editor'
 export { DEFAULT_EDITOR_LABELS } from './edit/labels'
 export type { SubtopicEditorLabels } from './edit/labels'
 export { fromEditorValue } from './edit/serialize'

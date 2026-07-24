@@ -52,6 +52,12 @@ export const AUDIT_ACTIONS = {
   revision_restored: 'content.revision_restored',
   review_claimed: 'review.review_claimed',
   review_released: 'review.review_released',
+  preview_link_created: 'preview_link.preview_link_created',
+  preview_link_revoked: 'preview_link.preview_link_revoked',
+  media_uploaded: 'media.media_uploaded',
+  media_replaced: 'media.media_replaced',
+  media_deleted: 'media.media_deleted',
+  media_restored: 'media.media_restored',
 } as const
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS]

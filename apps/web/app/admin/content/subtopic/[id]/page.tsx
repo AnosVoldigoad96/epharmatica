@@ -4,9 +4,10 @@ import { getTranslations } from 'next-intl/server'
 import { RichText, validateContent } from '@epharmatica/editor'
 import { MonographLabel } from '@epharmatica/ui'
 import { requireSection } from '@/features/admin/queries'
-import { getSubtopicDetail } from '@/features/content/queries'
+import { getPreviewLinks, getSubtopicDetail } from '@/features/content/queries'
 import { Crumbs } from '../../_components/crumbs'
 import { EditorCanvas } from '../../_components/editor-canvas'
+import { PreviewLinksPanel } from '../../_components/preview-links-panel'
 import { WorkflowRail } from '../../_components/workflow-rail'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,6 +27,7 @@ export default async function AdminSubtopicPage({ params }: { params: Promise<{ 
   const t = await getTranslations('admin.content.workflow')
   const detail = await getSubtopicDetail(id)
   if (!detail) notFound()
+  const previewLinks = await getPreviewLinks(id)
 
   const validated = validateContent(detail.content)
   const empty = validated.ok && validated.content.length === 0
@@ -72,20 +74,32 @@ export default async function AdminSubtopicPage({ params }: { params: Promise<{ 
           )}
         </div>
 
-        <WorkflowRail
-          detail={{
-            id: detail.id,
-            status: detail.status,
-            readingMinutes: detail.reading_minutes,
-            primaryVideoUrl: detail.primary_video_url,
-            semester: detail.path.semester,
-            claimedBy: detail.claimedBy,
-            revisions: detail.revisions,
-            events: detail.events,
-          }}
-          currentContent={validated.ok ? validated.content : null}
-          viewer={{ id: profile.id, role: profile.role }}
-        />
+        <div className="flex min-w-0 flex-col gap-6">
+          <WorkflowRail
+            detail={{
+              id: detail.id,
+              status: detail.status,
+              readingMinutes: detail.reading_minutes,
+              primaryVideoUrl: detail.primary_video_url,
+              semester: detail.path.semester,
+              claimedBy: detail.claimedBy,
+              revisions: detail.revisions,
+              events: detail.events,
+            }}
+            currentContent={validated.ok ? validated.content : null}
+            viewer={{ id: profile.id, role: profile.role }}
+          />
+          <PreviewLinksPanel
+            subtopicId={detail.id}
+            links={previewLinks}
+            canCreate={
+              canEdit &&
+              (detail.status === 'draft' ||
+                detail.status === 'in_review' ||
+                detail.status === 'changes_requested')
+            }
+          />
+        </div>
       </div>
     </div>
   )

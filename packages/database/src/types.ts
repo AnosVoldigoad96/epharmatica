@@ -692,6 +692,7 @@ export type Database = {
           revoked_at: string | null
           subtopic_id: string
           token_hash: string
+          token_tail: string | null
           updated_at: string
         }
         Insert: {
@@ -702,6 +703,7 @@ export type Database = {
           revoked_at?: string | null
           subtopic_id: string
           token_hash: string
+          token_tail?: string | null
           updated_at?: string
         }
         Update: {
@@ -712,6 +714,7 @@ export type Database = {
           revoked_at?: string | null
           subtopic_id?: string
           token_hash?: string
+          token_tail?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1164,6 +1167,10 @@ export type Database = {
       }
       publish_subtopic: {
         Args: { p_primary_video_url: string; p_reading_minutes: number; p_subtopic_id: string }
+        Returns: undefined
+      }
+      refresh_media_refs: {
+        Args: { p_asset_ids: string[]; p_source: string; p_subtopic_id: string }
         Returns: undefined
       }
       rename_content_node: {
