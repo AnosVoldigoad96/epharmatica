@@ -1341,6 +1341,22 @@ export type Database = {
         Args: { p_role: Database['public']['Enums']['app_role'] }
         Returns: number
       }
+      search_published: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          chapter_name: string
+          chapter_slug: string
+          rank: number
+          slug: string
+          snippet: string
+          subject_name: string
+          subject_slug: string
+          subtopic_id: string
+          title: string
+          topic_name: string
+          topic_slug: string
+        }[]
+      }
       staff_directory: {
         Args: never
         Returns: {

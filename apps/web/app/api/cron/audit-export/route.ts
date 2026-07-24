@@ -18,9 +18,13 @@ import { createAdminClient } from '@/lib/supabase/admin'
  *
  * Service-role surface (audit_log read + prune RPC) — reviewed addition to
  * the ESLint I2 allowlist in eslint.config.mjs.
+ *
+ * Runs on the Node.js runtime — the route-handler DEFAULT (node:crypto
+ * above would fail edge). The former explicit `export const runtime`
+ * segment config is rejected under `experimental.useCache` (1.C-3), so the
+ * default carries it.
  */
 
-export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const PAGE_SIZE = 1000

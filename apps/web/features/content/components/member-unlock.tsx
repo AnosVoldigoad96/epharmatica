@@ -8,6 +8,7 @@ import { ButtonLink } from '@/app/(marketing)/_components/button-link'
 import { withNext } from '@/features/auth/next-param'
 import { getMemberBlocks } from '@/features/content/public-actions'
 import { LiteYouTube } from '@/features/content/components/lite-youtube'
+import { EVENTS } from '@/lib/observability/events'
 import { createClient } from '@/lib/supabase/client'
 
 /**
@@ -107,7 +108,11 @@ export function MemberUnlock({
           <ButtonLink href={withNext('/auth/sign-up', nextPath)} variant="primary">
             {labels.createAccount}
           </ButtonLink>
-          <ButtonLink href={withNext('/auth/sign-in', nextPath)} variant="ghost">
+          <ButtonLink
+            href={withNext('/auth/sign-in', nextPath)}
+            variant="ghost"
+            umamiEvent={EVENTS.preview_gate_signin_clicked}
+          >
             {labels.signIn}
           </ButtonLink>
         </div>

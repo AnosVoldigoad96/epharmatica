@@ -1,8 +1,8 @@
 /**
  * Cache-tag invalidation for content mutations (ARCHITECTURE §6 map) and
  * the re-anchor hand-off (M1 §5.5). Tags are the source of truth; the
- * public reader (1.C) subscribes to them — firing them before it exists is
- * a correct no-op.
+ * public reader (1.C-3) subscribes to them via `use cache` + cacheTag in
+ * the /learn pages and the sitemap.
  */
 import 'server-only'
 
@@ -16,14 +16,26 @@ export type ContentTagScope = {
   sitemap?: boolean
 }
 
+/*
+ * Tag NAMES (ARCH §6 / M1 §8) — one builder per level, shared by both sides
+ * of the contract: revalidateContentTags fires them, and the public reader's
+ * `use cache` scopes subscribe via cacheTag (1.C-3). Never build these
+ * strings anywhere else.
+ */
+export const subjectTag = (slug: string) => `subject:${slug}`
+export const chapterTag = (id: string) => `chapter:${id}`
+export const topicTag = (id: string) => `topic:${id}`
+export const subtopicTag = (id: string) => `subtopic:${id}`
+export const SITEMAP_TAG = 'sitemap'
+
 // Next 16 signature: the cache-life profile is required. Content pages are
 // 'max' — cached until a mutation explicitly fires their tag (ARCH §6).
 export function revalidateContentTags(scope: ContentTagScope): void {
-  for (const slug of scope.subjectSlugs ?? []) revalidateTag(`subject:${slug}`, 'max')
-  for (const id of scope.chapterIds ?? []) revalidateTag(`chapter:${id}`, 'max')
-  for (const id of scope.topicIds ?? []) revalidateTag(`topic:${id}`, 'max')
-  for (const id of scope.subtopicIds ?? []) revalidateTag(`subtopic:${id}`, 'max')
-  if (scope.sitemap) revalidateTag('sitemap', 'max')
+  for (const slug of scope.subjectSlugs ?? []) revalidateTag(subjectTag(slug), 'max')
+  for (const id of scope.chapterIds ?? []) revalidateTag(chapterTag(id), 'max')
+  for (const id of scope.topicIds ?? []) revalidateTag(topicTag(id), 'max')
+  for (const id of scope.subtopicIds ?? []) revalidateTag(subtopicTag(id), 'max')
+  if (scope.sitemap) revalidateTag(SITEMAP_TAG, 'max')
 }
 
 /**

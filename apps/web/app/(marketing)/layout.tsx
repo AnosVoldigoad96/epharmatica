@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server'
 import { MonographLabel } from '@epharmatica/ui'
 import { BrandMark, BrandWordmark } from './_components/brand-mark'
 import { HeaderAuthMenu } from '@/features/account/components/header-auth-menu'
+import { UmamiScript } from '@/lib/observability/umami-script'
 
 /*
  * Marketing shell per mockup 2a: sticky topnav (56px mobile / 64px desktop,
@@ -109,6 +110,8 @@ export default async function MarketingLayout({ children }: { children: ReactNod
           </nav>
         </div>
       </footer>
+
+      <UmamiScript />
     </>
   )
 }

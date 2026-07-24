@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { cacheLife, cacheTag } from 'next/cache'
 import { notFound, permanentRedirect } from 'next/navigation'
-import { cache } from 'react'
 import { getTranslations } from 'next-intl/server'
 import { StateGlyph } from '@epharmatica/ui'
 import { ButtonLink } from '@/app/(marketing)/_components/button-link'
@@ -9,11 +9,18 @@ import { Chip } from '@/app/(marketing)/_components/chip'
 import { Crumbs } from '@/app/(learn)/_components/crumbs'
 import { Reader, readerPageMetadata } from '@/app/(learn)/_components/reader'
 import { semesterCode } from '@/app/(learn)/_lib/format'
+import { SITEMAP_TAG, chapterTag, subtopicTag, topicTag } from '@/features/content/cache'
 import {
   findTopic,
   getChapterPageReaderPayload,
   getPublishedTree,
   resolveLearn301,
+} from '@/features/content/public-queries'
+import type {
+  PublishedChapter,
+  PublishedSubject,
+  PublishedTopic,
+  ReaderPayload,
 } from '@/features/content/public-queries'
 
 /*
@@ -21,51 +28,89 @@ import {
  * OVERVIEW (M1-1: always exists, even for single-subtopic topics; M1 §5.1)
  * OR, since flexible leaves (020), as a chapter-attached content page —
  * rendered through the shared <Reader/>. Topic and page slugs share one
- * chapter namespace (DB-enforced), so the resolution order is safe. ISR
- * anon shell: progress strip, glyph states, stamps and the bookmark button
- * are signed-in surfaces (1.D) and are omitted here; anon sees the same
- * list with empty glyphs.
+ * chapter namespace (DB-enforced), so the resolution order is safe. Static
+ * anon shell, tag-revalidated (M1 §8): progress strip, glyph states, stamps
+ * and the bookmark button are signed-in surfaces (1.D) and are omitted
+ * here; anon sees the same list with empty glyphs.
  */
-export const revalidate = 3600
 export const dynamic = 'force-static'
 
 type Params = Promise<{ subject: string; chapter: string; topic: string }>
 
-// Request-scoped dedupe for the chapter-page branch: generateMetadata and
-// the page share one payload.
-const loadChapterPage = cache(async (subject: string, chapter: string, page: string) =>
-  // TODO(1.C-3): cacheTag wiring ("use cache" + subtopic:{id} +
-  // chapter:{id} tags replaces the time-based revalidate net).
-  getChapterPageReaderPayload(subject, chapter, page, 'anon'),
-)
+/**
+ * Cached topic overview (1.C-3): topic:{id} fires on the topic's own
+ * mutations, on any subtopic publish/unpublish beneath it, and on ancestor
+ * renames (tags.ts). The sitemap tag covers cached misses — every publish
+ * fires it.
+ */
+async function loadTopic(
+  subjectSlug: string,
+  chapterSlug: string,
+  topicSlug: string,
+): Promise<{
+  subject: PublishedSubject
+  chapter: PublishedChapter
+  topic: PublishedTopic
+} | null> {
+  'use cache'
+  cacheLife('max')
+  cacheTag(SITEMAP_TAG)
+  const tree = await getPublishedTree()
+  const found = findTopic(tree, subjectSlug, chapterSlug, topicSlug)
+  if (found) cacheTag(topicTag(found.topic.id))
+  return found
+}
+
+/**
+ * Cached chapter-page reader payload (1.C-3, flexible leaves 020):
+ * subtopic:{id} fires on the page's own publish cycle, chapter:{id} on
+ * sibling-page publishes and ancestor renames. Cached ANON payload only —
+ * the preview truncation already happened in the data layer (D8/I3), so
+ * gated blocks are never stored either.
+ */
+async function loadChapterPage(
+  subject: string,
+  chapter: string,
+  page: string,
+): Promise<ReaderPayload | null> {
+  'use cache'
+  cacheLife('max')
+  cacheTag(SITEMAP_TAG)
+  const payload = await getChapterPageReaderPayload(subject, chapter, page, 'anon')
+  if (payload) cacheTag(subtopicTag(payload.subtopicId), chapterTag(payload.path.chapter.id))
+  return payload
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { subject: subjectSlug, chapter: chapterSlug, topic: topicSlug } = await params
-  const tree = await getPublishedTree()
-  const found = findTopic(tree, subjectSlug, chapterSlug, topicSlug)
+  const found = await loadTopic(subjectSlug, chapterSlug, topicSlug)
   if (!found) {
     // Chapter-attached page (020): reader metadata over the 3-segment URL.
     const payload = await loadChapterPage(subjectSlug, chapterSlug, topicSlug)
     return readerPageMetadata(payload, `/learn/${subjectSlug}/${chapterSlug}/${topicSlug}`)
   }
   const t = await getTranslations('learn.meta')
+  const title = t('entityTitle', { name: found.topic.name })
+  const url = `/learn/${found.subject.slug}/${found.chapter.slug}/${found.topic.slug}`
   return {
-    title: { absolute: t('entityTitle', { name: found.topic.name }) },
+    title: { absolute: title },
     description: found.topic.description ?? undefined,
     robots: { index: true, follow: true },
-    alternates: {
-      canonical: `/learn/${found.subject.slug}/${found.chapter.slug}/${found.topic.slug}`,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description: found.topic.description ?? undefined,
+      type: 'website',
+      url,
     },
+    twitter: { card: 'summary', title, description: found.topic.description ?? undefined },
   }
 }
 
 export default async function TopicPage({ params }: { params: Params }) {
   const { subject: subjectSlug, chapter: chapterSlug, topic: topicSlug } = await params
   const t = await getTranslations('learn')
-  // TODO(1.C-3): cacheTag wiring ("use cache" + topic:{id} tag replaces the
-  // time-based revalidate net).
-  const tree = await getPublishedTree()
-  const found = findTopic(tree, subjectSlug, chapterSlug, topicSlug)
+  const found = await loadTopic(subjectSlug, chapterSlug, topicSlug)
   if (!found) {
     // Not a topic — try the segment as a chapter-attached page (020).
     const payload = await loadChapterPage(subjectSlug, chapterSlug, topicSlug)

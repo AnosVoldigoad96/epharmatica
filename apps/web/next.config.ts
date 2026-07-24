@@ -9,6 +9,12 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
  */
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // "use cache" directive only (1.C-3 cacheTag wiring). Deliberately NOT
+  // cacheComponents: that mode rejects the route segment configs
+  // (force-static/revalidate) the static /learn shells depend on.
+  experimental: {
+    useCache: true,
+  },
   transpilePackages: [
     '@epharmatica/ui',
     '@epharmatica/tokens',

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { getTranslations } from 'next-intl/server'
 import { BrandMark, BrandWordmark } from '@/app/(marketing)/_components/brand-mark'
 import { HeaderAuthMenu } from '@/features/account/components/header-auth-menu'
+import { UmamiScript } from '@/lib/observability/umami-script'
 
 /*
  * (learn) chrome (1.C · reader spec): the marketing header pattern minus the
@@ -51,6 +52,8 @@ export default async function LearnLayout({ children }: { children: ReactNode })
       </header>
 
       <main>{children}</main>
+
+      <UmamiScript />
     </>
   )
 }

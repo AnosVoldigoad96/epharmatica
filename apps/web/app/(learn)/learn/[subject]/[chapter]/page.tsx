@@ -1,45 +1,66 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { cacheLife, cacheTag } from 'next/cache'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { BlisterCell, BlisterGrid, StateGlyph } from '@epharmatica/ui'
 import { Chip } from '@/app/(marketing)/_components/chip'
 import { Crumbs } from '@/app/(learn)/_components/crumbs'
 import { semesterCode } from '@/app/(learn)/_lib/format'
+import { SITEMAP_TAG, chapterTag } from '@/features/content/cache'
 import { findChapter, getPublishedTree, resolveLearn301 } from '@/features/content/public-queries'
+import type { PublishedChapter, PublishedSubject } from '@/features/content/public-queries'
 
 /*
  * /learn/[subject]/[chapter] — topic grid (M1 §4 · reader spec) plus, since
  * flexible leaves (020), the chapter's direct content pages as a blister
  * list (the topic-overview row treatment) linking the 3-segment reader.
- * ISR anon shell; misses consult slug_history for a permanent redirect
- * before 404ing.
+ * Static anon shell, tag-revalidated (M1 §8); misses consult slug_history
+ * for a permanent redirect before 404ing.
  */
-export const revalidate = 3600
 export const dynamic = 'force-static'
 
 type Params = Promise<{ subject: string; chapter: string }>
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { subject: subjectSlug, chapter: chapterSlug } = await params
+/**
+ * Cached chapter subtree (1.C-3): chapter:{id} fires on every mutation of
+ * or beneath the chapter, and ancestor renames fire all chapter ids
+ * (tags.ts). The sitemap tag covers cached misses — content appears only
+ * through a publish, and every publish fires it.
+ */
+async function loadChapter(
+  subjectSlug: string,
+  chapterSlug: string,
+): Promise<{ subject: PublishedSubject; chapter: PublishedChapter } | null> {
+  'use cache'
+  cacheLife('max')
+  cacheTag(SITEMAP_TAG)
   const tree = await getPublishedTree()
   const found = findChapter(tree, subjectSlug, chapterSlug)
+  if (found) cacheTag(chapterTag(found.chapter.id))
+  return found
+}
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { subject: subjectSlug, chapter: chapterSlug } = await params
+  const found = await loadChapter(subjectSlug, chapterSlug)
   if (!found) return {}
   const t = await getTranslations('learn.meta')
+  const title = t('entityTitle', { name: found.chapter.name })
+  const url = `/learn/${found.subject.slug}/${found.chapter.slug}`
   return {
-    title: { absolute: t('entityTitle', { name: found.chapter.name }) },
+    title: { absolute: title },
     robots: { index: true, follow: true },
-    alternates: { canonical: `/learn/${found.subject.slug}/${found.chapter.slug}` },
+    alternates: { canonical: url },
+    openGraph: { title, type: 'website', url },
+    twitter: { card: 'summary', title },
   }
 }
 
 export default async function ChapterPage({ params }: { params: Params }) {
   const { subject: subjectSlug, chapter: chapterSlug } = await params
   const t = await getTranslations('learn')
-  // TODO(1.C-3): cacheTag wiring ("use cache" + chapter:{id} tag replaces
-  // the time-based revalidate net).
-  const tree = await getPublishedTree()
-  const found = findChapter(tree, subjectSlug, chapterSlug)
+  const found = await loadChapter(subjectSlug, chapterSlug)
   if (!found) {
     const moved = await resolveLearn301([subjectSlug, chapterSlug])
     if (moved) permanentRedirect(moved)

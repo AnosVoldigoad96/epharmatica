@@ -15,7 +15,10 @@ import { cache } from 'react'
 import { validateContent } from '@epharmatica/editor'
 import type { Content } from '@epharmatica/editor'
 import { defaultPreviewBlockCount } from '@epharmatica/editor'
-import { createClient } from '@/lib/supabase/server'
+// Cookie-less anon client throughout: this module renders inside static
+// shells and `use cache` scopes (1.C-3), where `cookies()` is forbidden —
+// and everything here is the anonymous published surface anyway.
+import { createAnonClient } from '@/lib/supabase/server'
 
 export type PublishedSubtopicCell = {
   id: string
@@ -60,7 +63,7 @@ export type PublishedTree = PublishedSubject[]
  * every /learn level and the sitemap share one fetch.
  */
 export const getPublishedTree = cache(async (): Promise<PublishedTree> => {
-  const supabase = await createClient()
+  const supabase = createAnonClient()
 
   const [subjects, chapters, topics, subtopics] = await Promise.all([
     supabase
@@ -205,7 +208,7 @@ const learnHref = (...segments: string[]) => `/learn/${segments.join('/')}`
  * blocks are never serialized).
  */
 async function loadPublishedSnapshot(cellId: string, viewer: 'anon' | 'member') {
-  const supabase = await createClient()
+  const supabase = createAnonClient()
   const { data: row } = await supabase
     .from('subtopics')
     .select('id, published_content, preview_block_count, published_at, reading_minutes')
@@ -409,7 +412,7 @@ async function slugHistoryEntityId(
   oldSlug: string,
   parentPath: string,
 ): Promise<string | null> {
-  const supabase = await createClient()
+  const supabase = createAnonClient()
   const { data: rows } = await supabase
     .from('slug_history')
     .select('entity_id, created_at')

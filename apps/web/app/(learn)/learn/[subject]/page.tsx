@@ -1,42 +1,64 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { cacheLife, cacheTag } from 'next/cache'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { Chip } from '@/app/(marketing)/_components/chip'
 import { Crumbs } from '@/app/(learn)/_components/crumbs'
 import { semesterCode } from '@/app/(learn)/_lib/format'
+import { SITEMAP_TAG, subjectTag } from '@/features/content/cache'
 import { findSubject, getPublishedTree, resolveLearn301 } from '@/features/content/public-queries'
+import type { PublishedSubject } from '@/features/content/public-queries'
 
 /*
- * /learn/[subject] — chapter list (M1 §4 · reader spec). ISR anon shell;
- * misses consult slug_history for a permanent redirect before 404ing.
+ * /learn/[subject] — chapter list (M1 §4 · reader spec). Static anon shell,
+ * tag-revalidated (M1 §8); misses consult slug_history for a permanent
+ * redirect before 404ing.
  */
-export const revalidate = 3600
 export const dynamic = 'force-static'
 
 type Params = Promise<{ subject: string }>
 
+/**
+ * Cached subject subtree (1.C-3): every mutation beneath a subject fires
+ * its slug tag, and renames fire the OLD slug from the pre-mutation tree
+ * (tags.ts), so the slug tag is a complete net for this shell. The sitemap
+ * tag covers cached misses — a slug that resolves to nothing gains content
+ * only through a publish, and every publish fires the sitemap tag.
+ */
+async function loadSubject(subjectSlug: string): Promise<PublishedSubject | null> {
+  'use cache'
+  cacheLife('max')
+  cacheTag(SITEMAP_TAG, subjectTag(subjectSlug))
+  const tree = await getPublishedTree()
+  return findSubject(tree, subjectSlug)
+}
+
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { subject: subjectSlug } = await params
-  const tree = await getPublishedTree()
-  const subject = findSubject(tree, subjectSlug)
+  const subject = await loadSubject(subjectSlug)
   if (!subject) return {}
   const t = await getTranslations('learn.meta')
+  const title = t('entityTitle', { name: subject.name })
   return {
-    title: { absolute: t('entityTitle', { name: subject.name }) },
+    title: { absolute: title },
     description: subject.description ?? undefined,
     robots: { index: true, follow: true },
     alternates: { canonical: `/learn/${subject.slug}` },
+    openGraph: {
+      title,
+      description: subject.description ?? undefined,
+      type: 'website',
+      url: `/learn/${subject.slug}`,
+    },
+    twitter: { card: 'summary', title, description: subject.description ?? undefined },
   }
 }
 
 export default async function SubjectPage({ params }: { params: Params }) {
   const { subject: subjectSlug } = await params
   const t = await getTranslations('learn')
-  // TODO(1.C-3): cacheTag wiring ("use cache" + subject:{slug} tag replaces
-  // the time-based revalidate net).
-  const tree = await getPublishedTree()
-  const subject = findSubject(tree, subjectSlug)
+  const subject = await loadSubject(subjectSlug)
   if (!subject) {
     const moved = await resolveLearn301([subjectSlug])
     if (moved) permanentRedirect(moved)

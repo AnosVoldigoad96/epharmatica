@@ -1,4 +1,7 @@
 import type { MetadataRoute } from 'next'
+import { cacheLife, cacheTag } from 'next/cache'
+import { SITEMAP_TAG } from '@/features/content/cache'
+import { getPublishedTree } from '@/features/content/public-queries'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://epharmatica.com'
 
@@ -13,13 +16,53 @@ const ROUTES = [
   '/medical-disclaimer',
 ] as const
 
-export default function sitemap(): MetadataRoute.Sitemap {
+/**
+ * Published /learn URLs (1.C-3 · M1 §5.10 — published only, by
+ * construction of the pruned tree): /learn, subject, chapter, topic
+ * overview, the 4-segment reader, and the 3-segment chapter-page reader
+ * (flexible leaves, 020). Cached under the sitemap tag — every
+ * publish/unpublish/move/rename fires it (tags.ts), so the sitemap
+ * refreshes with the shells, no time net needed.
+ */
+async function learnRoutes(): Promise<string[]> {
+  'use cache'
+  cacheLife('max')
+  cacheTag(SITEMAP_TAG)
+  const tree = await getPublishedTree()
+  const routes: string[] = ['/learn']
+  for (const subject of tree) {
+    routes.push(`/learn/${subject.slug}`)
+    for (const chapter of subject.chapters) {
+      routes.push(`/learn/${subject.slug}/${chapter.slug}`)
+      for (const page of chapter.leaves) {
+        routes.push(`/learn/${subject.slug}/${chapter.slug}/${page.slug}`)
+      }
+      for (const topic of chapter.topics) {
+        routes.push(`/learn/${subject.slug}/${chapter.slug}/${topic.slug}`)
+        for (const subtopic of topic.subtopics) {
+          routes.push(`/learn/${subject.slug}/${chapter.slug}/${topic.slug}/${subtopic.slug}`)
+        }
+      }
+    }
+  }
+  return routes
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date()
 
-  return ROUTES.map((route) => ({
-    url: new URL(route, SITE_URL).toString(),
-    lastModified,
-    changeFrequency: route === '/' ? 'weekly' : 'monthly',
-    priority: route === '/' ? 1 : 0.4,
-  }))
+  return [
+    ...ROUTES.map((route): MetadataRoute.Sitemap[number] => ({
+      url: new URL(route, SITE_URL).toString(),
+      lastModified,
+      changeFrequency: route === '/' ? 'weekly' : 'monthly',
+      priority: route === '/' ? 1 : 0.4,
+    })),
+    ...(await learnRoutes()).map((route): MetadataRoute.Sitemap[number] => ({
+      url: new URL(route, SITE_URL).toString(),
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: route === '/learn' ? 0.8 : 0.6,
+    })),
+  ]
 }

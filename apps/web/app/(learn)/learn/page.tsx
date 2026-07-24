@@ -1,18 +1,42 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
+import { cacheLife, cacheTag } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { BlisterCell, BlisterGrid } from '@epharmatica/ui'
 import { Chip } from '@/app/(marketing)/_components/chip'
 import { semesterCode } from '@/app/(learn)/_lib/format'
+import { SITEMAP_TAG, chapterTag, subjectTag, topicTag } from '@/features/content/cache'
 import { getPublishedTree } from '@/features/content/public-queries'
+import type { PublishedTree } from '@/features/content/public-queries'
 
 /*
- * /learn — subject index (M1 §4 · reader spec). ISR anon shell: the page
+ * /learn — subject index (M1 §4 · reader spec). Static anon shell: the page
  * renders the published tree for everyone; nothing here reads cookies.
- * force-static keeps the shared server client's cookie jar empty (the anon
- * client) instead of tipping the route dynamic.
+ * force-static keeps the route a build-time shell; freshness is tag-driven
+ * (M1 §8) — publish/unpublish/move/rename fire the tags below and purge it.
  */
-export const revalidate = 3600
 export const dynamic = 'force-static'
+
+/**
+ * Cached published tree for the index (1.C-3): tagged with every rendered
+ * node — any mutation beneath any subject fires one of these (tags.ts) —
+ * plus the sitemap tag, which every publish fires, so brand-new subjects
+ * (whose tags can't be known in advance) still appear without a time net.
+ */
+async function loadTree(): Promise<PublishedTree> {
+  'use cache'
+  cacheLife('max')
+  const tree = await getPublishedTree()
+  cacheTag(
+    SITEMAP_TAG,
+    ...tree.map((subject) => subjectTag(subject.slug)),
+    ...tree.flatMap((subject) => subject.chapters.map((chapter) => chapterTag(chapter.id))),
+    ...tree.flatMap((subject) =>
+      subject.chapters.flatMap((chapter) => chapter.topics.map((topic) => topicTag(topic.id))),
+    ),
+  )
+  return tree
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('learn.meta')
@@ -20,14 +44,14 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { absolute: t('indexTitle') },
     robots: { index: true, follow: true },
     alternates: { canonical: '/learn' },
+    openGraph: { title: t('indexTitle'), type: 'website', url: '/learn' },
+    twitter: { card: 'summary', title: t('indexTitle') },
   }
 }
 
 export default async function LearnIndexPage() {
   const t = await getTranslations('learn')
-  // TODO(1.C-3): cacheTag wiring ("use cache" + subject/chapter/topic tags
-  // replaces the time-based revalidate net).
-  const tree = await getPublishedTree()
+  const tree = await loadTree()
 
   // Units = topic subtopics + chapters' direct pages (flexible leaves, 020).
   const unitCount = tree.reduce(
@@ -53,6 +77,13 @@ export default async function LearnIndexPage() {
           {t('index.counter', { subjects: tree.length, units: unitCount })}
         </span>
         <span className="flex-1" />
+        {/* Plain link so the hub stays static — /search is the dynamic route. */}
+        <Link
+          href="/search"
+          className="inline-block whitespace-nowrap border border-ink bg-surface px-[9px] py-1 font-mono text-[11px] uppercase leading-[14px] tracking-[.05em] text-ink hover:bg-primary-tint active:bg-primary-tint"
+        >
+          {t('index.searchCta')} <span aria-hidden>⌕</span>
+        </Link>
         {/* Non-functional in this slice — semester filtering wires up in 1.C-2. */}
         <Chip variant="ink">
           {t('index.semesterFilter')} <span aria-hidden>▾</span>
