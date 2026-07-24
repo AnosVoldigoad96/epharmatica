@@ -1153,5 +1153,83 @@
     "meta": "{minutes} min read · draft",
     "inactiveLabel": "Preview link",
     "inactiveBody": "This preview link is no longer active."
+  },
+  "learn": {
+    "meta": {
+      "indexTitle": "Subjects · ePharmatica",
+      "entityTitle": "{name} · ePharmatica"
+    },
+    "nav": {
+      "primary": "Primary",
+      "learn": "Learn"
+    },
+    "crumbs": {
+      "aria": "Breadcrumbs",
+      "root": "Learn"
+    },
+    "units": "{count, plural, one {# unit} other {# units}}",
+    "semesterChip": "Sem {semester}",
+    "index": {
+      "title": "Subjects",
+      "counter": "{subjects, plural, one {# subject} other {# subjects}} · {units, plural, one {# unit} other {# units}} published",
+      "semesterFilter": "Semester · All"
+    },
+    "subject": {
+      "defaultSemesterChip": "Default sem {semester}"
+    },
+    "chapter": {
+      "videoChip": "▶ Video"
+    },
+    "topic": {
+      "continue": "Continue — {title}",
+      "minutesChip": "{minutes} min",
+      "videoChip": "▶",
+      "videoChipAria": "Has video",
+      "unitsAria": "Units in this topic"
+    },
+    "reader": {
+      "unitChip": "Unit {index} · {total}",
+      "siblingsAria": "Units in this topic",
+      "topicLabel": "Topic · {name}",
+      "minutesChip": "{minutes} min read",
+      "updatedChip": "Updated {date}",
+      "onThisPage": "On this page",
+      "pagerAria": "Previous and next units",
+      "previous": "← Previous",
+      "next": "Next →",
+      "reportIssue": "Report an issue",
+      "reportIssueSubject": "Content issue: {title}",
+      "playVideo": "Play video",
+      "tocAria": "Contents",
+      "callouts": {
+        "definition": "Definition",
+        "clinical_pearl": "Clinical Pearl",
+        "mnemonic": "Mnemonic",
+        "exam_alert": "Exam Alert",
+        "warning": "Warning"
+      },
+      "drugCardFields": {
+        "generic_name": "Generic name",
+        "brand_names": "Brand names",
+        "drug_class": "Class",
+        "mechanism": "Mechanism",
+        "indications": "Indications",
+        "contraindications": "Contraindications",
+        "adverse_effects": "Adverse effects",
+        "interactions": "Interactions",
+        "dosing": "Dosing",
+        "monitoring": "Monitoring",
+        "pregnancy_lactation": "Pregnancy & lactation",
+        "notes": "Notes"
+      }
+    },
+    "gate": {
+      "label": "Continue reading free — sign in",
+      "benefitFullContent": "The full content of every published unit",
+      "benefitStudyTools": "Highlights, notes, and bookmarks that survive the semester",
+      "benefitProgress": "Progress tracking and AI study tools on your own key",
+      "createAccount": "Create free account",
+      "signIn": "Sign in"
+    }
   }
 }
