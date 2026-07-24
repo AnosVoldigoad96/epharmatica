@@ -9,7 +9,12 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
  */
 const nextConfig: NextConfig = {
   output: 'standalone',
-  transpilePackages: ['@epharmatica/ui', '@epharmatica/tokens', '@epharmatica/database'],
+  transpilePackages: [
+    '@epharmatica/ui',
+    '@epharmatica/tokens',
+    '@epharmatica/database',
+    '@epharmatica/editor',
+  ],
   // Legal pages read their markdown source from repo-root docs/ with node:fs;
   // include those files in the standalone trace so runtime re-renders on the
   // VPS can find them (they live outside apps/web).
