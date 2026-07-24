@@ -73,9 +73,15 @@ end;
 $probe$;
 
 -- Probe 4: non-staff cannot create links; author can (then cleaned up).
+-- Hashes are computed BEFORE switching roles: API roles have no grant on
+-- the extensions schema (the app hashes tokens in Node; only the
+-- security-definer RPC hashes in SQL), and the probe must not depend on
+-- an ambient grant the migrations never made.
 do $probe$
 declare
   denied boolean := false;
+  v_illegal_hash text := encode(extensions.digest('rls-probe-illegal-token', 'sha256'), 'hex');
+  v_temp_hash text := encode(extensions.digest('rls-probe-temp-token', 'sha256'), 'hex');
 begin
   perform set_config('request.jwt.claims',
     '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}', true);
@@ -83,8 +89,7 @@ begin
 
   begin
     insert into public.preview_links (subtopic_id, token_hash)
-    values ('f0000000-0000-4000-a000-000000000014',
-            encode(extensions.digest('rls-probe-illegal-token', 'sha256'), 'hex'));
+    values ('f0000000-0000-4000-a000-000000000014', v_illegal_hash);
   exception
     when insufficient_privilege then denied := true;
   end;
@@ -100,14 +105,12 @@ begin
   set local role authenticated;
 
   insert into public.preview_links (subtopic_id, token_hash, created_by)
-  values ('f0000000-0000-4000-a000-000000000014',
-          encode(extensions.digest('rls-probe-temp-token', 'sha256'), 'hex'),
+  values ('f0000000-0000-4000-a000-000000000014', v_temp_hash,
           '00000000-0000-4000-a000-000000000004');
 
   reset role;
 
-  delete from public.preview_links
-   where token_hash = encode(extensions.digest('rls-probe-temp-token', 'sha256'), 'hex');
+  delete from public.preview_links where token_hash = v_temp_hash;
 
   raise notice 'PASS 08.4: link creation staff-only (author positive control)';
 end;
