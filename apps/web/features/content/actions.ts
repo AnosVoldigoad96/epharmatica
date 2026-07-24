@@ -12,10 +12,11 @@ import type { ContentLevel } from '@epharmatica/database'
 import { getAdminProfile } from '@/features/admin/queries'
 import type { AdminProfile } from '@/features/admin/queries'
 import { AUDIT_ACTIONS, withAudit } from '@/lib/observability/audit'
-import { identifierHash } from '@/lib/security/hash'
-import { enforceRateLimit } from '@/lib/security/rate-limit'
 import { createClient } from '@/lib/supabase/server'
+import { AUTHORING_ROLES, DbActionError, MANAGER_ROLES, failureFrom, requireRoles } from './gate'
+import type { DbErrorShape } from './gate'
 import { enqueueReanchor, revalidateContentTags } from './cache'
+import { fireTagsForNode, fireTagsForParent } from './tags'
 import { getContentTree } from './queries'
 import { findChapter, findSubject, findTopic, publishedSubtopicIds } from './tree'
 import type { ContentTree } from './tree'
@@ -36,40 +37,6 @@ import type { ContentTree } from './tree'
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
 export type CreateResult = { ok: true; id: string } | { ok: false; error: string }
-
-type DbErrorShape = { code?: string; message?: string } | null
-
-/** Carries the Postgres error out of withAudit's mutate callback. */
-class DbActionError extends Error {
-  constructor(public readonly dbError: DbErrorShape) {
-    super(dbError?.message ?? 'database error')
-  }
-}
-
-type StaffCheck = { ok: true; profile: AdminProfile } | { ok: false; error: string }
-
-const AUTHORING_ROLES = ['author', 'content_manager', 'admin', 'super_admin'] as const
-const MANAGER_ROLES = ['content_manager', 'admin', 'super_admin'] as const
-
-async function requireRoles(roles: readonly string[]): Promise<StaffCheck> {
-  const t = await getTranslations('admin.content.errors')
-  const profile = await getAdminProfile()
-  if (!profile || !roles.includes(profile.role)) {
-    return { ok: false, error: t('forbidden') }
-  }
-  const decision = await enforceRateLimit('admin_mutation', identifierHash(profile.id))
-  if (!decision.allowed) {
-    return { ok: false, error: t('rateLimited') }
-  }
-  return { ok: true, profile }
-}
-
-async function failureFrom(err: unknown): Promise<{ ok: false; error: string }> {
-  const t = await getTranslations('admin.content.errors')
-  const dbError = err instanceof DbActionError ? err.dbError : null
-  if (dbError?.code === '23505') return { ok: false, error: t('slugTaken') }
-  return { ok: false, error: t('saveFailed') }
-}
 
 async function nextSortOrder(
   table: 'subjects' | 'chapters' | 'topics' | 'subtopics',
@@ -605,94 +572,4 @@ function siblingIds(
   }
   const found = parentId ? findTopic(tree, parentId) : null
   return found ? found.topic.subtopics.map((subtopic) => subtopic.id) : null
-}
-
-/** Fire the ancestor tag cascade for a node (ARCH §6). */
-function fireTagsForNode(
-  tree: ContentTree,
-  level: ContentLevel,
-  id: string,
-  affectedSubtopicIds: string[],
-): void {
-  if (level === 'subject') {
-    const subject = findSubject(tree, id)
-    if (subject) {
-      revalidateContentTags({
-        subjectSlugs: [subject.slug],
-        chapterIds: subject.chapters.map((chapter) => chapter.id),
-        topicIds: subject.chapters.flatMap((chapter) => chapter.topics.map((topic) => topic.id)),
-        subtopicIds: affectedSubtopicIds,
-        sitemap: true,
-      })
-    }
-    return
-  }
-  if (level === 'chapter') {
-    const found = findChapter(tree, id)
-    if (found) {
-      revalidateContentTags({
-        subjectSlugs: [found.subject.slug],
-        chapterIds: [id],
-        topicIds: found.chapter.topics.map((topic) => topic.id),
-        subtopicIds: affectedSubtopicIds,
-        sitemap: true,
-      })
-    }
-    return
-  }
-  if (level === 'topic') {
-    const found = findTopic(tree, id)
-    if (found) {
-      revalidateContentTags({
-        subjectSlugs: [found.subject.slug],
-        chapterIds: [found.chapter.id],
-        topicIds: [id],
-        subtopicIds: affectedSubtopicIds,
-        sitemap: true,
-      })
-    }
-    return
-  }
-  for (const subject of tree) {
-    for (const chapter of subject.chapters) {
-      for (const topic of chapter.topics) {
-        if (topic.subtopics.some((subtopic) => subtopic.id === id)) {
-          revalidateContentTags({
-            subjectSlugs: [subject.slug],
-            chapterIds: [chapter.id],
-            topicIds: [topic.id],
-            subtopicIds: [id],
-            sitemap: true,
-          })
-          return
-        }
-      }
-    }
-  }
-}
-
-/** Fire tags for a DESTINATION parent after a move (its lists changed). */
-function fireTagsForParent(tree: ContentTree, level: ContentLevel, parentId: string): void {
-  if (level === 'subtopic') {
-    const found = findTopic(tree, parentId)
-    if (found) {
-      revalidateContentTags({
-        subjectSlugs: [found.subject.slug],
-        chapterIds: [found.chapter.id],
-        topicIds: [parentId],
-      })
-    }
-    return
-  }
-  if (level === 'topic') {
-    const found = findChapter(tree, parentId)
-    if (found) {
-      revalidateContentTags({ subjectSlugs: [found.subject.slug], chapterIds: [parentId] })
-    }
-    return
-  }
-  if (level === 'chapter') {
-    const subject = findSubject(tree, parentId)
-    if (subject) revalidateContentTags({ subjectSlugs: [subject.slug] })
-  }
 }

@@ -110,6 +110,7 @@ The RLS/security suite runs in CI against a migrated shadow DB. A feature is inc
 - Media: soft-deleted assets invisible to public read; writes staff-only; blank alt rejected at the constraint; referenced assets cannot be hard-deleted even by `service_role` (FK RESTRICT); `media_refs` writes are service-role only (probe 09)
 - Review claims: self-only claiming, one active claim per subtopic enforced by the DB, release paths respect roles (probe 09)
 - Move… / rename: `move_content_node` + `rename_content_node` RPCs are content_manager+ only; draft moves write no slug_history ceremony; published moves/renames write the 301 history rows atomically and report affected subtopic ids; invalid destinations change nothing; `count_affected_highlights` returns aggregates to staff only (probe 10)
+- Workflow engine: subtopic workflow columns (status/published_at/derived fields) are API-immutable — authors cannot self-publish by direct update; transitions run only through the definer RPCs with the M4 §5.5 matrix inside (reviewer cannot publish, author of record cannot review their own draft, request_changes requires a comment, publish only from approved + snapshots a revision + auto-revokes preview links, restore adds a new revision) (probe 11)
 - Yearly audit-export cron produces a valid R2 object from a seeded aged year
 
 **M5 (five non-negotiables + extras)**

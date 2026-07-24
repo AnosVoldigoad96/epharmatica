@@ -43,6 +43,15 @@ export const AUDIT_ACTIONS = {
   node_renamed: 'content.node_renamed',
   node_moved: 'content.node_moved',
   nodes_reordered: 'content.nodes_reordered',
+  workflow_submitted: 'content.workflow_submitted',
+  workflow_approved: 'content.workflow_approved',
+  workflow_changes_requested: 'content.workflow_changes_requested',
+  workflow_published: 'content.workflow_published',
+  workflow_unpublished: 'content.workflow_unpublished',
+  workflow_archived: 'content.workflow_archived',
+  revision_restored: 'content.revision_restored',
+  review_claimed: 'review.review_claimed',
+  review_released: 'review.review_released',
 } as const
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS]
