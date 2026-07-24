@@ -106,6 +106,56 @@ export async function getReviewQueue(): Promise<ReviewQueueEntry[]> {
     .sort((a, b) => a.waitingSince.localeCompare(b.waitingSince))
 }
 
+export type PreviewLinkSummary = {
+  id: string
+  tail: string
+  createdBy: string | null
+  expiresAt: string
+  revokedAt: string | null
+  opens: number
+  /** Computed at read time (the waitingDays precedent) — render stays pure. */
+  expired: boolean
+  daysLeft: number
+}
+
+/** Per-subtopic preview links with open counts (M4 §5.7 list). */
+export async function getPreviewLinks(subtopicId: string): Promise<PreviewLinkSummary[]> {
+  const supabase = await createClient()
+  const staff = await getStaffDirectory()
+
+  const { data: links } = await supabase
+    .from('preview_links')
+    .select('id, token_tail, created_by, expires_at, revoked_at')
+    .eq('subtopic_id', subtopicId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+  if (!links || links.length === 0) return []
+
+  const { data: opens } = await supabase
+    .from('preview_link_opens')
+    .select('link_id')
+    .in(
+      'link_id',
+      links.map((link) => link.id),
+    )
+  const counts = new Map<string, number>()
+  for (const open of opens ?? []) {
+    counts.set(open.link_id, (counts.get(open.link_id) ?? 0) + 1)
+  }
+
+  const nowMs = Date.now()
+  return links.map((link) => ({
+    id: link.id,
+    tail: link.token_tail ?? '····',
+    createdBy: link.created_by ? (staff.get(link.created_by)?.username ?? null) : null,
+    expiresAt: link.expires_at,
+    revokedAt: link.revoked_at,
+    opens: counts.get(link.id) ?? 0,
+    expired: Date.parse(link.expires_at) <= nowMs,
+    daysLeft: Math.max(0, Math.ceil((Date.parse(link.expires_at) - nowMs) / 86_400_000)),
+  }))
+}
+
 export type RevisionSummary = {
   id: string
   note: string | null

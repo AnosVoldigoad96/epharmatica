@@ -31,6 +31,16 @@ export type EditorSaveResult = { ok: boolean; error?: string }
 
 export type EditorStatus = 'clean' | 'dirty' | 'saving' | 'saved' | 'error'
 
+/** What the app's media-library picker resolves with (M4 §6 — the Plate
+ * image block's picker IS the library; the schema requires asset_id). */
+export type PickedImage = {
+  asset_id: string
+  url: string
+  alt: string
+  width: number
+  height: number
+}
+
 export type SubtopicEditorProps = {
   /** `[]` allowed — the editor seeds one empty paragraph. */
   initialContent: Content
@@ -40,6 +50,11 @@ export type SubtopicEditorProps = {
   onStatusChange?: (status: EditorStatus) => void
   /** Merged over DEFAULT_EDITOR_LABELS. */
   labels?: Partial<SubtopicEditorLabels>
+  /**
+   * Opens the app's media-library picker; resolve null to cancel. Absent →
+   * the Image insert stays disabled (labels.imageDisabledNote as title).
+   */
+  onPickImage?: () => Promise<PickedImage | null>
 }
 
 /* ---------------------------------------------------------------- chrome */
@@ -217,9 +232,11 @@ function insertBlockBelow(editor: PlateEditor, node: TElement) {
 function InsertMenu({
   labels,
   onOpenVideoForm,
+  onPickImage,
 }: {
   labels: SubtopicEditorLabels
   onOpenVideoForm: () => void
+  onPickImage?: () => Promise<PickedImage | null>
 }) {
   const editor = useEditorRef()
   const [open, setOpen] = useState(false)
@@ -302,8 +319,27 @@ function InsertMenu({
             })
           })}
           {item(labels.insertVideo, onOpenVideoForm)}
-          {/* Media-library picker arrives next slice — rendered disabled. */}
-          {item(labels.insertImage, () => undefined, true, labels.imageDisabledNote)}
+          {item(
+            labels.insertImage,
+            () => {
+              if (!onPickImage) return
+              void onPickImage().then((picked) => {
+                if (!picked) return
+                insertBlockBelow(editor, {
+                  type: 'img',
+                  url: picked.url,
+                  alt: picked.alt,
+                  asset_id: picked.asset_id,
+                  width: picked.width,
+                  height: picked.height,
+                  children: [{ text: '' }],
+                })
+                editor.tf.focus()
+              })
+            },
+            !onPickImage,
+            onPickImage ? undefined : labels.imageDisabledNote,
+          )}
         </div>
       ) : null}
     </div>
@@ -425,7 +461,15 @@ const STATUS_TONE: Record<EditorStatus, string> = {
   error: 'text-danger',
 }
 
-function Toolbar({ labels, status }: { labels: SubtopicEditorLabels; status: EditorStatus }) {
+function Toolbar({
+  labels,
+  status,
+  onPickImage,
+}: {
+  labels: SubtopicEditorLabels
+  status: EditorStatus
+  onPickImage?: () => Promise<PickedImage | null>
+}) {
   const editor = useEditorRef()
   const hasLink = useEditorSelector((ed) => !!ed.api.some({ match: { type: 'a' } }), [])
   const [panel, setPanel] = useState<'link' | 'video' | null>(null)
@@ -481,7 +525,11 @@ function Toolbar({ labels, status }: { labels: SubtopicEditorLabels; status: Edi
         >
           ⌀
         </ToolbarButton>
-        <InsertMenu labels={labels} onOpenVideoForm={() => setPanel('video')} />
+        <InsertMenu
+          labels={labels}
+          onOpenVideoForm={() => setPanel('video')}
+          onPickImage={onPickImage}
+        />
         <span
           className={`ml-auto select-none font-mono text-[10px] uppercase tracking-widest ${STATUS_TONE[status]}`}
         >
@@ -502,6 +550,7 @@ export function SubtopicEditor({
   onSave,
   onStatusChange,
   labels: labelOverrides,
+  onPickImage,
 }: SubtopicEditorProps) {
   const labels = useMemo(() => ({ ...DEFAULT_EDITOR_LABELS, ...labelOverrides }), [labelOverrides])
 
@@ -606,7 +655,7 @@ export function SubtopicEditor({
     <EditorLabelsProvider value={labels}>
       <Plate editor={editor} onValueChange={markDirty}>
         <div className="border border-ink bg-surface">
-          <Toolbar labels={labels} status={status} />
+          <Toolbar labels={labels} status={status} onPickImage={onPickImage} />
           {status === 'error' ? (
             <p className="border-b border-line bg-surface px-3 py-1.5 font-mono text-[11px] text-danger">
               {labels.validationErrorPrefix}

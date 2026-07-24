@@ -1,13 +1,14 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useMemo, useState, useTransition } from 'react'
+import { useCallback, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { DEFAULT_EDITOR_LABELS, RichText, defaultPreviewBlockCount } from '@epharmatica/editor'
-import type { Content, EditorStatus, SubtopicEditorLabels } from '@epharmatica/editor'
+import type { Content, EditorStatus, PickedImage, SubtopicEditorLabels } from '@epharmatica/editor'
 import { Button, MonographLabel, useToast } from '@epharmatica/ui'
 import { saveDraftContent, updatePreviewBlockCount } from '@/features/content/workflow-actions'
+import { MediaPickerSheet } from './media-picker-sheet'
 
 /**
  * Editor canvas host (M4 §5.4 · hi-fi 2e): the Plate surface (dynamically
@@ -46,6 +47,24 @@ export function EditorCanvas({
   const [anonView, setAnonView] = useState(false)
   const [latestContent, setLatestContent] = useState<Content>(initialContent)
   const [gateCount, setGateCount] = useState<number | null>(previewBlockCount)
+
+  // Image picker bridge: the editor asks, the sheet answers (M4 §6 — the
+  // picker IS the media library).
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const pickResolveRef = useRef<((picked: PickedImage | null) => void) | null>(null)
+  const onPickImage = useCallback(
+    () =>
+      new Promise<PickedImage | null>((resolve) => {
+        pickResolveRef.current = resolve
+        setPickerOpen(true)
+      }),
+    [],
+  )
+  const settlePicker = useCallback((picked: PickedImage | null) => {
+    pickResolveRef.current?.(picked)
+    pickResolveRef.current = null
+    setPickerOpen(false)
+  }, [])
 
   // The package ships English defaults; the catalog (rules §8.1) is the
   // source of truth here — every key mirrored under editor.labels.*.
@@ -147,6 +166,7 @@ export function EditorCanvas({
         <SubtopicEditor
           initialContent={initialContent}
           labels={editorLabels}
+          onPickImage={onPickImage}
           onSave={async (content) => {
             const result = await saveDraftContent(subtopicId, content)
             if (result.ok) {
@@ -160,6 +180,10 @@ export function EditorCanvas({
       )}
 
       <p className="mt-2 text-[11px] text-ink-2">{t('autosaveNote')}</p>
+
+      {pickerOpen ? (
+        <MediaPickerSheet open onClose={() => settlePicker(null)} onPick={settlePicker} />
+      ) : null}
     </div>
   )
 }

@@ -8,6 +8,7 @@ import {
   getPlainText,
   validateContent,
 } from '@epharmatica/editor'
+import type { Content } from '@epharmatica/editor'
 import { AUDIT_ACTIONS, withAudit } from '@/lib/observability/audit'
 import { createClient } from '@/lib/supabase/server'
 import { enqueueReanchor } from './cache'
@@ -38,6 +39,18 @@ import { fireTagsForSubtopic } from './tags'
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
 
+/** Asset ids referenced by img blocks — the media usage scan (M4 §6). */
+function imageAssetIds(content: Content): string[] {
+  return [
+    ...new Set(
+      content
+        .filter((block) => block.type === 'img')
+        .map((block) => (block.type === 'img' ? block.asset_id : ''))
+        .filter(Boolean),
+    ),
+  ]
+}
+
 // ---------------------------------------------------------------------------
 // Draft saves (author+) — content + serializer-derived FTS columns.
 // ---------------------------------------------------------------------------
@@ -65,6 +78,15 @@ export async function saveDraftContent(
     .eq('id', subtopicId)
 
   if (error) return failureFrom(new DbActionError(error))
+
+  // Draft usage scan (M4 §6, R-M4b: draft uses also block deletion).
+  // Best-effort — a failed scan must not fail the save.
+  await supabase.rpc('refresh_media_refs', {
+    p_subtopic_id: subtopicId,
+    p_asset_ids: imageAssetIds(validated.content),
+    p_source: 'draft',
+  })
+
   return { ok: true }
 }
 
@@ -196,6 +218,13 @@ export async function publishSubtopic(subtopicId: string): Promise<ActionResult>
   } catch (err) {
     return failureFrom(err)
   }
+
+  // Publish usage scan — authoritative for published refs (M4 §6).
+  await supabase.rpc('refresh_media_refs', {
+    p_subtopic_id: subtopicId,
+    p_asset_ids: imageAssetIds(validated.content),
+    p_source: 'published',
+  })
 
   const tree = await getContentTree()
   fireTagsForSubtopic(tree, subtopicId)

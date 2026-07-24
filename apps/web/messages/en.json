@@ -528,7 +528,8 @@
         "reorderStale": "The list changed under you — refresh and try again.",
         "commentRequired": "A comment is required to request changes.",
         "alreadyClaimed": "Someone claimed this while you were looking.",
-        "invalidContent": "The document fails schema validation: {detail}"
+        "invalidContent": "The document fails schema validation: {detail}",
+        "previewLinkWrongStatus": "Preview links are for unpublished work — this subtopic is live already."
       },
       "tabs": {
         "tree": "Content tree",
@@ -675,6 +676,93 @@
           "statusError": "Error",
           "validationErrorPrefix": "Cannot save"
         }
+      },
+      "previewLinks": {
+        "heading": "Preview links · {count} active",
+        "freshNote": "Copy it now — the full link is shown only once.",
+        "copy": "Copy link",
+        "copied": "Link copied.",
+        "dismiss": "Dismiss",
+        "empty": "No preview links yet.",
+        "expiry": "{days}d left",
+        "revokedTag": "Revoked",
+        "opens": "{count} opens",
+        "revoke": "Revoke",
+        "revoked": "Preview link revoked.",
+        "create": "Create preview link",
+        "helper": "7-day expiry · single subtopic · watermark · publishing revokes automatically."
+      },
+      "mediaPicker": {
+        "title": "Insert image from the media library",
+        "search": "Search",
+        "uploadToggle": "Upload new",
+        "file": "Image file",
+        "alt": "Alt text",
+        "altHint": "Required — describes the image for screen readers.",
+        "uploadInsert": "Upload and insert",
+        "emptyLabel": "No matches",
+        "emptyBody": "Nothing in the library matches. Upload a new image."
+      }
+    },
+    "media": {
+      "title": "Media library",
+      "toolbar": {
+        "searchLabel": "Search",
+        "searchPlaceholder": "Filename or alt text",
+        "uploaderLabel": "Uploader",
+        "allUploaders": "All",
+        "unusedOnly": "Unused only",
+        "showDeleted": "Show deleted",
+        "upload": "Upload image"
+      },
+      "grid": {
+        "label": "Assets",
+        "deletedChip": "Deleted",
+        "emptyLabel": "Empty state",
+        "emptyBody": "No assets match. Upload the first image or clear the filters."
+      },
+      "sheet": {
+        "title": "Upload image",
+        "file": "Image file",
+        "fileHint": "PNG, JPG, or WebP — converted to WebP, max edge 1920px, 2 MB after compression.",
+        "alt": "Alt text",
+        "altHint": "Required — describes the image for screen readers.",
+        "tags": "Tags",
+        "tagsHint": "Comma-separated, optional.",
+        "upload": "Upload",
+        "cancel": "Cancel"
+      },
+      "detail": {
+        "heading": "Asset",
+        "close": "Close details",
+        "dimensions": "{width} × {height} px · {kilobytes} KB",
+        "uploadedLine": "Uploaded {date} by {username}",
+        "replacedLine": "Replaced {date}",
+        "deletedLine": "Deleted {date} — restorable for 30 days",
+        "tagsLabel": "Tags",
+        "noTags": "No tags",
+        "usageHeading": "Usage",
+        "usedIn": "{count, plural, =0 {Not used in any subtopic yet} one {Used in # subtopic} other {Used in # subtopics}}",
+        "draftUse": "Draft",
+        "replace": "Replace…",
+        "replaceHint": "Swaps the file behind the same asset — usages update on their next publish; the prior file is kept 30 days.",
+        "delete": "Delete",
+        "deleteBlockedNote": "Deleting is blocked while the asset is used — see the usage list above.",
+        "restore": "Restore"
+      },
+      "toasts": {
+        "uploaded": "Uploaded.",
+        "replaced": "Replaced — usages update on their next publish.",
+        "deleted": "Deleted — restore within 30 days.",
+        "restored": "Restored."
+      },
+      "errors": {
+        "badFile": "Choose a PNG, JPG, or WebP image.",
+        "altRequired": "Alt text is required.",
+        "tooLarge": "Still over 2 MB after compression — use a smaller image.",
+        "uploadFailed": "Upload failed. Try again.",
+        "notFound": "That asset no longer exists.",
+        "deleteBlocked": "{count, plural, one {Can't delete — used in # subtopic.} other {Can't delete — used in # subtopics.}}"
       }
     }
   },
@@ -754,5 +842,13 @@
         }
       }
     }
+  },
+  "preview": {
+    "title": "Draft preview",
+    "watermark": "Draft — not published",
+    "eyebrow": "Draft preview",
+    "meta": "{minutes} min read · draft",
+    "inactiveLabel": "Preview link",
+    "inactiveBody": "This preview link is no longer active."
   }
 }
