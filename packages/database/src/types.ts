@@ -1060,6 +1060,9 @@ export type Database = {
           preview_block_count: number | null
           primary_video_url: string | null
           published_at: string | null
+          published_content: Json | null
+          published_headings_text: string
+          published_plain_text: string
           reading_minutes: number
           search_vector: unknown
           slug: string
@@ -1078,6 +1081,9 @@ export type Database = {
           preview_block_count?: number | null
           primary_video_url?: string | null
           published_at?: string | null
+          published_content?: Json | null
+          published_headings_text?: string
+          published_plain_text?: string
           reading_minutes?: number
           search_vector?: unknown
           slug: string
@@ -1096,6 +1102,9 @@ export type Database = {
           preview_block_count?: number | null
           primary_video_url?: string | null
           published_at?: string | null
+          published_content?: Json | null
+          published_headings_text?: string
+          published_plain_text?: string
           reading_minutes?: number
           search_vector?: unknown
           slug?: string
