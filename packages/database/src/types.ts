@@ -498,6 +498,88 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          alt: string
+          bytes: number
+          created_at: string
+          deleted_at: string | null
+          height: number
+          id: string
+          path: string
+          replaced_at: string | null
+          tags: string[]
+          updated_at: string
+          uploaded_by: string | null
+          width: number
+        }
+        Insert: {
+          alt: string
+          bytes: number
+          created_at?: string
+          deleted_at?: string | null
+          height: number
+          id?: string
+          path: string
+          replaced_at?: string | null
+          tags?: string[]
+          updated_at?: string
+          uploaded_by?: string | null
+          width: number
+        }
+        Update: {
+          alt?: string
+          bytes?: number
+          created_at?: string
+          deleted_at?: string | null
+          height?: number
+          id?: string
+          path?: string
+          replaced_at?: string | null
+          tags?: string[]
+          updated_at?: string
+          uploaded_by?: string | null
+          width?: number
+        }
+        Relationships: []
+      }
+      media_refs: {
+        Row: {
+          asset_id: string
+          created_at: string
+          source: string
+          subtopic_id: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string
+          source?: string
+          subtopic_id: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string
+          source?: string
+          subtopic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'media_refs_asset_id_fkey'
+            columns: ['asset_id']
+            referencedRelation: 'media_assets'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'media_refs_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       personal_data_registry: {
         Row: {
           created_at: string
@@ -554,6 +636,83 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      preview_link_opens: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string | null
+          link_id: string
+          opened_at: string
+          ua: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          link_id: string
+          opened_at?: string
+          ua?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          link_id?: string
+          opened_at?: string
+          ua?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'preview_link_opens_link_id_fkey'
+            columns: ['link_id']
+            referencedRelation: 'preview_links'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      preview_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          subtopic_id: string
+          token_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          subtopic_id: string
+          token_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          subtopic_id?: string
+          token_hash?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'preview_links_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -666,6 +825,43 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      review_claims: {
+        Row: {
+          claimed_at: string
+          created_at: string
+          id: string
+          released_at: string | null
+          reviewer_id: string
+          subtopic_id: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          released_at?: string | null
+          reviewer_id: string
+          subtopic_id: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          released_at?: string | null
+          reviewer_id?: string
+          subtopic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'review_claims_subtopic_id_fkey'
+            columns: ['subtopic_id']
+            referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
       }
       slug_history: {
         Row: {
@@ -930,6 +1126,10 @@ export type Database = {
       }
       can_feature: { Args: { feature_key: string }; Returns: boolean }
       has_role: { Args: { required_roles: string[] }; Returns: boolean }
+      open_preview_link: {
+        Args: { p_ip_hash: string; p_token: string; p_ua: string }
+        Returns: Json
+      }
       username_available: { Args: { candidate: string }; Returns: boolean }
     }
     Enums: {

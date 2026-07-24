@@ -106,6 +106,9 @@ The RLS/security suite runs in CI against a migrated shadow DB. A feature is inc
 - Reviewer cannot publish; author cannot approve their own draft
 - Audit rows immutable under every role; role assignment respects rank rules
 - Anon preview RPC honors expiry and revocation; publish auto-revokes preview links (network-verified)
+- `preview_links` invisible to anon and non-staff (the RPC is the only public path); opens log append-only under every API role; 30 opens/hr/IP enforced inside the RPC (probe 08)
+- Media: soft-deleted assets invisible to public read; writes staff-only; blank alt rejected at the constraint; referenced assets cannot be hard-deleted even by `service_role` (FK RESTRICT); `media_refs` writes are service-role only (probe 09)
+- Review claims: self-only claiming, one active claim per subtopic enforced by the DB, release paths respect roles (probe 09)
 - Yearly audit-export cron produces a valid R2 object from a seeded aged year
 
 **M5 (five non-negotiables + extras)**
