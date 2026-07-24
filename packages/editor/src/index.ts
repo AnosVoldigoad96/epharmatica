@@ -63,3 +63,16 @@ export { RichText } from './render/rich-text'
 export type { RichTextComponents, RichTextLabels, RichTextProps } from './render/rich-text'
 
 export { FIXTURE_DOCUMENT } from './fixtures'
+
+/*
+ * Editing surface (admin-only). Exported from the main index on purpose:
+ * the app loads <SubtopicEditor/> via next/dynamic (code-split), and reader
+ * routes import only <RichText/> — platejs and the editor tree are
+ * tree-shaken out of every bundle that doesn't render the editor, so no
+ * separate export path is needed.
+ */
+export { SubtopicEditor } from './edit/subtopic-editor'
+export type { EditorSaveResult, EditorStatus, SubtopicEditorProps } from './edit/subtopic-editor'
+export { DEFAULT_EDITOR_LABELS } from './edit/labels'
+export type { SubtopicEditorLabels } from './edit/labels'
+export { fromEditorValue } from './edit/serialize'

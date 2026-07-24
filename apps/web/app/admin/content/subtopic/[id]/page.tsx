@@ -6,6 +6,7 @@ import { MonographLabel } from '@epharmatica/ui'
 import { requireSection } from '@/features/admin/queries'
 import { getSubtopicDetail } from '@/features/content/queries'
 import { Crumbs } from '../../_components/crumbs'
+import { EditorCanvas } from '../../_components/editor-canvas'
 import { WorkflowRail } from '../../_components/workflow-rail'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,6 +29,9 @@ export default async function AdminSubtopicPage({ params }: { params: Promise<{ 
 
   const validated = validateContent(detail.content)
   const empty = validated.ok && validated.content.length === 0
+  const canEdit =
+    ['author', 'content_manager', 'admin', 'super_admin'].includes(profile.role) &&
+    detail.status !== 'archived'
 
   return (
     <div className="max-w-5xl">
@@ -44,18 +48,28 @@ export default async function AdminSubtopicPage({ params }: { params: Promise<{ 
 
       <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
         <div className="min-w-0">
-          <MonographLabel as="div" size="sm" className="mb-3">
-            {t('previewLabel')}
-          </MonographLabel>
-          <div className="border border-line bg-surface p-5">
-            {!validated.ok ? (
-              <p className="text-[13px] text-danger">{t('invalidContent')}</p>
-            ) : empty ? (
-              <p className="text-[13px] text-ink-2">{t('emptyContent')}</p>
-            ) : (
-              <RichText content={validated.content} />
-            )}
-          </div>
+          {canEdit && validated.ok ? (
+            <EditorCanvas
+              subtopicId={detail.id}
+              initialContent={validated.content}
+              previewBlockCount={detail.preview_block_count}
+            />
+          ) : (
+            <>
+              <MonographLabel as="div" size="sm" className="mb-3">
+                {t('previewLabel')}
+              </MonographLabel>
+              <div className="border border-line bg-surface p-5">
+                {!validated.ok ? (
+                  <p className="text-[13px] text-danger">{t('invalidContent')}</p>
+                ) : empty ? (
+                  <p className="text-[13px] text-ink-2">{t('emptyContent')}</p>
+                ) : (
+                  <RichText content={validated.content} />
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         <WorkflowRail
