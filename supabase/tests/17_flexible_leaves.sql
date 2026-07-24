@@ -131,4 +131,22 @@ begin
 end;
 $probe$;
 
+-- Probe 4: anon reads the flexible-leaves structure columns (021) — the
+-- published-tree query selects topic_id AND chapter_id under the anon key.
+do $probe$
+declare
+  n int;
+begin
+  set local role anon;
+  select count(*) into n
+    from (select topic_id, chapter_id from public.subtopics limit 1) q;
+  reset role;
+  raise notice 'PASS 17.4: anon can select topic_id + chapter_id';
+exception
+  when insufficient_privilege then
+    reset role;
+    raise exception 'FAIL 17.4: anon denied on subtopics structure columns';
+end;
+$probe$;
+
 select 'FLEXIBLE-LEAVES PROBES PASSED' as status;
