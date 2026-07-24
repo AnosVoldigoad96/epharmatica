@@ -878,6 +878,27 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          created_at: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       slug_history: {
         Row: {
           created_at: string
@@ -1143,6 +1164,27 @@ export type Database = {
         Args: { p_subtopic_id: string }
         Returns: string
       }
+      admin_force_rename: {
+        Args: { p_new_username: string; p_target: string }
+        Returns: string
+      }
+      admin_search_users: {
+        Args: { p_query: string }
+        Returns: {
+          id: string
+          username: string
+          display_name: string
+          role: Database['public']['Enums']['app_role']
+          email: string
+          email_confirmed_at: string | null
+          created_at: string
+          deletion_requested_at: string | null
+        }[]
+      }
+      admin_set_role: {
+        Args: { p_new_role: Database['public']['Enums']['app_role']; p_target: string }
+        Returns: undefined
+      }
       auth_rate_limit_hit: {
         Args: { p_bucket: string; p_identifier: string; p_window_start: string }
         Returns: number
@@ -1184,6 +1226,10 @@ export type Database = {
       restore_revision: {
         Args: { p_revision_id: string }
         Returns: string
+      }
+      role_rank: {
+        Args: { p_role: Database['public']['Enums']['app_role'] }
+        Returns: number
       }
       staff_directory: {
         Args: Record<PropertyKey, never>

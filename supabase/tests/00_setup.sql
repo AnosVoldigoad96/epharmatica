@@ -9,6 +9,7 @@
 --   AUTHOR   00000000-0000-4000-a000-000000000004  (role: author)
 --   REVIEWER 00000000-0000-4000-a000-000000000005  (role: reviewer)
 --   CM       00000000-0000-4000-a000-000000000006  (role: content_manager)
+--   SUPER    00000000-0000-4000-a000-000000000007  (role: super_admin)
 --   subject  f0000000-0000-4000-a000-000000000010
 --   chapter  f0000000-0000-4000-a000-000000000011
 --   topic    f0000000-0000-4000-a000-000000000012
@@ -33,7 +34,8 @@ delete from auth.users
               '00000000-0000-4000-a000-000000000003',
               '00000000-0000-4000-a000-000000000004',
               '00000000-0000-4000-a000-000000000005',
-              '00000000-0000-4000-a000-000000000006');
+              '00000000-0000-4000-a000-000000000006',
+              '00000000-0000-4000-a000-000000000007');
 
 -- Cascades from subjects clear subtopics → preview_links / preview_link_opens
 -- / media_refs / review_claims, which un-references media_assets (RESTRICT).
@@ -55,6 +57,9 @@ delete from public.waitlist_signups
 
 delete from public.audit_log
  where action = 'rls_probe';
+
+delete from public.handle_quarantine
+ where handle like 'rls-%';
 
 -- ---------------------------------------------------------------------------
 -- Auth users + profiles
@@ -101,6 +106,12 @@ values
    'rls-cm@example.com',
    extensions.crypt('password123', extensions.gen_salt('bf')),
    now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb,
+   now(), now(), '', '', '', ''),
+  ('00000000-0000-0000-0000-000000000000',
+   '00000000-0000-4000-a000-000000000007', 'authenticated', 'authenticated',
+   'rls-super@example.com',
+   extensions.crypt('password123', extensions.gen_salt('bf')),
+   now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb,
    now(), now(), '', '', '', '');
 
 insert into public.profiles (id, username, display_name, role, user_type, email_verified_at, prefs)
@@ -116,7 +127,9 @@ values
   ('00000000-0000-4000-a000-000000000005', 'rls-reviewer', 'RLS Reviewer',
    'reviewer', 'other', now(), '{}'::jsonb),
   ('00000000-0000-4000-a000-000000000006', 'rls-cm', 'RLS Content Manager',
-   'content_manager', 'other', now(), '{}'::jsonb);
+   'content_manager', 'other', now(), '{}'::jsonb),
+  ('00000000-0000-4000-a000-000000000007', 'rls-super', 'RLS Super Admin',
+   'super_admin', 'other', now(), '{}'::jsonb);
 
 -- ---------------------------------------------------------------------------
 -- Content fixture: one published + one draft subtopic

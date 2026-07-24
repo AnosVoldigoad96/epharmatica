@@ -112,6 +112,7 @@ The RLS/security suite runs in CI against a migrated shadow DB. A feature is inc
 - Move… / rename: `move_content_node` + `rename_content_node` RPCs are content_manager+ only; draft moves write no slug_history ceremony; published moves/renames write the 301 history rows atomically and report affected subtopic ids; invalid destinations change nothing; `count_affected_highlights` returns aggregates to staff only (probe 10)
 - Workflow engine: subtopic workflow columns (status/published_at/derived fields) are API-immutable — authors cannot self-publish by direct update; transitions run only through the definer RPCs with the M4 §5.5 matrix inside (reviewer cannot publish, author of record cannot review their own draft, request_changes requires a comment, publish only from approved + snapshots a revision + auto-revokes preview links, restore adds a new revision) (probe 11)
 - Media usage scans: `refresh_media_refs` is the only non-service write path to `media_refs` — staff-only, replace-all per (subtopic, source) slice, unknown asset ids skipped, unknown sources rejected (probe 12)
+- Users admin: `admin_search_users` admin+ only (emails visible, passwords nonexistent by construction); `admin_set_role` rank rules — self-elevation, peer-touch, and over-grant all fail, super_admin-grants-super_admin works; `admin_force_rename` quarantines the vacated handle for 90 days atomically; `site_settings` public-read/admin-write (probe 13)
 - Yearly audit-export cron produces a valid R2 object from a seeded aged year
 
 **M5 (five non-negotiables + extras)**
