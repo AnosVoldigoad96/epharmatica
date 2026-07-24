@@ -1,7 +1,13 @@
 {
   "common": {
     "appName": "ePharmatica",
-    "tagline": "Study pharmacy with structured, reviewed material — reader, study tools, and community, built mobile-first for Pharm-D students and professionals."
+    "tagline": "Study pharmacy with structured, reviewed material — reader, study tools, and community, built mobile-first for Pharm-D students and professionals.",
+    "accountMenu": {
+      "menuAria": "Account menu",
+      "admin": "Admin dashboard",
+      "settings": "Settings",
+      "signOut": "Sign out"
+    }
   },
   "errors": {
     "notFound": {

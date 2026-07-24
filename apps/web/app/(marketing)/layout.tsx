@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { getTranslations } from 'next-intl/server'
 import { MonographLabel } from '@epharmatica/ui'
 import { BrandMark, BrandWordmark } from './_components/brand-mark'
-import { ButtonLink } from './_components/button-link'
+import { HeaderAuthMenu } from '@/features/account/components/header-auth-menu'
 
 /*
  * Marketing shell per mockup 2a: sticky topnav (56px mobile / 64px desktop,
@@ -40,6 +40,7 @@ const LEGAL_LINKS = [
 
 export default async function MarketingLayout({ children }: { children: ReactNode }) {
   const tNav = await getTranslations('landing.nav')
+  const tMenu = await getTranslations('common.accountMenu')
   const tFooter = await getTranslations('footer')
   const year = new Date().getFullYear()
 
@@ -62,9 +63,15 @@ export default async function MarketingLayout({ children }: { children: ReactNod
             ))}
           </nav>
           <span className="flex-1" />
-          <ButtonLink href="/#waitlist" variant="primary" size="sm">
-            {tNav('joinWaitlist')}
-          </ButtonLink>
+          <HeaderAuthMenu
+            labels={{
+              joinWaitlist: tNav('joinWaitlist'),
+              menuAria: tMenu('menuAria'),
+              admin: tMenu('admin'),
+              settings: tMenu('settings'),
+              signOut: tMenu('signOut'),
+            }}
+          />
         </div>
       </header>
 

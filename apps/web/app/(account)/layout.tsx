@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { fromStoredPrefs } from '@epharmatica/database'
@@ -21,20 +22,25 @@ import { Topnav } from './_components/topnav'
 export const dynamic = 'force-dynamic'
 
 export default async function AccountLayout({ children }: { children: ReactNode }) {
+  // The proxy stamps the requested path so sign-in returns HERE, not to a
+  // hardcoded settings page.
+  const requested = (await headers()).get('x-pathname') ?? '/settings/profile'
+  const nextParam = encodeURIComponent(requested)
+
   const user = await getSessionUser()
   if (!user) {
-    redirect('/auth/sign-in?next=%2Fsettings%2Fprofile')
+    redirect(`/auth/sign-in?next=${nextParam}`)
   }
 
   const profile = await getOwnProfile()
   if (!profile) {
-    redirect('/auth/complete?next=%2Fsettings%2Fprofile')
+    redirect(`/auth/complete?next=${nextParam}`)
   }
 
   // AAL step-up (M4-5): verified-but-unpassed factor → the TOTP challenge
   // gates the account surfaces too (settings hold keys and data controls).
   if (await mfaStepUpRequired()) {
-    redirect('/auth/mfa?next=%2Fsettings%2Fprofile')
+    redirect(`/auth/mfa?next=${nextParam}`)
   }
 
   const prefs = fromStoredPrefs(profile.prefs)

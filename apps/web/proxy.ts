@@ -27,6 +27,9 @@ import { NextResponse } from 'next/server'
  */
 import { isStaffRole } from '@/features/admin/permissions'
 export default async function proxy(request: NextRequest) {
+  // Gated layouts can't read the pathname in RSC — stamp it as a request
+  // header (set() also squashes any client-spoofed value).
+  request.headers.set('x-pathname', request.nextUrl.pathname + request.nextUrl.search)
   let response = NextResponse.next({ request })
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
