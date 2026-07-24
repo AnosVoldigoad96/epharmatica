@@ -33,6 +33,13 @@ WORKDIR /app
 # docs/ (legal page sources), and apps/web/server.js as the entrypoint.
 COPY --from=build --chown=node:node /repo/apps/web/.next/standalone ./
 COPY --from=build --chown=node:node /repo/apps/web/.next/static ./apps/web/.next/static
+# sharp (media pipeline, 1.B-4) is imported at runtime by name; the
+# pnpm+standalone trace copies its store dir but creates no name-resolvable
+# link, so install it directly here — this also guarantees the alpine/musl
+# binaries match the runtime image. Keep the version in lockstep with
+# apps/web/package.json.
+RUN npm install --no-save --prefix /app sharp@0.35.3 \
+  && chown -R node:node /app/node_modules
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
