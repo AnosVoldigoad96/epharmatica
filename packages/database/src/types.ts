@@ -230,6 +230,7 @@ export type Database = {
           {
             foreignKeyName: 'chapters_subject_id_fkey'
             columns: ['subject_id']
+            isOneToOne: false
             referencedRelation: 'subjects'
             referencedColumns: ['id']
           },
@@ -270,6 +271,7 @@ export type Database = {
           {
             foreignKeyName: 'content_review_events_subtopic_id_fkey'
             columns: ['subtopic_id']
+            isOneToOne: false
             referencedRelation: 'subtopics'
             referencedColumns: ['id']
           },
@@ -307,6 +309,7 @@ export type Database = {
           {
             foreignKeyName: 'content_revisions_subtopic_id_fkey'
             columns: ['subtopic_id']
+            isOneToOne: false
             referencedRelation: 'subtopics'
             referencedColumns: ['id']
           },
@@ -365,6 +368,7 @@ export type Database = {
           {
             foreignKeyName: 'entitlements_plan_id_fkey'
             columns: ['plan_id']
+            isOneToOne: false
             referencedRelation: 'plans'
             referencedColumns: ['id']
           },
@@ -462,6 +466,7 @@ export type Database = {
           {
             foreignKeyName: 'highlights_subtopic_id_fkey'
             columns: ['subtopic_id']
+            isOneToOne: false
             referencedRelation: 'subtopics'
             referencedColumns: ['id']
           },
@@ -493,6 +498,7 @@ export type Database = {
           {
             foreignKeyName: 'last_visited_subtopic_id_fkey'
             columns: ['subtopic_id']
+            isOneToOne: false
             referencedRelation: 'subtopics'
             referencedColumns: ['id']
           },
@@ -569,12 +575,14 @@ export type Database = {
           {
             foreignKeyName: 'media_refs_asset_id_fkey'
             columns: ['asset_id']
+            isOneToOne: false
             referencedRelation: 'media_assets'
             referencedColumns: ['id']
           },
           {
             foreignKeyName: 'media_refs_subtopic_id_fkey'
             columns: ['subtopic_id']
+            isOneToOne: false
             referencedRelation: 'subtopics'
             referencedColumns: ['id']
           },
@@ -669,6 +677,7 @@ export type Database = {
           {
             foreignKeyName: 'preview_link_opens_link_id_fkey'
             columns: ['link_id']
+            isOneToOne: false
             referencedRelation: 'preview_links'
             referencedColumns: ['id']
           },
@@ -709,6 +718,7 @@ export type Database = {
           {
             foreignKeyName: 'preview_links_subtopic_id_fkey'
             columns: ['subtopic_id']
+            isOneToOne: false
             referencedRelation: 'subtopics'
             referencedColumns: ['id']
           },
@@ -803,6 +813,7 @@ export type Database = {
           {
             foreignKeyName: 'progress_subtopic_id_fkey'
             columns: ['subtopic_id']
+            isOneToOne: false
             referencedRelation: 'subtopics'
             referencedColumns: ['id']
           },
@@ -858,6 +869,7 @@ export type Database = {
           {
             foreignKeyName: 'review_claims_subtopic_id_fkey'
             columns: ['subtopic_id']
+            isOneToOne: false
             referencedRelation: 'subtopics'
             referencedColumns: ['id']
           },
@@ -991,6 +1003,7 @@ export type Database = {
           {
             foreignKeyName: 'subtopics_topic_id_fkey'
             columns: ['topic_id']
+            isOneToOne: false
             referencedRelation: 'topics'
             referencedColumns: ['id']
           },
@@ -1034,6 +1047,7 @@ export type Database = {
           {
             foreignKeyName: 'topics_chapter_id_fkey'
             columns: ['chapter_id']
+            isOneToOne: false
             referencedRelation: 'chapters'
             referencedColumns: ['id']
           },
@@ -1077,12 +1091,14 @@ export type Database = {
           {
             foreignKeyName: 'user_notes_highlight_id_fkey'
             columns: ['highlight_id']
+            isOneToOne: false
             referencedRelation: 'highlights'
             referencedColumns: ['id']
           },
           {
             foreignKeyName: 'user_notes_subtopic_id_fkey'
             columns: ['subtopic_id']
+            isOneToOne: false
             referencedRelation: 'subtopics'
             referencedColumns: ['id']
           },
