@@ -7,7 +7,7 @@ import 'server-only'
 
 import type { ContentLevel } from '@epharmatica/database'
 import { revalidateContentTags } from './cache'
-import { findChapter, findSubject, findTopic } from './tree'
+import { findChapter, findSubject, findSubtopic, findTopic } from './tree'
 import type { ContentTree } from './tree'
 
 /** Fire the ancestor tag cascade for a node (ARCH §6). */
@@ -56,21 +56,16 @@ export function fireTagsForNode(
     }
     return
   }
-  for (const subject of tree) {
-    for (const chapter of subject.chapters) {
-      for (const topic of chapter.topics) {
-        if (topic.subtopics.some((subtopic) => subtopic.id === id)) {
-          revalidateContentTags({
-            subjectSlugs: [subject.slug],
-            chapterIds: [chapter.id],
-            topicIds: [topic.id],
-            subtopicIds: [id],
-            sitemap: true,
-          })
-          return
-        }
-      }
-    }
+  // Subtopic: under a topic OR attached directly to a chapter (flexible leaves).
+  const found = findSubtopic(tree, id)
+  if (found) {
+    revalidateContentTags({
+      subjectSlugs: [found.subject.slug],
+      chapterIds: [found.chapter.id],
+      topicIds: found.topic ? [found.topic.id] : [],
+      subtopicIds: [id],
+      sitemap: true,
+    })
   }
 }
 
@@ -84,6 +79,12 @@ export function fireTagsForParent(tree: ContentTree, level: ContentLevel, parent
         chapterIds: [found.chapter.id],
         topicIds: [parentId],
       })
+      return
+    }
+    // The destination may be a CHAPTER (page moved to a direct leaf, 020).
+    const chapterHit = findChapter(tree, parentId)
+    if (chapterHit) {
+      revalidateContentTags({ subjectSlugs: [chapterHit.subject.slug], chapterIds: [parentId] })
     }
     return
   }

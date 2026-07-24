@@ -19,6 +19,56 @@ function canManage(role: StaffRole): boolean {
   return role === 'content_manager' || role === 'admin' || role === 'super_admin'
 }
 
+/**
+ * Move destinations for a content page (flexible leaves, 020): every
+ * CHAPTER (page becomes a direct leaf — parentLevel 'chapter', the move
+ * sheet groups these under its own label) plus every topic. `current`
+ * matches the page's present parent, whichever level that is.
+ */
+function pageMoveTargets(tree: ContentTree, currentParentId: string): MoveTarget[] {
+  const chapterTargets: MoveTarget[] = tree.flatMap((subject) =>
+    subject.chapters.map((chapter) => ({
+      id: chapter.id,
+      label: `${subject.name} › ${chapter.name}`,
+      group: '',
+      parentLevel: 'chapter' as const,
+      current: chapter.id === currentParentId,
+      pathSegments: [subject.slug, chapter.slug],
+    })),
+  )
+  const topicTargets: MoveTarget[] = tree.flatMap((subject) =>
+    subject.chapters.flatMap((chapter) =>
+      chapter.topics.map((topic) => ({
+        id: topic.id,
+        label: `${chapter.name} › ${topic.name}`,
+        group: subject.name,
+        current: topic.id === currentParentId,
+        pathSegments: [subject.slug, chapter.slug, topic.slug],
+      })),
+    ),
+  )
+  return [...chapterTargets, ...topicTargets]
+}
+
+/** A page/subtopic row is the same shape wherever it lists (topic or chapter). */
+function pageRow(
+  subtopic: ContentTree[number]['chapters'][number]['leaves'][number],
+  pathSegments: string[],
+): ListRow {
+  return {
+    id: subtopic.id,
+    name: subtopic.title,
+    slug: subtopic.slug,
+    status: { kind: 'own', status: subtopic.status },
+    semester: null,
+    updatedAt: subtopic.updated_at,
+    openHref: `/admin/content/subtopic/${subtopic.id}`,
+    publishedBeneath: subtopic.status === 'published' ? 1 : 0,
+    pathSegments,
+    form: { name: subtopic.title, slug: subtopic.slug },
+  }
+}
+
 export function subjectListData(tree: ContentTree, role: StaffRole): ListEditorData {
   const rows: ListRow[] = tree.map((subject) => {
     const rollup = subjectRollup(subject)
@@ -132,6 +182,12 @@ export function topicListData(
     rows,
     moveTargets,
     canManage: canManage(role),
+    // Flexible leaves (020): the chapter's direct content pages, a second
+    // grouped section (own sort space) in the same table.
+    pages: {
+      rows: chapter.leaves.map((leaf) => pageRow(leaf, [subject.slug, chapter.slug, leaf.slug])),
+      moveTargets: pageMoveTargets(tree, chapterId),
+    },
   }
 }
 
@@ -144,36 +200,16 @@ export function subtopicListData(
   if (!found) return null
   const { subject, chapter, topic } = found
 
-  const rows: ListRow[] = topic.subtopics.map((subtopic) => ({
-    id: subtopic.id,
-    name: subtopic.title,
-    slug: subtopic.slug,
-    status: { kind: 'own', status: subtopic.status },
-    semester: null,
-    updatedAt: subtopic.updated_at,
-    openHref: `/admin/content/subtopic/${subtopic.id}`,
-    publishedBeneath: subtopic.status === 'published' ? 1 : 0,
-    pathSegments: [subject.slug, chapter.slug, topic.slug, subtopic.slug],
-    form: { name: subtopic.title, slug: subtopic.slug },
-  }))
-
-  const moveTargets: MoveTarget[] = tree.flatMap((candidateSubject) =>
-    candidateSubject.chapters.flatMap((candidateChapter) =>
-      candidateChapter.topics.map((candidateTopic) => ({
-        id: candidateTopic.id,
-        label: `${candidateChapter.name} › ${candidateTopic.name}`,
-        group: candidateSubject.name,
-        current: candidateTopic.id === topicId,
-        pathSegments: [candidateSubject.slug, candidateChapter.slug, candidateTopic.slug],
-      })),
-    ),
+  const rows: ListRow[] = topic.subtopics.map((subtopic) =>
+    pageRow(subtopic, [subject.slug, chapter.slug, topic.slug, subtopic.slug]),
   )
 
   return {
     level: 'subtopic',
     parentId: topicId,
     rows,
-    moveTargets,
+    // Pages can now also move DIRECTLY under a chapter (020).
+    moveTargets: pageMoveTargets(tree, topicId),
     canManage: canManage(role),
   }
 }

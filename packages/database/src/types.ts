@@ -1052,6 +1052,7 @@ export type Database = {
       }
       subtopics: {
         Row: {
+          chapter_id: string | null
           content: Json
           created_at: string
           headings_text: string
@@ -1069,10 +1070,11 @@ export type Database = {
           sort_order: number
           status: Database['public']['Enums']['content_status']
           title: string
-          topic_id: string
+          topic_id: string | null
           updated_at: string
         }
         Insert: {
+          chapter_id?: string | null
           content?: Json
           created_at?: string
           headings_text?: string
@@ -1090,10 +1092,11 @@ export type Database = {
           sort_order?: number
           status?: Database['public']['Enums']['content_status']
           title: string
-          topic_id: string
+          topic_id?: string | null
           updated_at?: string
         }
         Update: {
+          chapter_id?: string | null
           content?: Json
           created_at?: string
           headings_text?: string
@@ -1111,10 +1114,17 @@ export type Database = {
           sort_order?: number
           status?: Database['public']['Enums']['content_status']
           title?: string
-          topic_id?: string
+          topic_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: 'subtopics_chapter_id_fkey'
+            columns: ['chapter_id']
+            isOneToOne: false
+            referencedRelation: 'chapters'
+            referencedColumns: ['id']
+          },
           {
             foreignKeyName: 'subtopics_topic_id_fkey'
             columns: ['topic_id']
@@ -1294,6 +1304,7 @@ export type Database = {
           p_entity_id: string
           p_level: Database['public']['Enums']['content_level']
           p_new_parent_id: string
+          p_new_parent_level?: Database['public']['Enums']['content_level']
         }
         Returns: string[]
       }

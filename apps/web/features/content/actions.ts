@@ -18,7 +18,7 @@ import type { DbErrorShape } from './gate'
 import { enqueueReanchor, revalidateContentTags } from './cache'
 import { fireTagsForNode, fireTagsForParent } from './tags'
 import { getContentTree } from './queries'
-import { findChapter, findSubject, findTopic, publishedSubtopicIds } from './tree'
+import { findChapter, findSubject, findSubtopic, findTopic, publishedSubtopicIds } from './tree'
 import type { ContentTree } from './tree'
 
 /*
@@ -192,6 +192,41 @@ export async function createSubtopic(topicId: string, values: unknown): Promise<
         .from('subtopics')
         .insert({
           topic_id: topicId,
+          title: parsed.data.title,
+          slug: parsed.data.slug,
+          sort_order: sortOrder,
+        })
+        .select('id')
+        .single(),
+  })
+}
+
+/**
+ * Create a content page attached DIRECTLY to a chapter (flexible leaves,
+ * migration 020): same subtopicCreateSchema, insert with chapter_id. The DB
+ * triggers enforce the chapter-wide shared slug namespace (page slugs and
+ * topic slugs collide as 23505 → the slugTaken copy).
+ */
+export async function createChapterPage(chapterId: string, values: unknown): Promise<CreateResult> {
+  const gate = await requireRoles(AUTHORING_ROLES)
+  if (!gate.ok) return gate
+
+  const parsed = subtopicCreateSchema.safeParse(values)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input' }
+  }
+
+  const supabase = await createClient()
+  const sortOrder = await nextSortOrder('subtopics', 'chapter_id', chapterId)
+  return createNode(gate.profile, {
+    level: 'subtopic',
+    parentId: chapterId,
+    slug: parsed.data.slug,
+    insert: async () =>
+      supabase
+        .from('subtopics')
+        .insert({
+          chapter_id: chapterId,
           title: parsed.data.title,
           slug: parsed.data.slug,
           sort_order: sortOrder,
@@ -395,6 +430,8 @@ export async function moveNode(
   id: string,
   newParentId: string,
   typedConfirmation: string,
+  /** Subtopic moves only: 'chapter' reparents the page as a direct leaf (020). */
+  newParentLevel: 'topic' | 'chapter' = 'topic',
 ): Promise<ActionResult> {
   const t = await getTranslations('admin.content.errors')
   const gate = await requireRoles(MANAGER_ROLES)
@@ -417,13 +454,20 @@ export async function moveNode(
         actorId: gate.profile.id,
         entity: 'content',
         entityId: id,
-        meta: { level, to_parent: newParentId, affected: result.length },
+        meta: {
+          level,
+          to_parent: newParentId,
+          affected: result.length,
+          ...(level === 'subtopic' ? { to_parent_level: newParentLevel } : {}),
+        },
       }),
       async () => {
         const { data, error } = await supabase.rpc('move_content_node', {
           p_level: level,
           p_entity_id: id,
           p_new_parent_id: newParentId,
+          // The parent-level disambiguation exists for subtopics only (020).
+          ...(level === 'subtopic' ? { p_new_parent_level: newParentLevel } : {}),
         })
         if (error) throw new DbActionError(error)
         return data ?? []
@@ -545,15 +589,10 @@ function affectedPublishedIds(tree: ContentTree, level: ContentLevel, id: string
     const found = findTopic(tree, id)
     return found ? publishedSubtopicIds(found.topic) : null
   }
-  for (const subject of tree) {
-    for (const chapter of subject.chapters) {
-      for (const topic of chapter.topics) {
-        const subtopic = topic.subtopics.find((candidate) => candidate.id === id)
-        if (subtopic) return subtopic.status === 'published' ? [subtopic.id] : []
-      }
-    }
-  }
-  return null
+  // Subtopic: under a topic OR attached directly to a chapter (020).
+  const found = findSubtopic(tree, id)
+  if (!found) return null
+  return found.subtopic.status === 'published' ? [found.subtopic.id] : []
 }
 
 function siblingIds(
@@ -570,6 +609,10 @@ function siblingIds(
     const found = parentId ? findChapter(tree, parentId) : null
     return found ? found.chapter.topics.map((topic) => topic.id) : null
   }
+  // Subtopic siblings: the parent is a topic OR a chapter (its direct
+  // leaves form their own sort space — flexible leaves, 020).
   const found = parentId ? findTopic(tree, parentId) : null
-  return found ? found.topic.subtopics.map((subtopic) => subtopic.id) : null
+  if (found) return found.topic.subtopics.map((subtopic) => subtopic.id)
+  const chapterHit = parentId ? findChapter(tree, parentId) : null
+  return chapterHit ? chapterHit.chapter.leaves.map((leaf) => leaf.id) : null
 }
