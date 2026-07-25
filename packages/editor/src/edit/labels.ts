@@ -115,9 +115,13 @@ export type SubtopicEditorLabels = {
   /** Column layout menu (contextual, selection inside a column group). */
   columnLayoutLabel: string
   columnLayout5050: string
+  columnLayout21: string
+  columnLayout12: string
   columnLayout333: string
-  columnLayout7030: string
-  columnLayout3070: string
+  columnLayout211: string
+  columnLayout121: string
+  columnLayout112: string
+  columnResizeLabel: string
 
   /** Empty-document placeholder on the first paragraph. */
   emptyPlaceholder: string
@@ -258,9 +262,13 @@ export const DEFAULT_EDITOR_LABELS: SubtopicEditorLabels = {
 
   columnLayoutLabel: 'Column layout',
   columnLayout5050: 'Two equal columns',
+  columnLayout21: 'Wide + narrow (2:1)',
+  columnLayout12: 'Narrow + wide (1:2)',
   columnLayout333: 'Three equal columns',
-  columnLayout7030: 'Wide + narrow',
-  columnLayout3070: 'Narrow + wide',
+  columnLayout211: 'Wide left (2:1:1)',
+  columnLayout121: 'Wide center (1:2:1)',
+  columnLayout112: 'Wide right (1:1:2)',
+  columnResizeLabel: 'Drag to set the column ratio',
 
   emptyPlaceholder: 'Type / for commands…',
 

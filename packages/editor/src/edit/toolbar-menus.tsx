@@ -538,9 +538,12 @@ const COLUMN_LAYOUTS: Array<{
   widths: string[]
 }> = [
   { labelKey: 'columnLayout5050', icon: Columns2, widths: ['50%', '50%'] },
-  { labelKey: 'columnLayout333', icon: Columns3, widths: ['33%', '33%', '33%'] },
-  { labelKey: 'columnLayout7030', icon: PanelRight, widths: ['70%', '30%'] },
-  { labelKey: 'columnLayout3070', icon: PanelLeft, widths: ['30%', '70%'] },
+  { labelKey: 'columnLayout21', icon: PanelRight, widths: ['66.67%', '33.33%'] },
+  { labelKey: 'columnLayout12', icon: PanelLeft, widths: ['33.33%', '66.67%'] },
+  { labelKey: 'columnLayout333', icon: Columns3, widths: ['33.33%', '33.33%', '33.33%'] },
+  { labelKey: 'columnLayout211', icon: Columns3, widths: ['50%', '25%', '25%'] },
+  { labelKey: 'columnLayout121', icon: Columns3, widths: ['25%', '50%', '25%'] },
+  { labelKey: 'columnLayout112', icon: Columns3, widths: ['25%', '25%', '50%'] },
 ]
 
 /** Contextual column-layout dropdown — the official ColumnFloatingToolbar's

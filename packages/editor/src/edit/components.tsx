@@ -3,10 +3,10 @@
 import { useToggleButton, useToggleButtonState } from '@platejs/toggle/react'
 import { ChevronRight } from 'lucide-react'
 import type { TElement } from 'platejs'
-import { NodeApi } from 'platejs'
+import { NodeApi, PathApi } from 'platejs'
 import type { PlateElementProps, PlateLeafProps } from 'platejs/react'
-import { PlateElement, PlateLeaf, useReadOnly, useSelected } from 'platejs/react'
-import { useState } from 'react'
+import { PlateElement, PlateLeaf, useEditorRef, useReadOnly, useSelected } from 'platejs/react'
+import { useRef, useState } from 'react'
 
 import { formatDateDisplay } from '../schema/date'
 import { CALLOUT_LABELS, DRUG_CARD_FIELD_LABELS } from '../schema/labels'
@@ -154,11 +154,85 @@ export function ColumnGroupElement(props: PlateElementProps) {
   )
 }
 
+/** Snap stops for the column divider, as the first column's share of the
+ * PAIR it is splitting: 1:2, 1:1, 2:1 (the founder's fixed-ratio scheme). */
+const COLUMN_RATIO_STOPS = [1 / 3, 1 / 2, 2 / 3]
+
 export function ColumnElement(props: PlateElementProps) {
   const width = typeof props.element.width === 'string' ? props.element.width : undefined
   const readOnly = useReadOnly()
+  const editor = useEditorRef()
+  const labels = useEditorLabels()
+  const outerRef = useRef<HTMLDivElement>(null)
+
+  // A divider renders after every column except the last. Dragging re-splits
+  // the PAIR's stored percentage sum, snapped to the fixed ratio stops, so
+  // the group total is always preserved exactly.
+  const path = editor.api.findPath(props.element)
+  const parentNode = path ? (editor.api.parent(path)?.[0] as TElement | undefined) : undefined
+  const hasNext =
+    !!path && !!parentNode && (path[path.length - 1] ?? 0) < parentNode.children.length - 1
+
+  const onDividerPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const outer = outerRef.current
+    const next = outer?.nextElementSibling as HTMLElement | null
+    const at = editor.api.findPath(props.element)
+    if (!outer || !next || !at) return
+    event.preventDefault()
+    const nextPath = PathApi.next(at)
+    const nextEntry = editor.api.node<TElement>(nextPath)
+    const group = outer.parentElement
+    if (!nextEntry || !group) return
+
+    const rtl = getComputedStyle(group).direction === 'rtl'
+    const startX = event.clientX
+    const leftStartPx = outer.getBoundingClientRect().width
+    const pairPx = leftStartPx + next.getBoundingClientRect().width
+    const fallback = 100 / Math.max(parentNode?.children.length ?? 2, 1)
+    const pctOf = (value: unknown) => {
+      const parsed = typeof value === 'string' ? Number.parseFloat(value) : NaN
+      return Number.isFinite(parsed) ? parsed : fallback
+    }
+    const pairPct = pctOf(props.element.width) + pctOf(nextEntry[0].width)
+    let leftPct = pctOf(props.element.width)
+
+    const onMove = (move: PointerEvent) => {
+      const dx = (move.clientX - startX) * (rtl ? -1 : 1)
+      const ratio = Math.min(Math.max((leftStartPx + dx) / pairPx, 0), 1)
+      const snapped = COLUMN_RATIO_STOPS.reduce((best, stop) =>
+        Math.abs(stop - ratio) < Math.abs(best - ratio) ? stop : best,
+      )
+      leftPct = snapped * pairPct
+      outer.style.width = `${leftPct}%`
+      next.style.width = `${pairPct - leftPct}%`
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      editor.tf.withoutNormalizing(() => {
+        editor.tf.setNodes({ width: `${leftPct.toFixed(2)}%` }, { at })
+        editor.tf.setNodes({ width: `${(pairPct - leftPct).toFixed(2)}%` }, { at: nextPath })
+      })
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
   return (
-    <div style={{ width: width ?? '100%' }} className="min-w-0">
+    <div ref={outerRef} style={{ width: width ?? '100%' }} className="relative min-w-0">
+      {!readOnly && hasNext ? (
+        <div
+          contentEditable={false}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={labels.columnResizeLabel}
+          title={labels.columnResizeLabel}
+          onPointerDown={onDividerPointerDown}
+          className="group/colresize absolute inset-y-0 -end-3 z-10 flex w-3 cursor-col-resize touch-none select-none items-center justify-center"
+        >
+          <div className="h-full w-px bg-line transition-all group-hover/colresize:w-0.5 group-hover/colresize:bg-primary" />
+        </div>
+      ) : null}
       <PlateElement {...props} className="h-full">
         <div className={`h-full p-1.5 ${readOnly ? '' : 'border border-dashed border-line'}`}>
           {props.children}
