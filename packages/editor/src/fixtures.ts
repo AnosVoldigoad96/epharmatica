@@ -1,11 +1,13 @@
 import type { Content } from './schema/types'
 
 /**
- * The canonical full-coverage fixture: every block kind, every callout
- * variant, both heading levels, marks, links, nested flat lists, a table
- * with a header row, captions, code lines, and a Drug Card. Renderer
- * snapshots run over it (rules.md §6.4), and the M1 anchor fixture suite
- * (1.D) extends from it — keep block ids stable.
+ * The canonical full-coverage fixture (schema v2): every block kind, every
+ * callout variant, both heading levels, all marks (incl. highlight/kbd and
+ * color/size), links, inline dates, container lists with nesting, a merged
+ * table with a header row, toggles with indented contents, columns, hr,
+ * alignment/line-height props, captions, code lines, and a Drug Card.
+ * Renderer snapshots run over it (rules.md §6.4), and the M1 anchor fixture
+ * suite (1.D) extends from it — keep block ids stable.
  */
 export const FIXTURE_DOCUMENT: Content = [
   {
@@ -40,35 +42,107 @@ export const FIXTURE_DOCUMENT: Content = [
     children: [{ text: 'All things are poison; the dosage alone makes a thing not poison.' }],
   },
   {
-    id: 'fx-li-absorption',
+    id: 'fx-p-styled',
     type: 'p',
-    listStyleType: 'disc',
-    children: [{ text: 'Rapid gastric absorption' }],
+    align: 'center',
+    lineHeight: 2,
+    children: [
+      { text: 'Key fact: ' },
+      { text: 'salicylate toxicity', highlight: true },
+      { text: ' is dose-dependent. Press ' },
+      { text: 'Ctrl', kbd: true },
+      { text: ' + ' },
+      { text: 'F', kbd: true },
+      { text: ' to search. ' },
+      { text: 'Red flag', color: '#b91c1c' },
+      { text: ' terms are ' },
+      { text: 'flagged', backgroundColor: '#fef08a' },
+      { text: ' and ' },
+      { text: 'enlarged', fontSize: '20px' },
+      { text: '. Reviewed ' },
+      { type: 'date', date: '2026-07-24', children: [{ text: '' }] },
+      { text: '.' },
+    ],
   },
   {
-    id: 'fx-li-distribution',
-    type: 'p',
-    listStyleType: 'disc',
-    children: [{ text: 'Wide distribution, ' }, { text: 'protein-bound', bold: true }],
+    id: 'fx-ul-absorption',
+    type: 'ul',
+    children: [
+      { type: 'li', children: [{ type: 'lic', children: [{ text: 'Rapid gastric absorption' }] }] },
+      {
+        type: 'li',
+        children: [
+          {
+            type: 'lic',
+            children: [{ text: 'Wide distribution, ' }, { text: 'protein-bound', bold: true }],
+          },
+          {
+            type: 'ul',
+            children: [
+              {
+                type: 'li',
+                children: [{ type: 'lic', children: [{ text: 'Albumin binding ~90%' }] }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   {
-    id: 'fx-li-distribution-detail',
-    type: 'p',
-    listStyleType: 'disc',
-    indent: 2,
-    children: [{ text: 'Albumin binding ~90%' }],
+    id: 'fx-ol-steps',
+    type: 'ol',
+    children: [
+      {
+        type: 'li',
+        children: [{ type: 'lic', children: [{ text: 'Hydrolysis to salicylate' }] }],
+      },
+      { type: 'li', children: [{ type: 'lic', children: [{ text: 'Hepatic conjugation' }] }] },
+    ],
+  },
+  { id: 'fx-hr', type: 'hr', children: [{ text: '' }] },
+  {
+    id: 'fx-toggle-details',
+    type: 'toggle',
+    children: [{ text: 'Advanced: salicylate kinetics' }],
   },
   {
-    id: 'fx-ol-step-1',
+    id: 'fx-toggle-body-p',
     type: 'p',
-    listStyleType: 'decimal',
-    children: [{ text: 'Hydrolysis to salicylate' }],
+    indent: 1,
+    children: [{ text: 'Zero-order elimination emerges at toxic concentrations.' }],
   },
   {
-    id: 'fx-ol-step-2',
-    type: 'p',
-    listStyleType: 'decimal',
-    children: [{ text: 'Hepatic conjugation' }],
+    id: 'fx-toggle-body-ul',
+    type: 'ul',
+    indent: 1,
+    children: [
+      { type: 'li', children: [{ type: 'lic', children: [{ text: 'Half-life extends 20h+' }] }] },
+    ],
+  },
+  {
+    id: 'fx-columns',
+    type: 'column_group',
+    children: [
+      {
+        type: 'column',
+        width: '50%',
+        children: [{ type: 'p', children: [{ text: 'COX-1: constitutive, gastric protection.' }] }],
+      },
+      {
+        type: 'column',
+        width: '50%',
+        children: [
+          { type: 'p', children: [{ text: 'COX-2: inducible, inflammation.' }] },
+          {
+            type: 'ul',
+            children: [
+              { type: 'li', children: [{ type: 'lic', children: [{ text: 'Selective NSAIDs' }] }] },
+            ],
+          },
+        ],
+      },
+    ],
   },
   { id: 'fx-h3-monitoring', type: 'h3', children: [{ text: 'Monitoring' }] },
   {
@@ -92,8 +166,11 @@ export const FIXTURE_DOCUMENT: Content = [
       {
         type: 'tr',
         children: [
-          { type: 'td', children: [{ type: 'p', children: [{ text: 'Analgesic' }] }] },
-          { type: 'td', children: [{ type: 'p', children: [{ text: '300–900 mg q4–6h' }] }] },
+          {
+            type: 'td',
+            colSpan: 2,
+            children: [{ type: 'p', children: [{ text: 'Analgesic: 300–900 mg q4–6h' }] }],
+          },
         ],
       },
     ],
@@ -193,4 +270,44 @@ export const FIXTURE_DOCUMENT: Content = [
     type: 'p',
     children: [{ text: 'Review the monitoring parameters before the next unit.' }],
   },
+]
+
+/**
+ * A v1 (flat-list) document as rows still store it — the dual-read tests
+ * upgrade this through legacy-lists.ts and assert the container result.
+ */
+export const LEGACY_FLAT_LIST_DOCUMENT: Content = [
+  { id: 'lg-h2', type: 'h2', children: [{ text: 'Pharmacokinetics' }] },
+  {
+    id: 'lg-li-absorption',
+    type: 'p',
+    listStyleType: 'disc',
+    children: [{ text: 'Rapid gastric absorption' }],
+  },
+  {
+    id: 'lg-li-distribution',
+    type: 'p',
+    listStyleType: 'disc',
+    children: [{ text: 'Wide distribution, ' }, { text: 'protein-bound', bold: true }],
+  },
+  {
+    id: 'lg-li-distribution-detail',
+    type: 'p',
+    listStyleType: 'disc',
+    indent: 2,
+    children: [{ text: 'Albumin binding ~90%' }],
+  },
+  {
+    id: 'lg-ol-step-1',
+    type: 'p',
+    listStyleType: 'decimal',
+    children: [{ text: 'Hydrolysis to salicylate' }],
+  },
+  {
+    id: 'lg-ol-step-2',
+    type: 'p',
+    listStyleType: 'decimal',
+    children: [{ text: 'Hepatic conjugation' }],
+  },
+  { id: 'lg-p-outro', type: 'p', children: [{ text: 'Plain closing paragraph.' }] },
 ]

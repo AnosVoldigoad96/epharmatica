@@ -1,4 +1,4 @@
-import type { Block } from './schema/types'
+import type { Block, ListItemNode } from './schema/types'
 import { inlineText, paragraphsText } from './serializers'
 
 /**
@@ -10,13 +10,16 @@ import { inlineText, paragraphsText } from './serializers'
  * text-access API, shared by anchor creation, re-anchoring, and rendering.
  */
 
-export type AnchorKind = 'prose' | 'table' | 'drugcard' | 'code' | 'caption'
+export type AnchorKind = 'prose' | 'table' | 'drugcard' | 'code' | 'caption' | 'list'
 
 export type AnchorPath = (string | number)[]
 
 /**
  * The anchorable kind of a block — null for blocks with no selectable text
- * of their own (toc). Note img/video anchor via their captions only.
+ * of their own (toc, hr) and for column groups (their nested blocks carry
+ * no ids; column text is searchable but not highlight-anchorable).
+ * Note img/video anchor via their captions only; a toggle's SUMMARY line is
+ * prose (its contents are ordinary top-level blocks with their own ids).
  */
 export function getAnchorKind(block: Block): AnchorKind | null {
   switch (block.type) {
@@ -25,6 +28,7 @@ export function getAnchorKind(block: Block): AnchorKind | null {
     case 'h3':
     case 'blockquote':
     case 'callout':
+    case 'toggle':
       return 'prose'
     case 'table':
       return 'table'
@@ -35,9 +39,30 @@ export function getAnchorKind(block: Block): AnchorKind | null {
     case 'img':
     case 'video':
       return 'caption'
+    case 'ul':
+    case 'ol':
+      return 'list'
     case 'toc':
+    case 'hr':
+    case 'column_group':
       return null
   }
+}
+
+/** Descend a list by li indexes: [i] → i-th item; [i, j] → j-th item of
+ * the list nested inside the i-th item; and so on. */
+function findListItem(items: ListItemNode[], path: AnchorPath): ListItemNode | null {
+  let current: ListItemNode | null = null
+  let level = items
+  for (const segment of path) {
+    if (typeof segment !== 'number') return null
+    const item: ListItemNode | undefined = level[segment]
+    if (!item) return null
+    current = item
+    const nested = item.children[1]
+    level = nested ? nested.children : []
+  }
+  return current
 }
 
 /**
@@ -50,6 +75,7 @@ export function getAnchorKind(block: Block): AnchorKind | null {
  *   drugcard [field_key]        that field's value
  *   code     [lineIdx]          that line's text
  *   caption  ['caption']        the figure/video caption text
+ *   list     [i, j, …]          the li line at that nesting chain
  */
 export function getTextRuns(block: Block, path: AnchorPath): string | null {
   switch (block.type) {
@@ -57,6 +83,7 @@ export function getTextRuns(block: Block, path: AnchorPath): string | null {
     case 'h2':
     case 'h3':
     case 'blockquote':
+    case 'toggle':
       return path.length === 0 ? inlineText(block.children) : null
 
     case 'callout':
@@ -92,7 +119,18 @@ export function getTextRuns(block: Block, path: AnchorPath): string | null {
       return caption && caption.length > 0 ? caption.map((node) => node.text).join('') : null
     }
 
+    case 'ul':
+    case 'ol': {
+      if (path.length === 0) return null
+      const item = findListItem(block.children, path)
+      if (!item) return null
+      const [lic] = item.children
+      return inlineText(lic.children)
+    }
+
     case 'toc':
+    case 'hr':
+    case 'column_group':
       return null
   }
 }

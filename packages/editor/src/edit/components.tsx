@@ -1,15 +1,20 @@
 'use client'
 
+import { useToggleButton, useToggleButtonState } from '@platejs/toggle/react'
+import { ChevronRight } from 'lucide-react'
 import type { TElement } from 'platejs'
 import { NodeApi } from 'platejs'
 import type { PlateElementProps, PlateLeafProps } from 'platejs/react'
-import { PlateElement, PlateLeaf } from 'platejs/react'
+import { PlateElement, PlateLeaf, useReadOnly, useSelected } from 'platejs/react'
+import { useState } from 'react'
 
+import { formatDateDisplay } from '../schema/date'
 import { CALLOUT_LABELS, DRUG_CARD_FIELD_LABELS } from '../schema/labels'
 import type { CalloutVariant, DrugCardFieldKey } from '../schema/types'
 import { CALLOUT_VARIANTS, DRUG_CARD_FIELD_KEYS } from '../schema/types'
 import { parseYouTubeUrl, youTubeThumbnailUrl } from '../schema/youtube'
 import { useEditorLabels } from './context'
+import { EmojiInputElement } from './emoji-input'
 import { SlashInputElement } from './slash-input'
 
 /**
@@ -46,26 +51,19 @@ const chromeInputClass =
 
 export function ParagraphElement(props: PlateElementProps) {
   const labels = useEditorLabels()
-  const element = props.element as TElement & { indent?: unknown; listStyleType?: unknown }
-  const indent = typeof element.indent === 'number' ? element.indent : 0
+  const element = props.element as TElement
   // Notion-style hint on the empty FIRST paragraph only ("Type / for
   // commands…"). Space is not reserved — the hint is absolutely positioned,
   // so its appearance never shifts the text (zero CLS).
+  // Block styling (align/lineHeight/indent margin) arrives via the plugin
+  // nodeProps injection — no manual style plumbing here.
   const showPlaceholder =
     props.path.length === 1 &&
     props.path[0] === 0 &&
-    element.listStyleType === undefined &&
     element.children.length === 1 &&
     NodeApi.string(element) === ''
   return (
-    <PlateElement
-      {...props}
-      // div, not p: flat list items render their <ul>/<ol>/<li> wrapper
-      // (ListPlugin belowNodes) inside the block — invalid inside a <p>.
-      as="div"
-      className="relative my-2 text-ink"
-      style={indent > 1 ? { marginInlineStart: `${(indent - 1) * 1.5}rem` } : undefined}
-    >
+    <PlateElement {...props} as="div" className="relative my-2 text-ink">
       {showPlaceholder ? (
         <span
           contentEditable={false}
@@ -77,6 +75,184 @@ export function ParagraphElement(props: PlateElementProps) {
       ) : null}
       {props.children}
     </PlateElement>
+  )
+}
+
+/* ------------------------------------------------------- classic lists */
+
+export function BulletedListElement(props: PlateElementProps) {
+  return (
+    <PlateElement
+      {...props}
+      as="ul"
+      className="my-2 list-disc ps-6 text-ink [&_ul]:list-[circle] [&_ul_ul]:list-[square]"
+    >
+      {props.children}
+    </PlateElement>
+  )
+}
+
+export function NumberedListElement(props: PlateElementProps) {
+  return (
+    <PlateElement {...props} as="ol" className="my-2 list-decimal ps-6 text-ink">
+      {props.children}
+    </PlateElement>
+  )
+}
+
+export function ListItemElement(props: PlateElementProps) {
+  return (
+    <PlateElement {...props} as="li" className="my-0.5">
+      {props.children}
+    </PlateElement>
+  )
+}
+
+export function ListItemContentElement(props: PlateElementProps) {
+  return (
+    <PlateElement {...props} as="div">
+      {props.children}
+    </PlateElement>
+  )
+}
+
+/* --------------------------------------------------------------- toggle */
+
+export function ToggleElement(props: PlateElementProps) {
+  const labels = useEditorLabels()
+  const element = props.element
+  const state = useToggleButtonState(element.id as string)
+  const { buttonProps, open } = useToggleButton(state)
+  return (
+    <PlateElement {...props} className="relative my-2 ps-6 text-ink">
+      <button
+        type="button"
+        aria-label={labels.toggleButtonLabel}
+        title={labels.toggleButtonLabel}
+        contentEditable={false}
+        className="absolute -start-0.5 top-0 flex size-6 select-none items-center justify-center text-ink-2 hover:bg-paper hover:text-ink"
+        {...buttonProps}
+      >
+        <ChevronRight
+          className={`size-4 transition-transform duration-75 ${open ? 'rotate-90' : 'rotate-0'}`}
+          aria-hidden
+        />
+      </button>
+      {props.children}
+    </PlateElement>
+  )
+}
+
+/* -------------------------------------------------------------- columns */
+
+export function ColumnGroupElement(props: PlateElementProps) {
+  return (
+    <PlateElement {...props} className="my-3">
+      <div className="flex w-full gap-3">{props.children}</div>
+    </PlateElement>
+  )
+}
+
+export function ColumnElement(props: PlateElementProps) {
+  const width = typeof props.element.width === 'string' ? props.element.width : undefined
+  const readOnly = useReadOnly()
+  return (
+    <div style={{ width: width ?? '100%' }} className="min-w-0">
+      <PlateElement {...props} className="h-full">
+        <div className={`h-full p-1.5 ${readOnly ? '' : 'border border-dashed border-line'}`}>
+          {props.children}
+        </div>
+      </PlateElement>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------ horizontal rule */
+
+export function HrElement(props: PlateElementProps) {
+  const selected = useSelected()
+  return (
+    <PlateElement {...props} className="my-4">
+      <div contentEditable={false} className={selected ? 'bg-primary-tint py-2' : 'py-2'}>
+        <hr className="border-t border-ink" />
+      </div>
+      {props.children}
+    </PlateElement>
+  )
+}
+
+/* ----------------------------------------------------------- inline date */
+
+export function DateElement(props: PlateElementProps) {
+  const labels = useEditorLabels()
+  const { editor, element } = props
+  const [open, setOpen] = useState(false)
+  const value = typeof element.date === 'string' ? element.date : ''
+  const readOnly = useReadOnly()
+  return (
+    <PlateElement {...props} as="span" className="relative inline-block">
+      <span contentEditable={false}>
+        <button
+          type="button"
+          aria-label={labels.dateEditLabel}
+          title={labels.dateEditLabel}
+          disabled={readOnly}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => setOpen((current) => !current)}
+          className="border border-line bg-paper px-1 font-mono text-[0.85em] text-ink hover:border-ink"
+        >
+          {value ? formatDateDisplay(value) : labels.datePlaceholder}
+        </button>
+        {open && !readOnly ? (
+          <span className="absolute start-0 top-full z-30 mt-px block border border-ink bg-surface p-1">
+            <input
+              type="date"
+              autoFocus
+              aria-label={labels.dateEditLabel}
+              value={value}
+              onChange={(event) => {
+                const next = event.target.value
+                if (next !== '') {
+                  editor.tf.setNodes({ date: next }, { at: props.path })
+                }
+              }}
+              onBlur={() => setOpen(false)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === 'Escape') {
+                  event.preventDefault()
+                  setOpen(false)
+                  editor.tf.focus()
+                }
+              }}
+              className={chromeInputClass}
+            />
+          </span>
+        ) : null}
+      </span>
+      {props.children}
+    </PlateElement>
+  )
+}
+
+/* ----------------------------------------------------------- mark leafs */
+
+export function HighlightLeaf(props: PlateLeafProps) {
+  return (
+    <PlateLeaf {...props} as="mark" className="bg-primary-tint text-inherit">
+      {props.children}
+    </PlateLeaf>
+  )
+}
+
+export function KbdLeaf(props: PlateLeafProps) {
+  return (
+    <PlateLeaf
+      {...props}
+      as="kbd"
+      className="border border-line bg-paper px-1 font-mono text-[0.85em] shadow-none"
+    >
+      {props.children}
+    </PlateLeaf>
   )
 }
 
@@ -199,13 +375,27 @@ export function TableHeaderCellElement(props: PlateElementProps) {
 /* ------------------------------------------------------------ code block */
 
 export function CodeBlockElement(props: PlateElementProps) {
+  const labels = useEditorLabels()
+  const { editor, element } = props
+  const lang = typeof element.lang === 'string' ? element.lang : ''
   return (
-    <PlateElement
-      {...props}
-      as="pre"
-      className="my-4 overflow-x-auto border border-line bg-paper p-4 font-mono text-sm text-ink"
-    >
-      <code>{props.children}</code>
+    <PlateElement {...props} className="relative my-4 border border-line bg-paper">
+      <div contentEditable={false} className="absolute end-1 top-1 z-10">
+        <input
+          aria-label={labels.codeLangLabel}
+          placeholder={labels.codeLangLabel}
+          value={lang}
+          onChange={(event) => {
+            const next = event.target.value
+            if (next === '') editor.tf.unsetNodes(['lang'], { at: props.path })
+            else editor.tf.setNodes({ lang: next }, { at: props.path })
+          }}
+          className="w-24 border border-line bg-surface px-1 py-0.5 font-mono text-[10px] text-ink-2 placeholder:text-ink-2 focus:border-ink focus:outline-none"
+        />
+      </div>
+      <pre className="overflow-x-auto p-4 font-mono text-sm text-ink">
+        <code>{props.children}</code>
+      </pre>
     </PlateElement>
   )
 }
@@ -403,5 +593,20 @@ export const editorComponents = {
   video: VideoElement,
   toc: TocElement,
   drug_card: DrugCardElement,
+  // Schema v2 blocks.
+  ul: BulletedListElement,
+  ol: NumberedListElement,
+  li: ListItemElement,
+  lic: ListItemContentElement,
+  toggle: ToggleElement,
+  column_group: ColumnGroupElement,
+  column: ColumnElement,
+  hr: HrElement,
+  date: DateElement,
+  // Marks.
+  highlight: HighlightLeaf,
+  kbd: KbdLeaf,
+  // Editor-time inline comboboxes (never stored).
   slash_input: SlashInputElement,
+  emoji_input: EmojiInputElement,
 }

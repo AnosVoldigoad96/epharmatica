@@ -312,4 +312,103 @@
   .rt-toc a:hover {
     color: var(--color-primary);
   }
+
+  /* ---- Schema v2 additions (container lists keep .rt-list above) ---- */
+
+  /* Horizontal rule — hard ink hairline, generous breathing room */
+  .rt-hr {
+    border: 0;
+    border-block-start: 1px solid var(--color-ink);
+    margin-block: 28px;
+  }
+
+  /* Author highlight mark (leaf) — primary tint, no radius */
+  .rt-mark {
+    background-color: var(--color-primary-tint);
+    color: inherit;
+    padding-inline: 1px;
+  }
+
+  /* Keyboard keys — mono chip, hairline border (matches inline code) */
+  .rt-kbd {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-block-end-width: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    padding-block: 1px;
+    padding-inline: 4px;
+  }
+
+  /* Inline date chip */
+  .rt-date {
+    color: var(--color-ink-2);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+  }
+
+  /* Toggle — native <details>; marker replaced with a rotating caret */
+  .rt-toggle {
+    border-inline-start: 2px solid var(--color-line);
+    padding-inline-start: 14px;
+  }
+
+  .rt-toggle > summary {
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+    position: relative;
+  }
+
+  .rt-toggle > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .rt-toggle > summary::before {
+    content: '▸';
+    color: var(--color-ink-2);
+    display: inline-block;
+    inline-size: 16px;
+  }
+
+  .rt-toggle[open] > summary::before {
+    content: '▾';
+  }
+
+  .rt-toggle__body {
+    margin-block-start: 12px;
+    padding-inline-start: 16px;
+  }
+
+  .rt-toggle__body > * + * {
+    margin-block-start: 12px;
+  }
+
+  /* Columns — flex row, stored % widths as flex-basis; stacks on small
+     screens (logical properties keep RTL order correct) */
+  .rt-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .rt-columns__col {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-inline-size: 220px;
+  }
+
+  .rt-columns__col > * + * {
+    margin-block-start: 12px;
+  }
+
+  @media (max-width: 560px) {
+    .rt-columns {
+      display: block;
+    }
+
+    .rt-columns__col + .rt-columns__col {
+      margin-block-start: 16px;
+    }
+  }
 }

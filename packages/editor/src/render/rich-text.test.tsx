@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
-import { FIXTURE_DOCUMENT } from '../fixtures'
+import { FIXTURE_DOCUMENT, LEGACY_FLAT_LIST_DOCUMENT } from '../fixtures'
 import type { Content, VideoBlock } from '../schema/types'
 import { RichText } from './rich-text'
 
@@ -20,15 +20,80 @@ describe('<RichText/> (rules.md §6.4 — full block schema)', () => {
     }
   })
 
-  it('groups consecutive flat list items into one list, nesting by indent', () => {
+  it('renders v2 container lists with nesting and ONE data-block-id', () => {
     const html = render(FIXTURE_DOCUMENT)
-    const bullets = html.match(/<ul class="rt-list">/g) ?? []
-    expect(bullets.length).toBe(2) // outer disc list + nested indent-2 list
-    expect(html.match(/<ol class="rt-list">/g)?.length).toBe(1)
+    expect(html).toContain('<ul class="rt-list" data-block-id="fx-ul-absorption">')
+    expect(html).toContain('<ol class="rt-list" data-block-id="fx-ol-steps">')
+    // The nested list renders INSIDE the second li, without its own id.
+    expect(html).toMatch(
+      /protein-bound<\/strong><ul class="rt-list"><li>Albumin binding ~90%<\/li><\/ul><\/li>/,
+    )
+  })
+
+  it('DUAL-READ: legacy flat list items group into containers, keeping per-item anchor ids', () => {
+    const html = render(LEGACY_FLAT_LIST_DOCUMENT)
+    // The container takes the first item's id…
+    expect(html).toContain('<ul class="rt-list" data-block-id="lg-li-absorption">')
+    expect(html).toContain('<ol class="rt-list" data-block-id="lg-ol-step-1">')
+    // …and every v1 item keeps its own data-block-id on its li.
+    expect(html).toContain('<li data-block-id="lg-li-distribution">')
+    expect(html).toContain('<li data-block-id="lg-ol-step-2">')
     // The indent-2 item nests INSIDE the preceding li.
     expect(html).toMatch(
-      /fx-li-distribution"[^]*?<ul class="rt-list"><li[^>]*fx-li-distribution-detail/,
+      /lg-li-distribution"[^]*?<ul class="rt-list"><li data-block-id="lg-li-distribution-detail"/,
     )
+    // No flat paragraphs remain.
+    expect(html).not.toContain('<p data-block-id="lg-li-absorption">')
+  })
+
+  it('renders toggles as <details> wrapping their indented contents', () => {
+    const html = render(FIXTURE_DOCUMENT)
+    expect(html).toContain(
+      '<details data-block-id="fx-toggle-details" class="rt-toggle"><summary>Advanced: salicylate kinetics</summary>',
+    )
+    // The indented body blocks live inside the details, ids intact.
+    expect(html).toMatch(/<details[^>]*fx-toggle-details[^]*?fx-toggle-body-p[^]*?<\/details>/)
+    expect(html).toMatch(/<details[^>]*fx-toggle-details[^]*?fx-toggle-body-ul[^]*?<\/details>/)
+  })
+
+  it('renders column groups as flex columns with width bases', () => {
+    const html = render(FIXTURE_DOCUMENT)
+    expect(html).toContain('<div data-block-id="fx-columns" class="rt-columns">')
+    expect(html.match(/rt-columns__col/g)?.length).toBe(2)
+    expect(html).toContain('style="flex-basis:50%"')
+    // Column children carry no block ids.
+    expect(html).toContain('<p>COX-1: constitutive, gastric protection.</p>')
+  })
+
+  it('renders hr, alignment, line-height, and the new marks', () => {
+    const html = render(FIXTURE_DOCUMENT)
+    expect(html).toContain('<hr data-block-id="fx-hr" class="rt-hr"/>')
+    expect(html).toContain('style="text-align:center;line-height:2"')
+    expect(html).toContain('<mark class="rt-mark">salicylate toxicity</mark>')
+    expect(html).toContain('<kbd class="rt-kbd">Ctrl</kbd>')
+    expect(html).toContain('<span style="color:#b91c1c">Red flag</span>')
+    expect(html).toContain('<span style="background-color:#fef08a">flagged</span>')
+    expect(html).toContain('<span style="font-size:20px">enlarged</span>')
+  })
+
+  it('renders inline dates as <time> with deterministic display text', () => {
+    const html = render(FIXTURE_DOCUMENT)
+    expect(html).toContain('dateTime="2026-07-24"')
+    expect(html).toContain('Jul 24, 2026')
+  })
+
+  it('renders merged table cells with their spans', () => {
+    const html = render(FIXTURE_DOCUMENT)
+    expect(html).toContain('<td colSpan="2"><p>Analgesic: 300–900 mg q4–6h</p></td>')
+  })
+
+  it('renders indented non-toggle blocks with a logical margin', () => {
+    const indented: Content = [
+      { id: 'a', type: 'p', children: [{ text: 'top' }] },
+      { id: 'b', type: 'p', indent: 2, children: [{ text: 'nudged' }] },
+    ]
+    const html = render(indented)
+    expect(html).toContain('style="margin-inline-start:3rem"')
   })
 
   it('renders the TOC from document headings with anchor links', () => {

@@ -1,11 +1,17 @@
+import { DATE_VALUE_PATTERN } from '../schema/date'
+import { upgradeLegacyLists } from '../schema/legacy-lists'
 import type {
+  Alignment,
   Block,
   CodeBlock,
   CodeLine,
+  ColumnChildBlock,
+  ColumnNode,
   Content,
   InlineNode,
+  ListItemNode,
+  NestedListNode,
   NestedParagraph,
-  ParagraphBlock,
   TableCell,
   TableRow,
   TextNode,
@@ -20,22 +26,26 @@ import { validateContent } from '../schema/validate'
  * strict Zod validator:
  *
  *  - `id` survives at the top level only; ids NodeIdPlugin stamped on
- *    nested elements (tr/td/nested p/code_line) are dropped.
- *  - Editor-internal props are dropped: `listStart` (list normalizer),
- *    `colSizes`/`marginLeft` (table), `colSpan`/`rowSpan` (never produced —
- *    merging is disabled — but stripped defensively), selection artifacts.
- *  - `indent: 1` is dropped (the schema's canonical spelling omits it, see
- *    fixtures) and `indent` without `listStyleType` is meaningless → dropped.
- *  - Leaf props `subscript`/`superscript` translate to `sub`/`sup` — the kit
- *    renames the mark types so these should never occur; this is defense.
- *  - Mark props survive only as literal `true` (empty-string/false leftovers
- *    are dropped).
+ *    nested elements (tr/td/li/lic/column/nested p/code_line) are dropped.
+ *  - Editor-internal props are dropped: `listStart` (legacy), `colSizes`/
+ *    `marginLeft` (table), toggle open state (never on nodes anyway),
+ *    selection artifacts.
+ *  - LISTS (schema v2): ul/ol containers with li → [lic, nested list?]
+ *    children are the ONLY written list shape. A v1 flat item (`p` +
+ *    `listStyleType`) that somehow reaches the save path is upgraded to a
+ *    container too (defense in depth — the mount path upgrades first).
+ *  - Style props survive bounded: `align` (left/center/right/justify),
+ *    `lineHeight` (number), `indent` (int ≥ 1, top level only), text
+ *    `color`/`backgroundColor`/`fontSize` (validated CSS strings), table
+ *    cell `colSpan`/`rowSpan` (ints ≥ 2).
+ *  - Leaf props `subscript`/`superscript` translate to `sub`/`sup`; mark
+ *    props survive only as literal `true`.
  *  - Void children are coerced to `[{ text: '' }]`.
  *  - Unknown TOP-LEVEL block types are rejected (never silently dropped —
  *    a save must not lose content); unknown inline wrappers are flattened
- *    to their text runs. Editor-time inline elements (the slash-command
- *    `slash_input` combobox) are exactly such wrappers: their query text is
- *    unwrapped, the element itself never reaches storage.
+ *    to their text runs. Editor-time inline elements (slash_input,
+ *    emoji_input) are exactly such wrappers: their query text is unwrapped,
+ *    the element itself never reaches storage.
  *  - Stray EMPTY text runs left behind by flattened editor-time elements
  *    are dropped from inline children (a lone empty run survives — that is
  *    the canonical empty paragraph).
@@ -48,7 +58,17 @@ type UnknownRecord = Record<string, unknown>
 const isRecord = (value: unknown): value is UnknownRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-const MARK_KEYS = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'sub', 'sup'] as const
+const MARK_KEYS = [
+  'bold',
+  'italic',
+  'underline',
+  'strikethrough',
+  'code',
+  'sub',
+  'sup',
+  'highlight',
+  'kbd',
+] as const
 
 /** Plate default mark keys → our schema props (kit renames; this is backup). */
 const MARK_ALIASES: Record<string, (typeof MARK_KEYS)[number]> = {
@@ -56,15 +76,34 @@ const MARK_ALIASES: Record<string, (typeof MARK_KEYS)[number]> = {
   superscript: 'sup',
 }
 
+/** Bounded CSS values — mirrors validate.ts; non-conforming values DROP
+ * (styling is decoration, dropping it never loses content). */
+const CSS_COLOR_PATTERN =
+  /^(#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?([0-9a-fA-F]{2})?|[a-zA-Z]{2,25}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d{1,4})\s*)?\))$/
+const CSS_FONT_SIZE_PATTERN = /^\d{1,3}(\.\d{1,3})?(px|em|rem|%)$/
+const COLUMN_WIDTH_PATTERN = /^\d{1,3}(\.\d{1,3})?%$/
+
+const ALIGN_VALUES: readonly Alignment[] = ['left', 'center', 'right', 'justify']
+
 function toTextNode(node: UnknownRecord): TextNode | null {
   if (typeof node.text !== 'string') return null
   const out: TextNode = { text: node.text }
   for (const [key, value] of Object.entries(node)) {
-    if (value !== true) continue
-    const mark = (MARK_KEYS as readonly string[]).includes(key)
-      ? (key as (typeof MARK_KEYS)[number])
-      : MARK_ALIASES[key]
-    if (mark) out[mark] = true
+    if (value === true) {
+      const mark = (MARK_KEYS as readonly string[]).includes(key)
+        ? (key as (typeof MARK_KEYS)[number])
+        : MARK_ALIASES[key]
+      if (mark) out[mark] = true
+    }
+  }
+  if (typeof node.color === 'string' && CSS_COLOR_PATTERN.test(node.color)) {
+    out.color = node.color
+  }
+  if (typeof node.backgroundColor === 'string' && CSS_COLOR_PATTERN.test(node.backgroundColor)) {
+    out.backgroundColor = node.backgroundColor
+  }
+  if (typeof node.fontSize === 'string' && CSS_FONT_SIZE_PATTERN.test(node.fontSize)) {
+    out.fontSize = node.fontSize
   }
   return out
 }
@@ -102,7 +141,16 @@ function toInlineNodes(children: unknown): InlineNode[] {
       }
       continue
     }
-    // Unknown inline wrapper — keep its text, drop the wrapper.
+    if (child.type === 'date') {
+      // Canonical YYYY-MM-DD only; an unset/unparseable chip carries no
+      // content, so it drops rather than blocking the save.
+      if (typeof child.date === 'string' && DATE_VALUE_PATTERN.test(child.date)) {
+        out.push({ type: 'date', date: child.date, children: [{ text: '' }] })
+      }
+      continue
+    }
+    // Unknown inline wrapper (slash_input, emoji_input, …) — keep its
+    // text, drop the wrapper.
     out.push(...toInlineNodes(child.children))
   }
   return out
@@ -117,13 +165,47 @@ const ensureInline = (children: unknown): InlineNode[] => {
   return meaningful.length > 0 ? meaningful : [{ text: '' }]
 }
 
+/* --------------------------------------------------------- styling props */
+
+const readAlign = (node: UnknownRecord): Alignment | undefined =>
+  typeof node.align === 'string' && (ALIGN_VALUES as readonly string[]).includes(node.align)
+    ? (node.align as Alignment)
+    : undefined
+
+const readLineHeight = (node: UnknownRecord): number | undefined => {
+  const raw = typeof node.lineHeight === 'string' ? Number(node.lineHeight) : node.lineHeight
+  return typeof raw === 'number' && Number.isFinite(raw) && raw >= 0.8 && raw <= 3 ? raw : undefined
+}
+
+const readIndent = (node: UnknownRecord): number | undefined =>
+  typeof node.indent === 'number' && Number.isInteger(node.indent) && node.indent >= 1
+    ? Math.min(node.indent, 20)
+    : undefined
+
+/** align + lineHeight, applied to prose-ish nodes at any depth. */
+function proseStyleProps(node: UnknownRecord): { align?: Alignment; lineHeight?: number } {
+  const out: { align?: Alignment; lineHeight?: number } = {}
+  const align = readAlign(node)
+  if (align) out.align = align
+  const lineHeight = readLineHeight(node)
+  if (lineHeight !== undefined) out.lineHeight = lineHeight
+  return out
+}
+
+/** indent survives at the top level only (toggle containment + visual). */
+function topStyleProps(node: UnknownRecord, nested: boolean): { indent?: number } {
+  if (nested) return {}
+  const indent = readIndent(node)
+  return indent === undefined ? {} : { indent }
+}
+
 function toNestedParagraphs(children: unknown): NestedParagraph[] {
   const out: NestedParagraph[] = []
   if (Array.isArray(children)) {
     for (const child of children) {
       if (!isRecord(child)) continue
       if (child.type === 'p') {
-        out.push({ type: 'p', children: ensureInline(child.children) })
+        out.push({ type: 'p', children: ensureInline(child.children), ...proseStyleProps(child) })
       } else {
         // Stray non-paragraph content — preserve its inline text.
         const inline =
@@ -152,6 +234,11 @@ function toCodeLines(children: unknown): CodeLine[] {
   return out.length > 0 ? out : [{ type: 'code_line', children: [{ text: '' }] }]
 }
 
+const readSpan = (value: unknown): number | undefined =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 2 && value <= 50
+    ? value
+    : undefined
+
 function toTableRows(children: unknown): TableRow[] {
   const rows: TableRow[] = []
   if (!Array.isArray(children)) return rows
@@ -161,12 +248,88 @@ function toTableRows(children: unknown): TableRow[] {
     if (Array.isArray(row.children)) {
       for (const cell of row.children) {
         if (!isRecord(cell) || (cell.type !== 'td' && cell.type !== 'th')) continue
-        cells.push({ type: cell.type, children: toNestedParagraphs(cell.children) })
+        const out: TableCell = { type: cell.type, children: toNestedParagraphs(cell.children) }
+        const colSpan = readSpan(cell.colSpan)
+        if (colSpan !== undefined) out.colSpan = colSpan
+        const rowSpan = readSpan(cell.rowSpan)
+        if (rowSpan !== undefined) out.rowSpan = rowSpan
+        cells.push(out)
       }
     }
     if (cells.length > 0) rows.push({ type: 'tr', children: cells })
   }
   return rows
+}
+
+/* ------------------------------------------------------------------ lists */
+
+function toListItems(children: unknown): ListItemNode[] {
+  const items: ListItemNode[] = []
+  if (!Array.isArray(children)) return items
+  for (const child of children) {
+    if (!isRecord(child) || child.type !== 'li') continue
+    let lic: { type: 'lic'; children: InlineNode[] } | null = null
+    let nested: NestedListNode | null = null
+    if (Array.isArray(child.children)) {
+      for (const grand of child.children) {
+        if (!isRecord(grand)) continue
+        if (grand.type === 'lic' && !lic) {
+          lic = { type: 'lic', children: ensureInline(grand.children) }
+        } else if ((grand.type === 'ul' || grand.type === 'ol') && !nested) {
+          const nestedItems = toListItems(grand.children)
+          if (nestedItems.length > 0) nested = { type: grand.type, children: nestedItems }
+        } else if (typeof grand.text === 'string' && !lic) {
+          // Defensive: a bare text child becomes the content line.
+          lic = { type: 'lic', children: ensureInline([grand]) }
+        }
+      }
+    }
+    if (!lic) lic = { type: 'lic', children: [{ text: '' }] }
+    items.push(nested ? { type: 'li', children: [lic, nested] } : { type: 'li', children: [lic] })
+  }
+  return items
+}
+
+/* ---------------------------------------------------------------- columns */
+
+/** Block types allowed inside a column (no headings/toc/toggle/columns). */
+const COLUMN_CHILD_TYPES = new Set([
+  'p',
+  'blockquote',
+  'callout',
+  'table',
+  'img',
+  'video',
+  'code_block',
+  'drug_card',
+  'ul',
+  'ol',
+  'hr',
+])
+
+function toColumns(children: unknown, index: number | string, errors: string[]): ColumnNode[] {
+  const columns: ColumnNode[] = []
+  if (!Array.isArray(children)) return columns
+  for (const child of children) {
+    if (!isRecord(child) || child.type !== 'column') continue
+    const nested: ColumnChildBlock[] = []
+    if (Array.isArray(child.children)) {
+      child.children.forEach((grand, grandIndex) => {
+        if (!isRecord(grand)) return
+        const block = toBlock(grand, `${index}.${grandIndex}`, errors, { nested: true })
+        if (block) nested.push(block as ColumnChildBlock)
+      })
+    }
+    const column: ColumnNode = {
+      type: 'column',
+      children: nested.length > 0 ? nested : [{ type: 'p', children: [{ text: '' }] }],
+    }
+    if (typeof child.width === 'string' && COLUMN_WIDTH_PATTERN.test(child.width)) {
+      column.width = child.width
+    }
+    columns.push(column)
+  }
+  return columns
 }
 
 const VOID_CHILDREN: [{ text: '' }] = [{ text: '' }]
@@ -176,32 +339,65 @@ const blockId = (node: UnknownRecord): { id: string } => ({
   id: typeof node.id === 'string' ? node.id : '',
 })
 
-function toBlock(node: UnknownRecord, index: number, errors: string[]): Block | null {
+type ToBlockOptions = { nested: boolean }
+
+function toBlock(
+  node: UnknownRecord,
+  index: number | string,
+  errors: string[],
+  options: ToBlockOptions = { nested: false },
+): Block | ColumnChildBlock | null {
+  const { nested } = options
+  const ids = nested ? {} : blockId(node)
+  const top = topStyleProps(node, nested)
   const type = node.type
+
+  if (nested && typeof type === 'string' && !COLUMN_CHILD_TYPES.has(type)) {
+    errors.push(`${index}: block type "${type}" is not allowed inside a column`)
+    return null
+  }
+
   switch (type) {
     case 'p': {
-      const block: ParagraphBlock = {
-        ...blockId(node),
+      const block = {
+        ...ids,
+        ...top,
         type: 'p',
         children: ensureInline(node.children),
-      }
-      if (node.listStyleType === 'disc' || node.listStyleType === 'decimal') {
-        block.listStyleType = node.listStyleType
-        // indent 1 is the canonical "omitted" level; keep 2+ only.
-        if (typeof node.indent === 'number' && Number.isInteger(node.indent) && node.indent >= 2) {
-          block.indent = node.indent
-        }
+        ...proseStyleProps(node),
+      } as Block
+      // v1 legacy flat-list props: preserved here so the post-pass list
+      // upgrade (upgradeLegacyLists) can container-ize them — they NEVER
+      // reach storage as flat items.
+      if (!nested && (node.listStyleType === 'disc' || node.listStyleType === 'decimal')) {
+        ;(block as UnknownRecord).listStyleType = node.listStyleType
+        const indent = readIndent(node)
+        if (indent !== undefined && indent >= 2) (block as UnknownRecord).indent = indent
+        else delete (block as UnknownRecord).indent
       }
       return block
     }
     case 'h2':
     case 'h3':
-      return { ...blockId(node), type, children: ensureInline(node.children) }
+      return {
+        ...ids,
+        ...top,
+        type,
+        children: ensureInline(node.children),
+        ...proseStyleProps(node),
+      } as Block
     case 'blockquote':
-      return { ...blockId(node), type: 'blockquote', children: ensureInline(node.children) }
+      return {
+        ...ids,
+        ...top,
+        type: 'blockquote',
+        children: ensureInline(node.children),
+        ...proseStyleProps(node),
+      } as Block
     case 'callout':
       return {
-        ...blockId(node),
+        ...ids,
+        ...top,
         type: 'callout',
         // Passed through as-is: an out-of-roster variant is a validation
         // error, not something to silently rewrite.
@@ -209,10 +405,11 @@ function toBlock(node: UnknownRecord, index: number, errors: string[]): Block | 
         children: toNestedParagraphs(node.children),
       } as unknown as Block
     case 'table':
-      return { ...blockId(node), type: 'table', children: toTableRows(node.children) }
+      return { ...ids, ...top, type: 'table', children: toTableRows(node.children) } as Block
     case 'img': {
       const block = {
-        ...blockId(node),
+        ...ids,
+        ...top,
         type: 'img',
         url: node.url,
         alt: node.alt,
@@ -227,23 +424,50 @@ function toBlock(node: UnknownRecord, index: number, errors: string[]): Block | 
     }
     case 'video':
       return {
-        ...blockId(node),
+        ...ids,
+        ...top,
         type: 'video',
         url: node.url,
         caption: collectTextNodes(node.caption),
         children: VOID_CHILDREN,
       } as unknown as Block
     case 'code_block': {
-      const block: CodeBlock = {
-        ...blockId(node),
+      const block = {
+        ...ids,
+        ...top,
         type: 'code_block',
         children: toCodeLines(node.children),
-      }
+      } as CodeBlock
       if (typeof node.lang === 'string' && node.lang !== '') block.lang = node.lang
       return block
     }
     case 'toc':
-      return { ...blockId(node), type: 'toc', children: VOID_CHILDREN }
+      return { ...ids, ...top, type: 'toc', children: VOID_CHILDREN } as Block
+    case 'hr':
+      return { ...ids, ...top, type: 'hr', children: VOID_CHILDREN } as Block
+    case 'ul':
+    case 'ol': {
+      const items = toListItems(node.children)
+      return {
+        ...ids,
+        ...top,
+        type,
+        children:
+          items.length > 0
+            ? items
+            : [{ type: 'li', children: [{ type: 'lic', children: [{ text: '' }] }] }],
+      } as Block
+    }
+    case 'toggle':
+      return { ...ids, ...top, type: 'toggle', children: ensureInline(node.children) } as Block
+    case 'column_group': {
+      const columns = toColumns(node.children, index, errors)
+      if (columns.length < 2) {
+        errors.push(`${index}: column group needs at least 2 columns`)
+        return null
+      }
+      return { ...ids, ...top, type: 'column_group', children: columns } as Block
+    }
     case 'drug_card': {
       const fields: Record<string, string> = {}
       if (isRecord(node.fields)) {
@@ -256,7 +480,8 @@ function toBlock(node: UnknownRecord, index: number, errors: string[]): Block | 
         }
       }
       return {
-        ...blockId(node),
+        ...ids,
+        ...top,
         type: 'drug_card',
         fields,
         children: VOID_CHILDREN,
@@ -288,24 +513,21 @@ export function fromEditorValue(value: unknown): FromEditorValueResult {
       return
     }
     const block = toBlock(node, index, errors)
-    if (block) blocks.push(block)
+    if (block) blocks.push(block as Block)
   })
   if (errors.length > 0) return { ok: false, errors }
-  return validateContent(blocks)
+  // SINGLE-WRITE: any v1 flat-list paragraphs that slipped through become
+  // v2 containers here — storage only ever receives the container shape.
+  return validateContent(upgradeLegacyLists(blocks))
 }
 
 /**
- * Stored content → editor-mountable value. The flat-list plugin normalizes
- * `listStyleType` away when `indent` is missing, and the schema's canonical
- * spelling omits `indent: 1` — so seed it back before mounting. (The
- * serializer re-omits it on save.)
+ * Stored content → editor-mountable value. DUAL-READ: v1 flat lists are
+ * upgraded to v2 containers before mounting (the classic list plugin only
+ * understands containers). `keepItemIds` preserves per-item v1 ids on the
+ * editor value — harmless there, and the serializer strips nested ids on
+ * save anyway.
  */
 export function toEditorValue(content: Content): Content {
-  return content.map((block) => {
-    const clone = structuredClone(block)
-    if (clone.type === 'p' && clone.listStyleType !== undefined && clone.indent === undefined) {
-      clone.indent = 1
-    }
-    return clone
-  })
+  return structuredClone(upgradeLegacyLists(content, { keepItemIds: true }))
 }
