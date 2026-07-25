@@ -43,6 +43,8 @@ export const AUDIT_ACTIONS = {
   node_renamed: 'content.node_renamed',
   node_moved: 'content.node_moved',
   node_deleted: 'content.node_deleted',
+  node_restored: 'content.node_restored',
+  node_purged: 'content.node_purged',
   nodes_reordered: 'content.nodes_reordered',
   workflow_submitted: 'content.workflow_submitted',
   workflow_approved: 'content.workflow_approved',

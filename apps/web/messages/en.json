@@ -476,7 +476,8 @@
     "content": {
       "rail": {
         "label": "Tree — read-only rail",
-        "legend": "Amber dot = drafts inside · teal = all published"
+        "legend": "Amber dot = drafts inside · teal = all published",
+        "trash": "Trash"
       },
       "headings": {
         "subjects": "Subjects",
@@ -569,18 +570,44 @@
       },
       "delete": {
         "title": "Delete “{name}” — {levelName}",
-        "heading": "Cannot be undone — read before confirming",
-        "nodeLine": "The {levelName} “{name}” and everything beneath it will be permanently deleted.",
+        "heading": "Moves to Trash — read before confirming",
+        "nodeLine": "The {levelName} “{name}” and everything beneath it move to Trash and are hidden from students and readers immediately.",
         "countLine": "{total, plural, =0 {No content pages beneath} one {# content page beneath} other {# content pages beneath}} · {published, plural, =0 {none published} one {# published} other {# published}}",
         "publishedPage": "This page is published — it disappears from /learn immediately.",
-        "dependentsLine": "Revisions, review history, discussions, preview links and media references go with it.",
-        "studentDataLine": "Student highlights, notes and reading progress on those pages are removed.",
+        "restorableLine": "It stays restorable from Trash for 14 days; after that the daily purge removes it permanently.",
+        "dependentsLine": "Revisions, review history, discussions, preview links and media references go to Trash with it — and come back on restore.",
+        "studentDataLine": "Student highlights, notes and reading progress on those pages are hidden with it — removed for good only at purge.",
+        "reservedLine": "Its name and slug stay reserved until the Trash entry is purged.",
         "cacheLine": "Cache tags fire for the {levelName}, its parents, and the sitemap.",
         "typeToConfirm": "Type the exact name to confirm",
         "confirm": "Delete {levelName}",
         "zoneHeading": "Danger zone",
-        "zoneBody": "Deleting removes this page with its revisions, review history, discussions, preview links and media references — and students' highlights, notes and progress on it.",
+        "zoneBody": "Deleting moves this page — with its revisions, review history, discussions, preview links and media references — to Trash. It vanishes from readers immediately, keeps its name and slug reserved, and stays restorable for 14 days before the purge removes it for good.",
         "zoneButton": "Delete {levelName}…"
+      },
+      "trash": {
+        "title": "Trash",
+        "subline": "{count, plural, =0 {empty} one {# item} other {# items}}",
+        "counts": "{pages, plural, one {# page} other {# pages}} · {published, plural, =0 {none published} one {# published} other {# published}}",
+        "deletedAgo": "{days, plural, =0 {Deleted today} one {Deleted # day ago} other {Deleted # days ago}}",
+        "purgesIn": "{days, plural, =0 {Purges today} one {Purges in # day} other {Purges in # days}}",
+        "restore": "Restore",
+        "purgeButton": "Delete forever…",
+        "emptyLabel": "Empty state",
+        "emptyBody": "Trash is empty. Deleted items wait here for 14 days before the purge removes them for good.",
+        "footer": "Items purge automatically 14 days after deletion. Restoring puts the subtree back exactly where it was — names and slugs stay reserved while items sit here.",
+        "purge": {
+          "title": "Delete “{name}” forever — {levelName}",
+          "heading": "Cannot be undone — read before confirming",
+          "nodeLine": "The {levelName} “{name}” and everything beneath it will be permanently deleted, right now.",
+          "dependentsLine": "Revisions, review history, discussions, preview links, media references — and students' highlights, notes and progress on those pages — are removed for good.",
+          "slugLine": "The name and slug free up for reuse.",
+          "confirm": "Delete forever"
+        },
+        "toasts": {
+          "restored": "Restored.",
+          "purged": "Deleted forever."
+        }
       },
       "toasts": {
         "created": "Created.",
@@ -588,7 +615,7 @@
         "renamed": "Renamed.",
         "moved": "Moved.",
         "reordered": "Order saved.",
-        "deleted": "Deleted."
+        "deleted": "Moved to Trash."
       },
       "errors": {
         "forbidden": "Your role can't do that.",
@@ -596,6 +623,7 @@
         "slugTaken": "That slug is already used here.",
         "saveFailed": "Couldn't save. Try again.",
         "notFound": "That item no longer exists.",
+        "restoreParentFirst": "Its parent is in the Trash too — restore the parent first.",
         "confirmationRequired": "Review the consequences and confirm first.",
         "typeMoveToConfirm": "Type move to confirm.",
         "typeNameToConfirm": "Type the exact name to confirm.",

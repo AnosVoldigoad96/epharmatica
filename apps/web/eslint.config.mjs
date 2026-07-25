@@ -31,6 +31,9 @@ const config = [
       // Reviewed addition (1.B-5b): the yearly audit-export cron reads
       // audit_log and calls prune_audit_log on the service role (M4 §9 D-b).
       'app/api/cron/audit-export/route.ts',
+      // Reviewed addition (024): the daily trash-purge cron calls
+      // purge_content_trash on the service role (CRON_SECRET-guarded).
+      'app/api/cron/content-purge/route.ts',
     ],
     rules: {
       'no-restricted-imports': 'off',
