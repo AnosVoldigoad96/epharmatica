@@ -30,7 +30,8 @@
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",
     "server-only": "^0.0.1",
-    "sharp": "0.35.3"
+    "sharp": "0.35.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@epharmatica/config": "workspace:*",
@@ -41,6 +42,7 @@
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.10",
+    "jsdom": "^28.0.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.3",
     "vitest": "^4.1.10"

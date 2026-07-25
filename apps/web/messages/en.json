@@ -1367,6 +1367,67 @@
       "noResults": "No matches for ''{query}''. Try fewer words or a subject filter.",
       "pathWithTopic": "{subject} › {chapter} › {topic}",
       "pathChapter": "{subject} › {chapter}"
+    },
+    "study": {
+      "stamp": "Completed · {date}",
+      "glyphAria": "Open note",
+      "actions": {
+        "label": "Study",
+        "complete": "Mark complete",
+        "completed": "Completed",
+        "bookmark": "Bookmark",
+        "bookmarked": "Bookmarked",
+        "notes": "Notes"
+      },
+      "popover": {
+        "tooLong": "Selection too long — 1,000 characters max"
+      },
+      "highlight": {
+        "colorAria": "Set highlight color to {color}",
+        "note": "Note",
+        "editNote": "Edit note",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this highlight?",
+        "deleteWithNote": "Deletes its note too.",
+        "cancel": "Cancel"
+      },
+      "note": {
+        "label": "Note",
+        "placeholder": "Write your note…",
+        "save": "Save note",
+        "cancel": "Cancel",
+        "edit": "Edit note",
+        "delete": "Delete note"
+      },
+      "drawer": {
+        "title": "Notes",
+        "close": "Close notes",
+        "onThisPage": "On this page",
+        "emptyOnPage": "Highlight a passage and add a note — it lands here.",
+        "freeNotes": "Unit notes",
+        "emptyFree": "No notes on this unit yet.",
+        "addNote": "Add note",
+        "edit": "Edit",
+        "delete": "Delete",
+        "deleteConfirm": "Delete",
+        "cancel": "Cancel",
+        "orphaned": "Orphaned",
+        "restore": "Restore highlight",
+        "jumpAria": "Jump to this highlight"
+      },
+      "restoreFlow": {
+        "label": "Restore",
+        "hint": "Select the passage this highlight belongs to, then confirm.",
+        "confirm": "Restore here",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "notSignedIn": "Sign in to use study tools.",
+        "saveFailed": "That didn't save. Check your connection and try again.",
+        "notFound": "That item no longer exists. Reload the page to refresh your notes.",
+        "disabled": "Highlighting is turned off for this content right now.",
+        "noteExists": "This highlight already has a note. Edit it instead."
+      }
     }
   }
 }

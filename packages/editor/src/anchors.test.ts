@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { getAnchorKind, getTextRuns } from './anchors'
+import { getAllTextRuns, getAnchorKind, getTextRuns } from './anchors'
 import { FIXTURE_DOCUMENT } from './fixtures'
 import type { Block } from './schema/types'
 
@@ -118,5 +118,69 @@ describe('getTextRuns', () => {
     expect(getTextRuns(fixtureBlock('fx-equation-henderson'), [])).toBeNull()
     expect(getTextRuns(fixtureBlock('fx-columns'), [])).toBeNull()
     expect(getTextRuns(fixtureBlock('fx-columns'), [0, 0])).toBeNull()
+  })
+})
+
+describe('getAllTextRuns (enumeration half of the run contract)', () => {
+  it('enumerates every run in document order', () => {
+    expect(getAllTextRuns(fixtureBlock('fx-table-doses')).map((run) => run.path)).toEqual([
+      [0, 0],
+      [0, 1],
+      [1, 0],
+      [1, 1],
+      [2, 0],
+    ])
+    expect(getAllTextRuns(fixtureBlock('fx-ul-absorption')).map((run) => run.path)).toEqual([
+      [0],
+      [1],
+      [1, 0],
+    ])
+    expect(getAllTextRuns(fixtureBlock('fx-drugcard-aspirin')).map((run) => run.path)).toEqual([
+      ['generic_name'],
+      ['brand_names'],
+      ['drug_class'],
+      ['mechanism'],
+      ['indications'],
+      ['adverse_effects'],
+      ['interactions'],
+      ['dosing'],
+      ['notes'],
+    ])
+    expect(getAllTextRuns(fixtureBlock('fx-code-calc')).map((run) => run.path)).toEqual([[0], [1]])
+  })
+
+  it('every enumerated run agrees with getTextRuns exactly', () => {
+    for (const block of FIXTURE_DOCUMENT) {
+      for (const run of getAllTextRuns(block)) {
+        expect(getTextRuns(block, run.path)).toBe(run.text)
+      }
+    }
+  })
+
+  it('prose and caption blocks expose exactly one run', () => {
+    expect(getAllTextRuns(fixtureBlock('fx-p-intro'))).toHaveLength(1)
+    expect(getAllTextRuns(fixtureBlock('fx-callout-pearl'))).toHaveLength(1)
+    expect(getAllTextRuns(fixtureBlock('fx-toggle-details'))).toHaveLength(1)
+    expect(getAllTextRuns(fixtureBlock('fx-img-structure'))).toEqual([
+      { path: ['caption'], text: 'FIG 1 — Acetylsalicylic acid' },
+    ])
+  })
+
+  it('non-anchorable blocks and absent runs yield nothing', () => {
+    expect(getAllTextRuns(fixtureBlock('fx-toc'))).toEqual([])
+    expect(getAllTextRuns(fixtureBlock('fx-hr'))).toEqual([])
+    expect(getAllTextRuns(fixtureBlock('fx-equation-henderson'))).toEqual([])
+    expect(getAllTextRuns(fixtureBlock('fx-columns'))).toEqual([])
+    const captionless: Block = {
+      id: 'x-img',
+      type: 'img',
+      url: 'https://cdn.example.com/content-media/x.webp',
+      alt: 'no caption',
+      asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+      width: 10,
+      height: 10,
+      children: [{ text: '' }],
+    }
+    expect(getAllTextRuns(captionless)).toEqual([])
   })
 })
