@@ -5,7 +5,8 @@ import type { Content } from './schema/types'
  * callout variant, both heading levels, all marks (incl. highlight/kbd and
  * color/size), links, inline dates, container lists with nesting, a merged
  * table with a header row, toggles with indented contents, columns, hr,
- * alignment/line-height props, captions, code lines, and a Drug Card.
+ * block + inline KaTeX equations, alignment/line-height props, captions,
+ * code lines, and a Drug Card.
  * Renderer snapshots run over it (rules.md §6.4), and the M1 anchor fixture
  * suite (1.D) extends from it — keep block ids stable.
  */
@@ -264,6 +265,21 @@ export const FIXTURE_DOCUMENT: Content = [
       notes: 'Stop 7 days before elective surgery.',
     },
     children: [{ text: '' }],
+  },
+  {
+    id: 'fx-equation-henderson',
+    type: 'equation',
+    texExpression: 'pH = pK_a + \\log_{10}\\frac{[A^-]}{[HA]}',
+    children: [{ text: '' }],
+  },
+  {
+    id: 'fx-p-inline-equation',
+    type: 'p',
+    children: [
+      { text: 'Clearance follows ' },
+      { type: 'inline_equation', texExpression: 'CL = k_e \\cdot V_d', children: [{ text: '' }] },
+      { text: ' at steady state.' },
+    ],
   },
   {
     id: 'fx-p-outro',

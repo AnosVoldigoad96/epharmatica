@@ -384,6 +384,24 @@
     margin-block-start: 12px;
   }
 
+  /* KaTeX equations — display math centers in its own scroll container
+     (wide formulas scroll, the page never grows a horizontal scrollbar);
+     the inline chip inherits the surrounding text metrics. KaTeX's own
+     glyph/spacing CSS ships from katex.min.css via the (learn) layout. */
+  .rt-equation {
+    overflow-x: auto;
+    padding-block: 4px;
+    text-align: center;
+  }
+
+  .rt-equation .katex {
+    font-size: 1.15em;
+  }
+
+  .rt-inline-equation .katex {
+    font-size: 1em;
+  }
+
   /* Columns — flex row, stored % widths as flex-basis; stacks on small
      screens (logical properties keep RTL order correct) */
   .rt-columns {

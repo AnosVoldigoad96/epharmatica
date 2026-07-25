@@ -44,6 +44,8 @@ describe('editorKit (plugin resolution)', () => {
       'column',
       'column_group',
       'date',
+      'equation',
+      'inline_equation',
       'emoji',
       'hr',
       'highlight',

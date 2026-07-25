@@ -16,8 +16,10 @@ export type AnchorPath = (string | number)[]
 
 /**
  * The anchorable kind of a block — null for blocks with no selectable text
- * of their own (toc, hr) and for column groups (their nested blocks carry
- * no ids; column text is searchable but not highlight-anchorable).
+ * of their own (toc, hr, equation — rendered KaTeX output has no
+ * offset-addressable text run; the block is still ONE unit with a stable
+ * data-block-id in the DOM) and for column groups (their nested blocks
+ * carry no ids; column text is searchable but not highlight-anchorable).
  * Note img/video anchor via their captions only; a toggle's SUMMARY line is
  * prose (its contents are ordinary top-level blocks with their own ids).
  */
@@ -44,6 +46,7 @@ export function getAnchorKind(block: Block): AnchorKind | null {
       return 'list'
     case 'toc':
     case 'hr':
+    case 'equation':
     case 'column_group':
       return null
   }
@@ -130,6 +133,7 @@ export function getTextRuns(block: Block, path: AnchorPath): string | null {
 
     case 'toc':
     case 'hr':
+    case 'equation':
     case 'column_group':
       return null
   }

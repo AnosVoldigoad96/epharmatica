@@ -18,9 +18,9 @@
  *    following TOP-LEVEL blocks whose `indent` is greater than the
  *    toggle's. Every enclosed block keeps its own id — so toggle contents
  *    stay ordinary anchor targets.
- *  - Void blocks (img, video, toc, drug_card, hr) keep the Slate-compatible
- *    `children: [{ text: '' }]` so the editing surface can host them
- *    unchanged; their real payload lives in props.
+ *  - Void blocks (img, video, toc, drug_card, hr, equation) keep the
+ *    Slate-compatible `children: [{ text: '' }]` so the editing surface can
+ *    host them unchanged; their real payload lives in props.
  */
 
 /** Storage schema version: 1 = flat lists, 2 = container lists + styling
@@ -67,7 +67,18 @@ export type DateNode = {
   children: VoidChildren
 }
 
-export type InlineNode = TextNode | LinkNode | DateNode
+/**
+ * Inline KaTeX equation — a void chip whose payload is the TeX source
+ * (`texExpression`, the official Plate math prop). Renderers turn it into
+ * KaTeX HTML; the raw TeX is what search/plain-text extraction sees.
+ */
+export type InlineEquationNode = {
+  type: 'inline_equation'
+  texExpression: string
+  children: VoidChildren
+}
+
+export type InlineNode = TextNode | LinkNode | DateNode | InlineEquationNode
 
 export function isTextNode(node: InlineNode): node is TextNode {
   return !('type' in node)
@@ -75,6 +86,10 @@ export function isTextNode(node: InlineNode): node is TextNode {
 
 export function isDateNode(node: InlineNode): node is DateNode {
   return 'type' in node && node.type === 'date'
+}
+
+export function isInlineEquationNode(node: InlineNode): node is InlineEquationNode {
+  return 'type' in node && node.type === 'inline_equation'
 }
 
 /** Paragraph nested inside a structural block (no id — the parent anchors). */
@@ -215,6 +230,20 @@ export type ColumnGroupBlock = {
 export type HrBlock = {
   id: string
   type: 'hr'
+  children: VoidChildren
+  indent?: number
+}
+
+/**
+ * Block KaTeX equation (display math) — a void block; `texExpression` is
+ * the TeX source (official Plate math prop). The public reader renders it
+ * server-side with katex.renderToString, so anonymous clients receive HTML
+ * + CSS only, never the KaTeX engine.
+ */
+export type EquationBlock = {
+  id: string
+  type: 'equation'
+  texExpression: string
   children: VoidChildren
   indent?: number
 }
@@ -365,6 +394,7 @@ export type Block =
   | ListBlock
   | ToggleBlock
   | HrBlock
+  | EquationBlock
   | ColumnGroupBlock
 
 export type BlockType = Block['type']

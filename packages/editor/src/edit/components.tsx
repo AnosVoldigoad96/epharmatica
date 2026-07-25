@@ -15,6 +15,7 @@ import { CALLOUT_VARIANTS, DRUG_CARD_FIELD_KEYS } from '../schema/types'
 import { parseYouTubeUrl, youTubeThumbnailUrl } from '../schema/youtube'
 import { useEditorLabels } from './context'
 import { EmojiInputElement } from './emoji-input'
+import { EquationElement, InlineEquationElement } from './equation-node'
 import { SlashInputElement } from './slash-input'
 
 /**
@@ -603,6 +604,9 @@ export const editorComponents = {
   column: ColumnElement,
   hr: HrElement,
   date: DateElement,
+  // KaTeX equations (vendored official node components, equation-node.tsx).
+  equation: EquationElement,
+  inline_equation: InlineEquationElement,
   // Marks.
   highlight: HighlightLeaf,
   kbd: KbdLeaf,

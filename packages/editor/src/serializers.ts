@@ -26,6 +26,9 @@ export function inlineText(nodes: InlineNode[]): string {
     .map((node) => {
       if (isTextNode(node)) return node.text
       if (node.type === 'date') return formatDateDisplay(node.date)
+      // Raw TeX — searchable ("Michaelis", "\\frac") even though the reader
+      // shows rendered math.
+      if (node.type === 'inline_equation') return node.texExpression
       return inlineText(node.children)
     })
     .join('')
@@ -84,6 +87,9 @@ export function blockPlainText(block: Block | ColumnChildBlock): string {
     case 'ul':
     case 'ol':
       return listItemsText(block.children).join('\n')
+    case 'equation':
+      // The raw TeX source — keeps formulas searchable (M1 §5.9).
+      return block.texExpression
     case 'column_group':
       return block.children
         .map((column) => column.children.map(blockPlainText).filter(Boolean).join('\n'))

@@ -31,6 +31,8 @@ import { ColumnItemPlugin, ColumnPlugin } from '@platejs/layout/react'
 import { LinkPlugin } from '@platejs/link/react'
 import { BulletedListRules, OrderedListRules } from '@platejs/list-classic'
 import { ListPlugin } from '@platejs/list-classic/react'
+import { MathRules } from '@platejs/math'
+import { EquationPlugin, InlineEquationPlugin } from '@platejs/math/react'
 import { SlashPlugin } from '@platejs/slash-command/react'
 import { TablePlugin } from '@platejs/table/react'
 import { TogglePlugin } from '@platejs/toggle/react'
@@ -81,6 +83,10 @@ import { BlockDraggable } from './draggable'
  *    element, flattened at save); the chosen emoji inserts as PLAIN TEXT —
  *    no storage impact at all.
  *  - Date: inline void `date` element with canonical YYYY-MM-DD payload.
+ *  - EQUATIONS (official @platejs/math): block `equation` + inline
+ *    `inline_equation` voids carrying `texExpression` — exactly the schema
+ *    shapes. Official markdown rules: `$tex$` → inline, `$$` + Enter →
+ *    block (both self-gate out of code blocks and existing equations).
  *  - NodeIdPlugin stamps `id` on blocks (replacing the core instance, so it
  *    stays enabled under NODE_ENV=test too). Nested elements (li/lic/tr/td/
  *    column/nested p/code_line) may still receive ids — the serializer
@@ -232,6 +238,7 @@ const INDENT_TARGETS = [
   'ol',
   'toggle',
   'hr',
+  'equation',
   'column_group',
 ]
 
@@ -287,6 +294,14 @@ export const editorKit: AnyPluginConfig[] = [
   ColumnItemPlugin,
   // Inline date chip.
   DatePlugin,
+  // KaTeX equations (official math plugin) — block + inline voids with the
+  // official `$…$` / `$$⏎` markdown input rules.
+  EquationPlugin.configure({
+    inputRules: [MathRules.markdown({ on: 'break', variant: '$$' })],
+  }),
+  InlineEquationPlugin.configure({
+    inputRules: [MathRules.markdown({ variant: '$' })],
+  }),
   // ':' emoji combobox — inserts plain unicode text. (@emoji-mart/data's
   // main IS the JSON dataset; its d.ts declares no default export, hence
   // the cast.)
