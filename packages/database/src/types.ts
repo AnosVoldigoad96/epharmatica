@@ -1397,10 +1397,6 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: number
       }
-      purge_content_trash: {
-        Args: { p_trash_id?: string }
-        Returns: number
-      }
       publish_subtopic: {
         Args: {
           p_primary_video_url: string
@@ -1409,6 +1405,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      purge_content_trash: { Args: { p_trash_id?: string }; Returns: number }
       refresh_media_refs: {
         Args: { p_asset_ids: string[]; p_source: string; p_subtopic_id: string }
         Returns: undefined
