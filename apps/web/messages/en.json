@@ -5,6 +5,7 @@
     "accountMenu": {
       "menuAria": "Account menu",
       "admin": "Admin dashboard",
+      "dashboard": "Dashboard",
       "settings": "Settings",
       "signOut": "Sign out"
     }
@@ -429,6 +430,72 @@
         "badPassword": "That password doesn't match.",
         "generic": "Something went wrong. Try again."
       }
+    }
+  },
+  "account": {
+    "meta": {
+      "dashboard": {
+        "title": "Dashboard",
+        "description": "Continue studying, progress by subject, recent highlights and notes, bookmarks."
+      },
+      "highlights": {
+        "title": "My Highlights",
+        "description": "Every highlight you've made, grouped by subject and unit."
+      }
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "continueLabel": "Continue studying",
+      "resume": "Resume",
+      "emptyContinueBody": "Open any unit and it will wait for you here.",
+      "startStudying": "Start studying",
+      "progressLabel": "Progress by subject",
+      "progressCounter": "{completed} / {published} units",
+      "progressStripAria": "{completed} of {published} units complete",
+      "progressEmpty": "Published subjects appear here as they go live.",
+      "highlightsLabel": "Recent highlights",
+      "highlightsEmpty": "Highlight a passage in any unit and it lands here.",
+      "viewAllHighlights": "My Highlights",
+      "notesLabel": "Recent notes",
+      "notesEmpty": "Notes you take while reading land here.",
+      "noteAttached": "On highlight",
+      "noteFree": "Unit note",
+      "bookmarksLabel": "Bookmarks",
+      "bookmarksEmpty": "Bookmark units or topics to shortcut back to them.",
+      "bookmarkKindTopic": "Topic",
+      "removeAria": "Remove bookmark: {title}",
+      "removeFailed": "That didn't save. Check your connection and try again.",
+      "unavailable": "No longer available",
+      "orphanChip": "Orphaned",
+      "daysAgo": "{days, plural, =0 {Today} =1 {Yesterday} other {# days ago}}"
+    },
+    "highlights": {
+      "title": "My Highlights",
+      "backToDashboard": "Dashboard",
+      "counter": "{count, plural, one {# highlight} other {# highlights}}",
+      "filterLabel": "Filter by color",
+      "filterAll": "All",
+      "colors": {
+        "amber": "Amber",
+        "mint": "Mint",
+        "lilac": "Lilac",
+        "rose": "Rose"
+      },
+      "orphanedLabel": "Orphaned",
+      "orphanedHint": "Open the unit and restore it from the notes drawer by re-selecting the passage.",
+      "openUnit": "Open unit",
+      "noteLabel": "Note",
+      "movedChip": "Moved",
+      "unavailable": "No longer available",
+      "unavailableGroup": "No longer available",
+      "delete": "Delete",
+      "deleteConfirm": "Delete",
+      "deleteWithNote": "Deletes its note too.",
+      "cancel": "Cancel",
+      "deleteFailed": "That didn't save. Check your connection and try again.",
+      "empty": "Highlight a passage in any unit and it lands here.",
+      "emptyFiltered": "No highlights in this color.",
+      "daysAgo": "{days, plural, =0 {Today} =1 {Yesterday} other {# days ago}}"
     }
   },
   "admin": {
