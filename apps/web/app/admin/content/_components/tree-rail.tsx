@@ -63,9 +63,17 @@ function RailRow({
   )
 }
 
-export function TreeRail({ tree }: { tree: ContentTree }) {
+export function TreeRail({
+  tree,
+  trashCount = null,
+}: {
+  tree: ContentTree
+  /** Open trash-event count — null hides the Trash link (non-admin staff). */
+  trashCount?: number | null
+}) {
   const t = useTranslations('admin.content.rail')
   const pathname = usePathname()
+  const onTrash = pathname === '/admin/content/trash'
 
   return (
     <nav aria-label={t('label')} className="hidden border-e border-line pb-6 pt-6 md:block">
@@ -126,6 +134,22 @@ export function TreeRail({ tree }: { tree: ContentTree }) {
           )
         })}
       </ul>
+      {trashCount !== null ? (
+        <div className="mt-3 border-t border-line pt-3">
+          <Link
+            href="/admin/content/trash"
+            aria-current={onTrash ? 'page' : undefined}
+            className={`flex items-center gap-2 border-s-2 py-[7px] pe-[18px] ps-[18px] text-[13px] ${
+              onTrash
+                ? 'border-primary bg-primary-tint font-semibold text-primary-strong'
+                : 'border-transparent text-ink-2 hover:bg-primary-tint/50 hover:text-ink'
+            }`}
+          >
+            <span className="min-w-0 flex-1 truncate">{t('trash')}</span>
+            <span className="font-mono text-[10px] tabular-nums text-ink-2">{trashCount}</span>
+          </Link>
+        </div>
+      ) : null}
       <p className="mt-4 px-[18px] font-mono text-[9px] uppercase tracking-[0.08em] text-ink-2">
         {t('legend')}
       </p>

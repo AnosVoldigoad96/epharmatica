@@ -10,13 +10,15 @@ import { AdminSheet } from './admin-sheet'
 import type { RowStatus } from './list-types'
 
 /**
- * Delete… dialog (admin+ only — founder directive, migration 023): the
- * move sheet's typed-confirmation chrome turned danger. Spells out exactly
- * what goes — the node and its subtree with the rollup counts incl.
- * published, every dependent, the student data on those pages — then arms
- * the danger confirm only once the node's EXACT name is typed. The server
- * re-validates the typed name against the pre-delete tree; the cascade
- * cannot be undone.
+ * Delete… dialog (admin+ only — founder directive, migration 023 → soft
+ * delete 024): the move sheet's typed-confirmation chrome turned danger.
+ * Spells out exactly what happens — the node and its subtree (rollup counts
+ * incl. published) move to Trash, vanish from students/readers immediately,
+ * stay restorable for 14 days, and keep their name/slug reserved until
+ * purged — then arms the danger confirm only once the node's EXACT name is
+ * typed. The server re-validates the typed name against the pre-delete
+ * tree. Danger styling stays: the 14-day purge makes this permanent in the
+ * end.
  */
 export function DeleteDialog({
   level,
@@ -76,8 +78,10 @@ export function DeleteDialog({
           ) : status.status === 'published' ? (
             <p>{t('delete.publishedPage')}</p>
           ) : null}
+          <p>{t('delete.restorableLine')}</p>
           <p>{t('delete.dependentsLine')}</p>
           <p>{t('delete.studentDataLine')}</p>
+          <p>{t('delete.reservedLine')}</p>
           <p>{t('delete.cacheLine', { levelName })}</p>
         </div>
       </div>

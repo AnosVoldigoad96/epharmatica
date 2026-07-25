@@ -201,6 +201,7 @@ export type Database = {
       chapters: {
         Row: {
           created_at: string
+          deleted_at: string | null
           id: string
           name: string
           slug: string
@@ -210,6 +211,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name: string
           slug: string
@@ -219,6 +221,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           id?: string
           name?: string
           slug?: string
@@ -393,6 +396,68 @@ export type Database = {
             columns: ['subtopic_id']
             isOneToOne: false
             referencedRelation: 'subtopics'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      content_trash: {
+        Row: {
+          created_at: string
+          deleted_at: string
+          deleted_by: string | null
+          entity_id: string
+          entity_ids: string[]
+          id: string
+          level: Database['public']['Enums']['content_level']
+          name: string
+          pages: number
+          published: number
+          purge_after: string
+          purged_at: string | null
+          restored_at: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string
+          deleted_by?: string | null
+          entity_id: string
+          entity_ids: string[]
+          id?: string
+          level: Database['public']['Enums']['content_level']
+          name: string
+          pages?: number
+          published?: number
+          purge_after: string
+          purged_at?: string | null
+          restored_at?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string
+          deleted_by?: string | null
+          entity_id?: string
+          entity_ids?: string[]
+          id?: string
+          level?: Database['public']['Enums']['content_level']
+          name?: string
+          pages?: number
+          published?: number
+          purge_after?: string
+          purged_at?: string | null
+          restored_at?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'content_trash_deleted_by_fkey'
+            columns: ['deleted_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
             referencedColumns: ['id']
           },
         ]
@@ -1018,6 +1083,7 @@ export type Database = {
         Row: {
           created_at: string
           default_semester: number | null
+          deleted_at: string | null
           description: string | null
           icon: string | null
           id: string
@@ -1029,6 +1095,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_semester?: number | null
+          deleted_at?: string | null
           description?: string | null
           icon?: string | null
           id?: string
@@ -1040,6 +1107,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_semester?: number | null
+          deleted_at?: string | null
           description?: string | null
           icon?: string | null
           id?: string
@@ -1055,6 +1123,7 @@ export type Database = {
           chapter_id: string | null
           content: Json
           created_at: string
+          deleted_at: string | null
           headings_text: string
           id: string
           plain_text: string
@@ -1077,6 +1146,7 @@ export type Database = {
           chapter_id?: string | null
           content?: Json
           created_at?: string
+          deleted_at?: string | null
           headings_text?: string
           id?: string
           plain_text?: string
@@ -1099,6 +1169,7 @@ export type Database = {
           chapter_id?: string | null
           content?: Json
           created_at?: string
+          deleted_at?: string | null
           headings_text?: string
           id?: string
           plain_text?: string
@@ -1138,6 +1209,7 @@ export type Database = {
         Row: {
           chapter_id: string
           created_at: string
+          deleted_at: string | null
           description: string | null
           id: string
           name: string
@@ -1149,6 +1221,7 @@ export type Database = {
         Insert: {
           chapter_id: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           name: string
@@ -1160,6 +1233,7 @@ export type Database = {
         Update: {
           chapter_id?: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           name?: string
@@ -1303,7 +1377,7 @@ export type Database = {
           p_entity_id: string
           p_level: Database['public']['Enums']['content_level']
         }
-        Returns: undefined
+        Returns: string
       }
       has_role: { Args: { required_roles: string[] }; Returns: boolean }
       move_content_node: {
@@ -1321,6 +1395,10 @@ export type Database = {
       }
       prune_audit_log: {
         Args: { p_from: string; p_to: string }
+        Returns: number
+      }
+      purge_content_trash: {
+        Args: { p_trash_id?: string }
         Returns: number
       }
       publish_subtopic: {
@@ -1343,6 +1421,7 @@ export type Database = {
         }
         Returns: string[]
       }
+      restore_content_node: { Args: { p_trash_id: string }; Returns: undefined }
       restore_revision: { Args: { p_revision_id: string }; Returns: string }
       role_rank: {
         Args: { p_role: Database['public']['Enums']['app_role'] }

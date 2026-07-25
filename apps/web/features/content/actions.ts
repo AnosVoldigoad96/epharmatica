@@ -500,11 +500,13 @@ export async function moveNode(
 }
 
 // ---------------------------------------------------------------------------
-// Delete… (admin+, migration 023) — typed-name confirmation; the SECURITY
-// DEFINER RPC cascades the whole subtree + every dependent (revisions,
-// review events, study data, discussions, preview links, media refs) and
-// sweeps slug_history. Direct table deletes are RLS-blocked for every role
-// — the RPC is the single path.
+// Delete… (admin+, migration 023 → SOFT delete 024) — typed-name
+// confirmation; the SECURITY DEFINER RPC stamps deleted_at over the whole
+// subtree (dependents — revisions, review events, study data, discussions,
+// preview links, media refs — ride along, hidden by RLS) and records a
+// content_trash event with a 14-day purge_after. Slugs stay reserved while
+// trashed. Direct table deletes are RLS-blocked for every role — the RPC is
+// the single path. Restore/purge below settle the event.
 // ---------------------------------------------------------------------------
 
 export async function deleteNode(
@@ -530,8 +532,10 @@ export async function deleteNode(
 
   const supabase = await createClient()
   try {
-    await withAudit(
-      {
+    // The RPC returns the content_trash event id — captured into the audit
+    // meta so the node_deleted row links to its restore/purge lifecycle.
+    await withAudit<string>(
+      (trashId) => ({
         action: AUDIT_ACTIONS.node_deleted,
         actorId: gate.profile.id,
         entity: 'content',
@@ -542,22 +546,141 @@ export async function deleteNode(
           slug: target.slug,
           ...target.counts,
           published: target.affectedIds.length,
+          trash_id: trashId,
         },
-      },
+      }),
       async () => {
-        const { error } = await supabase.rpc('delete_content_node', {
+        const { data, error } = await supabase.rpc('delete_content_node', {
           p_level: level,
           p_entity_id: id,
         })
-        if (error) throw new DbActionError(error)
+        if (error || !data) throw new DbActionError(error)
+        return data
       },
     )
     // OLD-location tags off the pre-delete tree: the node's own tag, every
-    // ancestor list, and the sitemap (fireTagsForNode covers all three).
+    // ancestor list, and the sitemap (fireTagsForNode covers all three) —
+    // trashed content vanishes from every public surface instantly.
     fireTagsForNode(tree, level, id, target.affectedIds)
   } catch (err) {
     return failureFrom(err)
   }
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// Trash lifecycle (admin+, migration 024): restore un-trashes exactly one
+// event's rows; purge hard-deletes them ahead of the 14-day cron. Both read
+// the open event first (admin-read RLS) for friendly notFound + audit meta.
+// ---------------------------------------------------------------------------
+
+/** One OPEN content_trash event (restored_at/purged_at null), or null. */
+async function openTrashEvent(trashId: string) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('content_trash')
+    .select('level, entity_id, name, slug, pages, published')
+    .eq('id', trashId)
+    .is('restored_at', null)
+    .is('purged_at', null)
+    .maybeSingle()
+  return data
+}
+
+export async function restoreNode(trashId: string): Promise<ActionResult> {
+  const t = await getTranslations('admin.content.errors')
+  const gate = await requireRoles(DELETING_ROLES)
+  if (!gate.ok) return gate
+
+  const event = await openTrashEvent(trashId)
+  if (!event) return { ok: false, error: t('notFound') }
+
+  const supabase = await createClient()
+  try {
+    await withAudit(
+      {
+        action: AUDIT_ACTIONS.node_restored,
+        actorId: gate.profile.id,
+        entity: 'content',
+        entityId: event.entity_id,
+        meta: {
+          level: event.level,
+          name: event.name,
+          slug: event.slug,
+          pages: event.pages,
+          published: event.published,
+          trash_id: trashId,
+        },
+      },
+      async () => {
+        const { error } = await supabase.rpc('restore_content_node', { p_trash_id: trashId })
+        if (error) throw new DbActionError(error)
+      },
+    )
+  } catch (err) {
+    // The RPC refuses a restore under a still-trashed parent — distinct copy
+    // (the DB message is the contract: "the parent is deleted — restore it
+    // first"; anything else falls through to the standard failure map).
+    if (err instanceof DbActionError && err.dbError?.message?.includes('restore it first')) {
+      return { ok: false, error: t('restoreParentFirst') }
+    }
+    return failureFrom(err)
+  }
+
+  // POST-restore tree (getContentTree first touches the cache HERE, after
+  // the RPC): the subtree is publicly visible again, so fire the same tag
+  // set deleteNode fires — own tag, every ancestor list, sitemap.
+  const tree = await getContentTree()
+  fireTagsForNode(
+    tree,
+    event.level,
+    event.entity_id,
+    affectedPublishedIds(tree, event.level, event.entity_id) ?? [],
+  )
+  return { ok: true }
+}
+
+export async function purgeNode(trashId: string, typedName: string): Promise<ActionResult> {
+  const t = await getTranslations('admin.content.errors')
+  const gate = await requireRoles(DELETING_ROLES)
+  if (!gate.ok) return gate
+
+  const event = await openTrashEvent(trashId)
+  if (!event) return { ok: false, error: t('notFound') }
+
+  // Exact name, trimmed, case-sensitive — the deleteNode contract; the
+  // purge dialog mirrors it client-side.
+  if (typedName.trim() !== event.name) {
+    return { ok: false, error: t('typeNameToConfirm') }
+  }
+
+  const supabase = await createClient()
+  try {
+    await withAudit(
+      {
+        action: AUDIT_ACTIONS.node_purged,
+        actorId: gate.profile.id,
+        entity: 'content',
+        entityId: event.entity_id,
+        meta: {
+          level: event.level,
+          name: event.name,
+          slug: event.slug,
+          pages: event.pages,
+          published: event.published,
+          trash_id: trashId,
+        },
+      },
+      async () => {
+        const { error } = await supabase.rpc('purge_content_trash', { p_trash_id: trashId })
+        if (error) throw new DbActionError(error)
+      },
+    )
+  } catch (err) {
+    return failureFrom(err)
+  }
+  // No tag firing: trashed content is already invisible on every public
+  // surface — the purge only frees the reserved name/slug.
   return { ok: true }
 }
 

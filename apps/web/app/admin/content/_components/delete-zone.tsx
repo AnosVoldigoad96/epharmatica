@@ -12,7 +12,8 @@ import type { RowStatus } from './list-types'
  * resolves the viewer's role and gates rendering). One danger-outlined
  * panel whose single affordance opens the typed-name DeleteDialog;
  * afterDeleteHref lands a successful delete on the parent list instead of
- * a 404 on the just-deleted node.
+ * a 404 on the just-trashed node. Deletes are SOFT (024): the page moves
+ * to Trash, restorable for 14 days — the zone copy says so.
  */
 export function DeleteZone({
   level,

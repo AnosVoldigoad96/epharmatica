@@ -8,6 +8,7 @@
 import 'server-only'
 
 import { cache } from 'react'
+import type { ContentLevel } from '@epharmatica/database'
 import { createClient } from '@/lib/supabase/server'
 import type { ContentTree } from './tree'
 
@@ -363,6 +364,64 @@ export async function getDiscussions(subtopicId: string): Promise<DiscussionThre
     createdAt: row.created_at,
     replies: replies.get(row.id) ?? [],
   }))
+}
+
+export type TrashEventSummary = {
+  id: string
+  level: ContentLevel
+  entityId: string
+  name: string
+  slug: string
+  pages: number
+  published: number
+  deletedAt: string
+  purgeAfter: string
+  /** Whole days since deletion, computed at read time (waitingDays precedent). */
+  deletedDaysAgo: number
+  /** Whole days until the purge cron may hard-delete — 0 means "due". */
+  purgeInDays: number
+}
+
+/**
+ * OPEN trash events (migration 024), newest deletion first. content_trash
+ * is admin-read under RLS — every other role gets an empty list. Day math
+ * happens server-side at read time (the waitingDays precedent) so render
+ * stays pure.
+ */
+export async function getContentTrash(): Promise<TrashEventSummary[]> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('content_trash')
+    .select('id, level, entity_id, name, slug, pages, published, deleted_at, purge_after')
+    .is('restored_at', null)
+    .is('purged_at', null)
+    .order('deleted_at', { ascending: false })
+
+  const nowMs = Date.now()
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    level: row.level,
+    entityId: row.entity_id,
+    name: row.name,
+    slug: row.slug,
+    pages: row.pages,
+    published: row.published,
+    deletedAt: row.deleted_at,
+    purgeAfter: row.purge_after,
+    deletedDaysAgo: Math.max(0, Math.floor((nowMs - Date.parse(row.deleted_at)) / 86_400_000)),
+    purgeInDays: Math.max(0, Math.ceil((Date.parse(row.purge_after) - nowMs) / 86_400_000)),
+  }))
+}
+
+/** Open-event count for the rail's Trash badge (admin-read RLS, as above). */
+export async function getContentTrashCount(): Promise<number> {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from('content_trash')
+    .select('id', { count: 'exact', head: true })
+    .is('restored_at', null)
+    .is('purged_at', null)
+  return count ?? 0
 }
 
 /**
