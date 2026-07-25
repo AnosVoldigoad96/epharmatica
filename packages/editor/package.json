@@ -16,6 +16,7 @@
     "react": "^19"
   },
   "dependencies": {
+    "@ariakit/react": "^0.4.35",
     "@platejs/basic-nodes": "^53.0.0",
     "@platejs/code-block": "^53.0.0",
     "@platejs/combobox": "53.0.0",
@@ -25,6 +26,7 @@
     "@platejs/list": "^53.1.3",
     "@platejs/slash-command": "53.0.0",
     "@platejs/table": "^53.0.9",
+    "lucide-react": "^1.25.0",
     "platejs": "^53.2.4",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",

@@ -211,8 +211,12 @@ export const editorKit = [
       triggerQuery: (editor) => !editor.api.some({ match: { type: ['code_block'] } }),
     },
   }),
-  // Drag & reorder for top-level blocks (six-dot gutter handle, drop line).
+  // Drag & reorder for top-level blocks (official plate-ui BlockDraggable:
+  // GripVertical gutter handle, cloned-DOM drag preview, drop line).
+  // enableScroller matches the official DndKit: the viewport auto-scrolls
+  // while dragging near its edges.
   DndPlugin.configure({
+    options: { enableScroller: true },
     render: { aboveNodes: BlockDraggable },
   }),
   // Markdown autoformat (input rules — see MarkdownRulesPlugin above).

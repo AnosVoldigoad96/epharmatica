@@ -263,8 +263,9 @@ function InsertMenu({ labels, bridges }: { labels: SubtopicEditorLabels; bridges
                   title={item.disabledNote ?? item.label}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => pick(item)}
-                  className="block w-full whitespace-nowrap px-3 py-1.5 text-start font-mono text-xs text-ink hover:bg-paper disabled:opacity-40"
+                  className="flex w-full items-center gap-2 whitespace-nowrap px-3 py-1.5 text-start font-mono text-xs text-ink hover:bg-paper disabled:opacity-40"
                 >
+                  <item.icon className="size-4 shrink-0 text-ink-2" aria-hidden />
                   {item.label}
                 </button>
               ))}
