@@ -1372,6 +1372,15 @@ export type Database = {
         Args: { p_subtopic_ids: string[] }
         Returns: number
       }
+      create_highlight_with_note: {
+        Args: {
+          p_anchor: Json
+          p_color: Database['public']['Enums']['highlight_color']
+          p_note_content?: Json
+          p_subtopic_id: string
+        }
+        Returns: string
+      }
       delete_content_node: {
         Args: {
           p_entity_id: string
@@ -1406,6 +1415,17 @@ export type Database = {
         Returns: undefined
       }
       purge_content_trash: { Args: { p_trash_id?: string }; Returns: number }
+      reanchor_apply: {
+        Args: { p_results: Json; p_subtopic_id: string }
+        Returns: number
+      }
+      reanchor_fetch: {
+        Args: { p_subtopic_id: string }
+        Returns: {
+          anchor: Json
+          id: string
+        }[]
+      }
       refresh_media_refs: {
         Args: { p_asset_ids: string[]; p_source: string; p_subtopic_id: string }
         Returns: undefined

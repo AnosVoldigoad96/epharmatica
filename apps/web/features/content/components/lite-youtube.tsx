@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { parseYouTubeUrl, youTubeEmbedUrl, youTubeThumbnailUrl } from '@epharmatica/editor'
+import { EVENTS } from '@/lib/observability/events'
 
 /**
  * Lite YouTube facade (M1 §5.3): until click, the only asset fetched is the
@@ -49,6 +50,8 @@ export function LiteYouTube({
     <button
       type="button"
       onClick={() => setPlaying(true)}
+      // M1 §10: video_played fires declaratively on the facade's one click.
+      data-umami-event={EVENTS.video_played}
       aria-label={title ? `${playLabel} — ${title}` : playLabel}
       className="group relative block aspect-video w-full cursor-pointer overflow-hidden border-0 bg-ink p-0"
     >

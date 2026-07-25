@@ -22,6 +22,7 @@ import { MonographLabel, ReadingBar } from '@epharmatica/ui'
 import { Chip } from '@/app/(marketing)/_components/chip'
 import { Crumbs } from '@/app/(learn)/_components/crumbs'
 import { semesterCode, updatedDate } from '@/app/(learn)/_lib/format'
+import { StudyLayerMount } from '@/app/(learn)/_components/study-layer-mount'
 import { LiteYouTube } from '@/features/content/components/lite-youtube'
 import { MemberUnlock } from '@/features/content/components/member-unlock'
 import type { ReaderPayload } from '@/features/content/public-queries'
@@ -210,8 +211,12 @@ export async function Reader({ payload }: { payload: ReaderPayload }) {
               ) : null}
             </div>
 
-            {/* The anonymous preview (server-truncated, D8/I3) */}
-            <div className="text-[16px] leading-[1.65]">
+            {/* The anonymous preview (server-truncated, D8/I3) + member
+                unlock. data-study-scope wraps BOTH so the 1.D study layer
+                (highlights, note glyphs) covers server-rendered preview
+                blocks AND client-swapped unlocked blocks; `relative` hosts
+                its zero-layout overlay. */}
+            <div data-study-scope className="relative text-[16px] leading-[1.65]">
               <RichText
                 content={payload.blocks}
                 components={{
@@ -221,28 +226,28 @@ export async function Reader({ payload }: { payload: ReaderPayload }) {
                 }}
                 labels={richTextLabels}
               />
-            </div>
 
-            {/* Gate + member unlock — only when the shell is truncated */}
-            {payload.gated ? (
-              <MemberUnlock
-                subtopicId={payload.subtopicId}
-                previewCount={payload.blocks.length}
-                nextPath={currentPath}
-                labels={{
-                  gateLabel: t('gate.label'),
-                  benefits: [
-                    t('gate.benefitFullContent'),
-                    t('gate.benefitStudyTools'),
-                    t('gate.benefitProgress'),
-                  ],
-                  createAccount: t('gate.createAccount'),
-                  signIn: t('gate.signIn'),
-                  playVideo: playLabel,
-                }}
-                richTextLabels={richTextLabels}
-              />
-            ) : null}
+              {/* Gate + member unlock — only when the shell is truncated */}
+              {payload.gated ? (
+                <MemberUnlock
+                  subtopicId={payload.subtopicId}
+                  previewCount={payload.blocks.length}
+                  nextPath={currentPath}
+                  labels={{
+                    gateLabel: t('gate.label'),
+                    benefits: [
+                      t('gate.benefitFullContent'),
+                      t('gate.benefitStudyTools'),
+                      t('gate.benefitProgress'),
+                    ],
+                    createAccount: t('gate.createAccount'),
+                    signIn: t('gate.signIn'),
+                    playVideo: playLabel,
+                  }}
+                  richTextLabels={richTextLabels}
+                />
+              ) : null}
+            </div>
 
             {/* Medical-disclaimer obligation (M1): minimal mailto for 1.C */}
             <p className="mt-8">
@@ -293,18 +298,25 @@ export async function Reader({ payload }: { payload: ReaderPayload }) {
               </nav>
             ) : null}
           </div>
+
+          {/* Study layer (1.D): lazy client mount, signed-in only — the
+              static shell ships only the tiny session gate. */}
+          <StudyLayerMount subtopicId={payload.subtopicId} />
         </div>
 
-        {/* ── Right rail: ON THIS PAGE (study-tool actions land in 1.D) ── */}
+        {/* ── Right rail: study actions portal target (1.D) + ON THIS PAGE ── */}
         <aside className="hidden border-s border-line md:block">
-          {headings.length > 0 ? (
-            <nav aria-label={t('reader.onThisPage')} className="sticky top-20 p-[28px_24px]">
-              <MonographLabel as="div" size="sm" rule="hard" className="mb-3">
-                {t('reader.onThisPage')}
-              </MonographLabel>
-              {tocLinks}
-            </nav>
-          ) : null}
+          <div className="sticky top-20">
+            <div data-study-rail />
+            {headings.length > 0 ? (
+              <nav aria-label={t('reader.onThisPage')} className="p-[28px_24px]">
+                <MonographLabel as="div" size="sm" rule="hard" className="mb-3">
+                  {t('reader.onThisPage')}
+                </MonographLabel>
+                {tocLinks}
+              </nav>
+            ) : null}
+          </div>
         </aside>
       </div>
     </>

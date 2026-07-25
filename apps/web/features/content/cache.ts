@@ -37,14 +37,3 @@ export function revalidateContentTags(scope: ContentTagScope): void {
   for (const id of scope.subtopicIds ?? []) revalidateTag(subtopicTag(id), 'max')
   if (scope.sitemap) revalidateTag(SITEMAP_TAG, 'max')
 }
-
-/**
- * Re-anchor hand-off for moved published subtopics (M4 §5.3 → M1 §5.5).
- * The job itself is 1.D's post-publish machinery (exact-keep → re-path →
- * move → orphan, per-block-kind fixtures); until it lands this records
- * nothing — highlights cannot exist before the public reader (1.C) ships.
- * TODO(1.D): replace with the real enqueue when the re-anchor job lands.
- */
-export function enqueueReanchor(_subtopicIds: string[]): void {
-  // Intentionally empty — see TODO above.
-}

@@ -22,7 +22,8 @@ import {
   requireRoles,
 } from './gate'
 import type { DbErrorShape } from './gate'
-import { enqueueReanchor, revalidateContentTags } from './cache'
+import { revalidateContentTags } from './cache'
+import { runReanchor } from './reanchor'
 import { fireTagsForNode, fireTagsForParent } from './tags'
 import { getContentTree } from './queries'
 import {
@@ -492,7 +493,10 @@ export async function moveNode(
     fireTagsForNode(tree, level, id, affectedIds)
     // The destination's ancestors change too (blister lists, counts).
     fireTagsForParent(tree, level, newParentId)
-    enqueueReanchor(affectedIds)
+    // M4 gate: the re-anchor job runs on published moves. Content is
+    // unchanged by a move, so every anchor resolves to keep and the apply
+    // step short-circuits — cheap by construction (see reanchor.ts).
+    await runReanchor(affectedIds)
   } catch (err) {
     return failureFrom(err)
   }

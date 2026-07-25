@@ -80,8 +80,11 @@ export {
   paragraphsText,
 } from './serializers'
 
-export { getAnchorKind, getTextRuns } from './anchors'
-export type { AnchorKind, AnchorPath } from './anchors'
+export { getAllTextRuns, getAnchorKind, getTextRuns } from './anchors'
+export type { AnchorKind, AnchorPath, TextRun } from './anchors'
+
+export { reanchorHighlights } from './reanchor'
+export type { AnchorV1, ReanchorHighlight, ReanchorResult } from './reanchor'
 
 export { RichText } from './render/rich-text'
 export type { RichTextComponents, RichTextLabels, RichTextProps } from './render/rich-text'

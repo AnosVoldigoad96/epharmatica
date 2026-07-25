@@ -11,7 +11,7 @@ import {
 import type { Content } from '@epharmatica/editor'
 import { AUDIT_ACTIONS, withAudit } from '@/lib/observability/audit'
 import { createClient } from '@/lib/supabase/server'
-import { enqueueReanchor } from './cache'
+import { runReanchor } from './reanchor'
 import {
   AUTHORING_ROLES,
   DbActionError,
@@ -199,13 +199,15 @@ export async function publishSubtopic(subtopicId: string): Promise<ActionResult>
 
   try {
     await withAudit(
-      {
+      // Entry-of-result form: the re-anchor summary (M1 §5.5, R-M2 "observable
+      // in admin") rides the publish audit row.
+      (reanchor) => ({
         action: AUDIT_ACTIONS.workflow_published,
         actorId: gate.profile.id,
         entity: 'content',
         entityId: subtopicId,
-        meta: { reading_minutes: deriveReadingMinutes(validated.content) },
-      },
+        meta: { reading_minutes: deriveReadingMinutes(validated.content), reanchor },
+      }),
       async () => {
         const { error } = await supabase.rpc('publish_subtopic', {
           p_subtopic_id: subtopicId,
@@ -213,6 +215,9 @@ export async function publishSubtopic(subtopicId: string): Promise<ActionResult>
           p_reading_minutes: deriveReadingMinutes(validated.content),
         })
         if (error) throw new DbActionError(error)
+        // Never throws — a re-anchor hiccup must not fail a publish that
+        // already happened (summary.failed records it instead).
+        return runReanchor([subtopicId])
       },
     )
   } catch (err) {
@@ -228,7 +233,6 @@ export async function publishSubtopic(subtopicId: string): Promise<ActionResult>
 
   const tree = await getContentTree()
   fireTagsForSubtopic(tree, subtopicId)
-  enqueueReanchor([subtopicId])
   return { ok: true }
 }
 

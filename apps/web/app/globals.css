@@ -429,4 +429,52 @@
       margin-block-start: 16px;
     }
   }
+
+  /* ---- Study layer (1.D · M1 §5.5/§5.6) -------------------------------- */
+
+  /* Note glyph — the 12px square at a noted highlight's anchor end
+     (M1 §5.6 inline surface). Lives in an absolutely-positioned overlay
+     computed from Range rects: zero layout impact, zero CLS. Nudged above
+     the baseline so it reads as a marginal mark, not a character. */
+  .eph-note-glyph {
+    background-color: var(--color-primary-tint);
+    block-size: 12px;
+    border: 1px solid var(--color-primary);
+    cursor: pointer;
+    inline-size: 12px;
+    transform: translate(1px, -9px);
+  }
+
+  .eph-note-glyph:hover {
+    background-color: var(--color-primary);
+  }
+}
+
+/*
+ * User highlights (1.D · M1 §5.5) — painted through the CSS Custom
+ * Highlight API (no DOM mutation; overlap-safe; the study layer registers
+ * `epharmatica-{color}` Highlight objects and splits overlaps so the
+ * newest wins). STYLE §3: the four hl-* tokens are the USER layer only;
+ * dark mode swaps them to alpha overlays via the token sheet, and text on
+ * highlights stays ink in both themes. Browsers without the API simply
+ * don't paint — highlights still exist in the drawer.
+ */
+::highlight(epharmatica-amber) {
+  background-color: var(--color-hl-amber);
+  color: var(--color-ink);
+}
+
+::highlight(epharmatica-mint) {
+  background-color: var(--color-hl-mint);
+  color: var(--color-ink);
+}
+
+::highlight(epharmatica-lilac) {
+  background-color: var(--color-hl-lilac);
+  color: var(--color-ink);
+}
+
+::highlight(epharmatica-rose) {
+  background-color: var(--color-hl-rose);
+  color: var(--color-ink);
 }
