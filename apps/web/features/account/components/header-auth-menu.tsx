@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { AvatarSquare } from '@epharmatica/ui'
 import { ButtonLink } from '@/app/(marketing)/_components/button-link'
 import { createClient } from '@/lib/supabase/client'
@@ -11,8 +12,11 @@ import { createClient } from '@/lib/supabase/client'
  * Public-header account slot. The marketing pages stay STATIC: this
  * renders the waitlist CTA at build time and swaps to the avatar menu
  * client-side once a session is found (same control height — zero CLS).
- * Menu: Admin (staff roles only) · Settings · Sign out (this device;
- * sign-out-everywhere lives in settings, and only it is audited — M2).
+ * Menu: Admin (staff roles only) · Dashboard · Settings · Sign out (this
+ * device; sign-out-everywhere lives in settings, and only it is audited —
+ * M2). The Dashboard label reads its copy directly (useTranslations under
+ * the root NextIntlClientProvider) — the labels prop predates that and its
+ * callers are the static (marketing)/(learn) layouts.
  */
 
 type MenuState =
@@ -36,6 +40,7 @@ export function HeaderAuthMenu({
   }
 }) {
   const router = useRouter()
+  const tMenu = useTranslations('common.accountMenu')
   const [, startTransition] = useTransition()
   const [state, setState] = useState<MenuState>({ kind: 'anon' })
   const [open, setOpen] = useState(false)
@@ -140,6 +145,14 @@ export function HeaderAuthMenu({
               {labels.admin}
             </Link>
           ) : null}
+          <Link
+            role="menuitem"
+            href="/dashboard"
+            className={itemClass}
+            onClick={() => setOpen(false)}
+          >
+            {tMenu('dashboard')}
+          </Link>
           <Link
             role="menuitem"
             href="/settings/profile"
