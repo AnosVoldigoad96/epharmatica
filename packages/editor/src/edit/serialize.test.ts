@@ -756,6 +756,110 @@ describe('fromEditorValue — schema v2 blocks', () => {
     }
   })
 
+  it('equations: whitelists texExpression, coerces void children, strips junk', () => {
+    const value = [
+      {
+        id: 'eq',
+        type: 'equation',
+        texExpression: '\\frac{dC}{dt} = -kC',
+        __katexOpen: true,
+        children: [{ text: 'stray', bold: true }],
+      },
+      {
+        id: 'p1',
+        type: 'p',
+        children: [
+          { text: 'rate ' },
+          {
+            type: 'inline_equation',
+            texExpression: 'k_e',
+            selected: true,
+            children: [{ text: 'junk' }],
+          },
+        ],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        {
+          id: 'eq',
+          type: 'equation',
+          texExpression: '\\frac{dC}{dt} = -kC',
+          children: [{ text: '' }],
+        },
+        {
+          id: 'p1',
+          type: 'p',
+          children: [
+            { text: 'rate ' },
+            { type: 'inline_equation', texExpression: 'k_e', children: [{ text: '' }] },
+          ],
+        },
+      ])
+    }
+  })
+
+  it('equations: an empty inline chip drops; an empty block stays a placeholder', () => {
+    const result = fromEditorValue([
+      {
+        id: 'p1',
+        type: 'p',
+        children: [
+          { text: 'before ' },
+          { type: 'inline_equation', texExpression: '', children: [{ text: '' }] },
+          { text: ' after' },
+        ],
+      },
+      { id: 'eq', type: 'equation', texExpression: '', children: [{ text: '' }] },
+      // A non-string texExpression (editor glitch) coerces to the empty
+      // placeholder rather than failing the save.
+      { id: 'eq2', type: 'equation', texExpression: 42, children: [{ text: '' }] },
+    ])
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        { id: 'p1', type: 'p', children: [{ text: 'before ' }, { text: ' after' }] },
+        { id: 'eq', type: 'equation', texExpression: '', children: [{ text: '' }] },
+        { id: 'eq2', type: 'equation', texExpression: '', children: [{ text: '' }] },
+      ])
+    }
+  })
+
+  it('equations: inline chips survive inside table cells and list items', () => {
+    const chip = { type: 'inline_equation', texExpression: 'V_d', children: [{ text: '' }] }
+    const result = fromEditorValue([
+      {
+        id: 'tbl',
+        type: 'table',
+        children: [
+          {
+            type: 'tr',
+            children: [
+              { type: 'td', children: [{ type: 'p', children: [{ text: 'vol ' }, chip] }] },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'list',
+        type: 'ul',
+        children: [{ type: 'li', children: [{ type: 'lic', children: [chip] }] }],
+      },
+    ])
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      const table = result.content[0] as TableBlock
+      expect(table.children[0]?.children[0]?.children[0]?.children).toEqual([
+        { text: 'vol ' },
+        chip,
+      ])
+      const list = result.content[1] as ListBlock
+      expect(list.children[0]?.children[0]?.children).toEqual([chip])
+    }
+  })
+
   it('merged-cell round-trip: fixture table keeps its spans', () => {
     const result = fromEditorValue(FIXTURE_DOCUMENT)
     expect(result.ok).toBe(true)

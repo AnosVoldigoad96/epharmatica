@@ -13,9 +13,11 @@ import { parseYouTubeUrl } from './youtube'
  *
  * Schema v2 additions: container lists (ul/ol/li/lic), toggle, hr,
  * column_group, inline date, align/lineHeight/indent block styling,
- * color/background/size text marks, table cell spans. The v1 flat-list
- * spelling (p + listStyleType) still VALIDATES — stored rows must load —
- * but the serializer never writes it again.
+ * color/background/size text marks, table cell spans, KaTeX equations
+ * (block `equation` + inline `inline_equation`, both carrying a bounded
+ * `texExpression`). The v1 flat-list spelling (p + listStyleType) still
+ * VALIDATES — stored rows must load — but the serializer never writes it
+ * again.
  */
 
 /** Bounded CSS color: hex, bare named color, or rgb()/rgba(). No urls,
@@ -66,7 +68,22 @@ const dateNodeSchema = z.strictObject({
   children: voidChildren,
 })
 
-const inlineNodeSchema = z.union([textNodeSchema, linkNodeSchema, dateNodeSchema])
+/** TeX source bound: generous for real formulas, a ceiling for hostile
+ * payloads (KaTeX renders with throwOnError:false + trust:false). */
+const texExpressionSchema = z.string().max(2000)
+
+const inlineEquationNodeSchema = z.strictObject({
+  type: z.literal('inline_equation'),
+  texExpression: texExpressionSchema,
+  children: voidChildren,
+})
+
+const inlineNodeSchema = z.union([
+  textNodeSchema,
+  linkNodeSchema,
+  dateNodeSchema,
+  inlineEquationNodeSchema,
+])
 
 const inlineChildren = z.array(inlineNodeSchema).min(1)
 
@@ -212,6 +229,15 @@ const hrBlockSchema = (mode: IdMode) =>
     children: voidChildren,
   })
 
+/** Block equation — top-level only (columns never host it). */
+const equationBlockSchema = z.strictObject({
+  id: blockId,
+  indent: indentProp,
+  type: z.literal('equation'),
+  texExpression: texExpressionSchema,
+  children: voidChildren,
+})
+
 /* ------------------------------------------------------------------ lists */
 
 const listItemContentSchema = z.strictObject({
@@ -334,6 +360,7 @@ export const blockSchema = z.discriminatedUnion('type', [
   listBlockSchema({ withId: true }),
   toggleBlockSchema,
   hrBlockSchema({ withId: true }),
+  equationBlockSchema,
   columnGroupBlockSchema,
 ])
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { RichText, inlineText } from '@epharmatica/editor'
+import { ClientEquation, ClientInlineEquation, RichText, inlineText } from '@epharmatica/editor'
 import type { Content, RichTextLabels, VideoBlock } from '@epharmatica/editor'
 import { MonographLabel, StateGlyph } from '@epharmatica/ui'
 import { ButtonLink } from '@/app/(marketing)/_components/button-link'
@@ -21,6 +21,11 @@ import { createClient } from '@/lib/supabase/client'
  * remaining blocks (everything past the server-rendered preview), rendered
  * through the same <RichText/>. The gate card stays visible while the
  * unlock resolves.
+ *
+ * Equations: unlocked blocks hydrate CLIENT-side, so they use the lazy
+ * ClientEquation pair — katex is dynamic-imported only when an equation
+ * block actually mounts, keeping the engine out of the shared /learn chunk
+ * (the anon preview's equations render server-side in the RSC shell).
  */
 
 export type MemberUnlockLabels = {
@@ -80,7 +85,15 @@ export function MemberUnlock({
   if (unlocked) {
     return (
       <div className="mt-4">
-        <RichText content={unlocked} components={{ video: Video }} labels={richTextLabels} />
+        <RichText
+          content={unlocked}
+          components={{
+            video: Video,
+            equation: ClientEquation,
+            inlineEquation: ClientInlineEquation,
+          }}
+          labels={richTextLabels}
+        />
       </div>
     )
   }

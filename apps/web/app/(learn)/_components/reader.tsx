@@ -8,6 +8,9 @@ import {
   getPlainText,
   inlineText,
 } from '@epharmatica/editor'
+// Server-only KaTeX renderers (RSC): the anon shell carries finished
+// equation HTML — never the katex JS engine.
+import { StaticEquation, StaticInlineEquation } from '@epharmatica/editor/static'
 import type {
   CalloutVariant,
   DrugCardFieldKey,
@@ -211,7 +214,11 @@ export async function Reader({ payload }: { payload: ReaderPayload }) {
             <div className="text-[16px] leading-[1.65]">
               <RichText
                 content={payload.blocks}
-                components={{ video: ReaderVideo }}
+                components={{
+                  video: ReaderVideo,
+                  equation: StaticEquation,
+                  inlineEquation: StaticInlineEquation,
+                }}
                 labels={richTextLabels}
               />
             </div>

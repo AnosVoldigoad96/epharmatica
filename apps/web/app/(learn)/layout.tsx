@@ -1,3 +1,8 @@
+// KaTeX styles + hashed fonts for server-rendered equations (the reader
+// ships equation HTML + this CSS only — the katex JS engine stays out of
+// every /learn client chunk).
+import 'katex/dist/katex.min.css'
+
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { getTranslations } from 'next-intl/server'

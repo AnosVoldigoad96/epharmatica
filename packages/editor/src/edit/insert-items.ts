@@ -3,6 +3,7 @@
 import { insertDate } from '@platejs/date'
 import { insertColumnGroup } from '@platejs/layout'
 import { someList, toggleList, unwrapList } from '@platejs/list-classic'
+import { insertInlineEquation } from '@platejs/math'
 import { openNextToggles } from '@platejs/toggle/react'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -25,6 +26,8 @@ import {
   Pilcrow,
   Pill,
   Quote,
+  Radical,
+  Sigma,
   Table,
   TableOfContents,
   TriangleAlert,
@@ -242,6 +245,27 @@ export function buildInsertItems(
       icon: CalendarDays,
       keywords: ['date', 'time', 'calendar', 'today'],
       run: focusAfter((editor) => insertDate(editor)),
+    },
+    {
+      key: 'equation',
+      group: 'blocks',
+      label: labels.insertEquation,
+      icon: Radical,
+      keywords: ['equation', 'math', 'katex', 'tex', 'latex', 'formula', '$$'],
+      // No focusAfter: `select: true` selects the fresh void, which opens
+      // its TeX popover — the textarea takes focus (official behavior).
+      run: (editor) =>
+        insertBlockNode(editor, { type: 'equation', texExpression: '', children: [{ text: '' }] }),
+    },
+    {
+      key: 'inline-equation',
+      group: 'blocks',
+      label: labels.insertInlineEquation,
+      icon: Sigma,
+      keywords: ['equation', 'inline', 'math', 'katex', 'tex', 'latex', '$'],
+      // Same: the selected inline void opens its popover; the textarea owns
+      // focus.
+      run: (editor) => insertInlineEquation(editor, '', { select: true }),
     },
     {
       key: 'toc',

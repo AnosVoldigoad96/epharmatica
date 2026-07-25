@@ -80,6 +80,11 @@ describe('getPlainText', () => {
   it('includes merged table cell text', () => {
     expect(plain).toContain('Analgesic: 300–900 mg q4–6h')
   })
+
+  it('includes the raw TeX of block and inline equations (searchable)', () => {
+    expect(plain).toContain('pH = pK_a + \\log_{10}\\frac{[A^-]}{[HA]}')
+    expect(plain).toContain('Clearance follows CL = k_e \\cdot V_d at steady state.')
+  })
 })
 
 describe('getHeadingsText', () => {

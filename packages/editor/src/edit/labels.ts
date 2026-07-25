@@ -80,6 +80,8 @@ export type SubtopicEditorLabels = {
   insertImage: string
   insertDivider: string
   insertDate: string
+  insertEquation: string
+  insertInlineEquation: string
   insertColumns2: string
   insertColumns3: string
   /** Title/tooltip on the disabled Image button (media library lands next slice). */
@@ -145,6 +147,14 @@ export type SubtopicEditorLabels = {
   dateEditLabel: string
   datePlaceholder: string
   codeLangLabel: string
+
+  /** KaTeX equation voids (popover TeX editor + empty states). */
+  equationInputLabel: string
+  equationPlaceholder: string
+  equationInlinePlaceholder: string
+  equationDone: string
+  equationEmpty: string
+  equationEmptyInline: string
 
   /** Status pill. */
   statusClean: string
@@ -218,6 +228,8 @@ export const DEFAULT_EDITOR_LABELS: SubtopicEditorLabels = {
   insertImage: 'Image',
   insertDivider: 'Divider',
   insertDate: 'Date',
+  insertEquation: 'Equation',
+  insertInlineEquation: 'Inline equation',
   insertColumns2: 'Two columns',
   insertColumns3: 'Three columns',
   imageDisabledNote: 'Images arrive with the media library (next slice)',
@@ -272,6 +284,13 @@ export const DEFAULT_EDITOR_LABELS: SubtopicEditorLabels = {
   dateEditLabel: 'Edit date',
   datePlaceholder: 'Pick a date',
   codeLangLabel: 'Language',
+
+  equationInputLabel: 'TeX expression',
+  equationPlaceholder: 'f(x) = ax^2 + bx + c',
+  equationInlinePlaceholder: 'E = mc^2',
+  equationDone: 'Done',
+  equationEmpty: 'Add a TeX equation',
+  equationEmptyInline: 'New equation',
 
   statusClean: 'Clean',
   statusDirty: 'Unsaved',

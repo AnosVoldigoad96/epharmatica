@@ -25,9 +25,11 @@ export type {
   DrugCardBlock,
   DrugCardFieldKey,
   DrugCardFields,
+  EquationBlock,
   HeadingBlock,
   HrBlock,
   ImageBlock,
+  InlineEquationNode,
   InlineNode,
   LinkNode,
   ListBlock,
@@ -51,6 +53,7 @@ export {
   CONTENT_SCHEMA_VERSION,
   DRUG_CARD_FIELD_KEYS,
   isDateNode,
+  isInlineEquationNode,
   isTextNode,
 } from './schema/types'
 
@@ -82,6 +85,16 @@ export type { AnchorKind, AnchorPath } from './anchors'
 
 export { RichText } from './render/rich-text'
 export type { RichTextComponents, RichTextLabels, RichTextProps } from './render/rich-text'
+
+/*
+ * Client-side KaTeX equation renderers (member-unlock path): katex arrives
+ * via DYNAMIC import only when an equation mounts, so importing these from
+ * a client component never puts the engine in a shared chunk. The
+ * server-side pair (StaticEquation/StaticInlineEquation) deliberately lives
+ * on the `@epharmatica/editor/static` subpath instead — its static katex
+ * import must stay out of every client module graph.
+ */
+export { ClientEquation, ClientInlineEquation } from './render/equation-client'
 
 export { FIXTURE_DOCUMENT, LEGACY_FLAT_LIST_DOCUMENT } from './fixtures'
 

@@ -149,6 +149,19 @@ function toInlineNodes(children: unknown): InlineNode[] {
       }
       continue
     }
+    if (child.type === 'inline_equation') {
+      // Inline KaTeX void — the TeX source is the whole payload. An empty
+      // chip is an abandoned placeholder (no content), so it drops like an
+      // unset date chip.
+      if (typeof child.texExpression === 'string' && child.texExpression !== '') {
+        out.push({
+          type: 'inline_equation',
+          texExpression: child.texExpression,
+          children: [{ text: '' }],
+        })
+      }
+      continue
+    }
     // Unknown inline wrapper (slash_input, emoji_input, …) — keep its
     // text, drop the wrapper.
     out.push(...toInlineNodes(child.children))
@@ -445,6 +458,16 @@ function toBlock(
       return { ...ids, ...top, type: 'toc', children: VOID_CHILDREN } as Block
     case 'hr':
       return { ...ids, ...top, type: 'hr', children: VOID_CHILDREN } as Block
+    case 'equation':
+      // Block KaTeX void — texExpression passes through as-is (an oversized
+      // expression is a validation error, never a silent truncation).
+      return {
+        ...ids,
+        ...top,
+        type: 'equation',
+        texExpression: typeof node.texExpression === 'string' ? node.texExpression : '',
+        children: VOID_CHILDREN,
+      } as Block
     case 'ul':
     case 'ol': {
       const items = toListItems(node.children)

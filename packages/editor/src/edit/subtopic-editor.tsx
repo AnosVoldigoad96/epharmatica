@@ -2,6 +2,8 @@
 
 import { flip, offset, shift, useFloatingToolbar, useFloatingToolbarState } from '@platejs/floating'
 import { unwrapLink, upsertLink } from '@platejs/link'
+import { insertInlineEquation } from '@platejs/math'
+import { Radical } from 'lucide-react'
 import type { Value } from 'platejs'
 import { nanoid } from 'platejs'
 import {
@@ -51,8 +53,8 @@ import {
  *  - "/" slash commands over the full insert roster (insert-items.ts);
  *  - drag & reorder of top-level blocks (six-dot gutter handle, drop line;
  *    a classic list drags as ONE block, a toggle brings its contents);
- *  - a floating selection toolbar: marks (incl. highlight/kbd), font size,
- *    text/background color, alignment, link;
+ *  - a floating selection toolbar: marks (incl. highlight/kbd), inline
+ *    equation, font size, text/background color, alignment, link;
  *  - markdown autoformat (editor-kit + classic-list input rules);
  *  - a fixed toolbar: block type · insert · align · line height · indent ·
  *    contextual table/column menus · undo/redo · status pill.
@@ -325,6 +327,12 @@ function FloatingToolbar({
   const editorId = useEditorId()
   const focusedEditorId = useEventEditorValue('focus')
   const hasLink = useEditorSelector((ed) => !!ed.api.some({ match: { type: 'a' } }), [])
+  // Inline equations never belong in code blocks (their TeX would flatten
+  // to plain text on save) — the button greys out there.
+  const inCodeBlock = useEditorSelector(
+    (ed) => !!ed.api.some({ match: { type: ['code_block'] } }),
+    [],
+  )
 
   const state = useFloatingToolbarState({
     editorId,
@@ -377,6 +385,16 @@ function FloatingToolbar({
         <MarkButton mark="kbd" label={labels.markKbd}>
           <span className="border border-line px-0.5 font-mono text-[10px]">K</span>
         </MarkButton>
+        {/* Official EquationToolbarButton: replaces the selection with an
+            inline equation; its popover textarea takes focus, so no
+            editor refocus here. */}
+        <ToolbarButton
+          label={labels.insertInlineEquation}
+          disabled={inCodeBlock}
+          onClick={() => insertInlineEquation(editor, '', { select: true })}
+        >
+          <Radical className="size-4" aria-hidden />
+        </ToolbarButton>
         <ColorMenu labels={labels} markKey="color" />
         <ColorMenu labels={labels} markKey="backgroundColor" />
         <FontSizeMenu labels={labels} />

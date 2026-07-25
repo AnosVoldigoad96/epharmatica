@@ -10,7 +10,9 @@ import type {
   ColumnChildBlock,
   Content,
   DrugCardFieldKey,
+  EquationBlock,
   ImageBlock,
+  InlineEquationNode,
   InlineNode,
   ListBlock,
   ListItemNode,
@@ -26,8 +28,10 @@ import { DRUG_CARD_FIELD_KEYS, isTextNode } from '../schema/types'
  * <RichText/> — the ONE read renderer (I4). Server-component-safe and
  * dependency-free: it walks stored block JSON directly, so public reader
  * routes never ship editor code (perf budget, rules.md §9.6). Interaction
- * leaves (video facade, zoomable images) are injected by the app through
- * `components`; everything else renders as semantic HTML with stable
+ * leaves (video facade, zoomable images) and KaTeX equation renderers are
+ * injected by the app through `components` (server-side pair from
+ * `@epharmatica/editor/static` on RSC routes — the katex engine never
+ * enters a client graph); everything else renders as semantic HTML with stable
  * `rt-*` class hooks and `data-block-id` markers (the highlight layer's
  * DOM contract).
  *
@@ -40,7 +44,18 @@ import { DRUG_CARD_FIELD_KEYS, isTextNode } from '../schema/types'
 export type RichTextComponents = {
   img?: ComponentType<{ block: ImageBlock }>
   video?: ComponentType<{ block: VideoBlock }>
+  /**
+   * KaTeX renderers. RSC surfaces inject the server-side pair from
+   * `@epharmatica/editor/static` (katex.renderToString — the client gets
+   * HTML + CSS only); client-side surfaces inject the lazy pair
+   * (ClientEquation/ClientInlineEquation). The dependency-free default
+   * shows the raw TeX source.
+   */
+  equation?: ComponentType<{ block: EquationBlock }>
+  inlineEquation?: ComponentType<{ node: InlineEquationNode }>
 }
+
+type InlineEquationComponent = ComponentType<{ node: InlineEquationNode }>
 
 export type RichTextLabels = {
   callouts?: Record<CalloutVariant, string>
@@ -76,7 +91,17 @@ function renderTextNode(node: TextNode, key: number): ReactNode {
   return <Fragment key={key}>{rendered}</Fragment>
 }
 
-function renderInline(nodes: InlineNode[]): ReactNode {
+/** Dependency-free fallbacks: raw TeX source (surfaces without an injected
+ * KaTeX renderer stay readable — and still searchable/copyable). */
+function DefaultInlineEquation({ node }: { node: InlineEquationNode }) {
+  return <code>{node.texExpression}</code>
+}
+
+function DefaultEquation({ block }: { block: EquationBlock }) {
+  return <code>{block.texExpression}</code>
+}
+
+function renderInline(nodes: InlineNode[], InlineEquation: InlineEquationComponent): ReactNode {
   return nodes.map((node, index) => {
     if (isTextNode(node)) return renderTextNode(node, index)
     if (node.type === 'date') {
@@ -84,6 +109,13 @@ function renderInline(nodes: InlineNode[]): ReactNode {
         <time key={index} className="rt-date" dateTime={node.date}>
           {formatDateDisplay(node.date)}
         </time>
+      )
+    }
+    if (node.type === 'inline_equation') {
+      return (
+        <span key={index} className="rt-inline-equation">
+          <InlineEquation node={node} />
+        </span>
       )
     }
     return (
@@ -104,10 +136,13 @@ function proseStyle(block: { align?: string; lineHeight?: number }): CSSProperti
   return style
 }
 
-function renderNestedParagraphs(paragraphs: NestedParagraph[]): ReactNode {
+function renderNestedParagraphs(
+  paragraphs: NestedParagraph[],
+  InlineEquation: InlineEquationComponent,
+): ReactNode {
   return paragraphs.map((paragraph, index) => (
     <p key={index} style={proseStyle(paragraph)}>
-      {renderInline(paragraph.children)}
+      {renderInline(paragraph.children, InlineEquation)}
     </p>
   ))
 }
@@ -153,7 +188,11 @@ function groupToggles(blocks: Block[]): RenderUnit[] {
 
 /* ------------------------------------------------------------------ lists */
 
-function renderList(list: ListBlock | NestedListNode, blockId?: string): ReactNode {
+function renderList(
+  list: ListBlock | NestedListNode,
+  InlineEquation: InlineEquationComponent,
+  blockId?: string,
+): ReactNode {
   const ListTag = list.type === 'ol' ? 'ol' : 'ul'
   return (
     <ListTag className="rt-list" data-block-id={blockId}>
@@ -161,8 +200,8 @@ function renderList(list: ListBlock | NestedListNode, blockId?: string): ReactNo
         const [lic, nested] = item.children
         return (
           <li key={index} data-block-id={item.id}>
-            {renderInline(lic.children)}
-            {nested ? renderList(nested) : null}
+            {renderInline(lic.children, InlineEquation)}
+            {nested ? renderList(nested, InlineEquation) : null}
           </li>
         )
       })}
@@ -170,7 +209,12 @@ function renderList(list: ListBlock | NestedListNode, blockId?: string): ReactNo
   )
 }
 
-function renderToc(content: Content, block: Block, tocLabel: string): ReactNode {
+function renderToc(
+  content: Content,
+  block: Block,
+  tocLabel: string,
+  InlineEquation: InlineEquationComponent,
+): ReactNode {
   const headings = content.filter((candidate) => candidate.type === 'h2' || candidate.type === 'h3')
   return (
     <nav key={block.id} data-block-id={block.id} className="rt-toc" aria-label={tocLabel}>
@@ -178,7 +222,7 @@ function renderToc(content: Content, block: Block, tocLabel: string): ReactNode 
         {headings.map((heading) =>
           heading.type === 'h2' || heading.type === 'h3' ? (
             <li key={heading.id} className={heading.type === 'h3' ? 'rt-toc__sub' : undefined}>
-              <a href={`#h-${heading.id}`}>{renderInline(heading.children)}</a>
+              <a href={`#h-${heading.id}`}>{renderInline(heading.children, InlineEquation)}</a>
             </li>
           ) : null,
         )}
@@ -219,6 +263,8 @@ export function RichText({ content, components, labels }: RichTextProps) {
   const fieldLabels = labels?.drugCardFields ?? DRUG_CARD_FIELD_LABELS
   const Image = components?.img ?? DefaultImage
   const Video = components?.video ?? DefaultVideo
+  const Equation = components?.equation ?? DefaultEquation
+  const InlineEq = components?.inlineEquation ?? DefaultInlineEquation
 
   // Dual-read: upgrade v1 flat lists (keeping per-item anchor ids), then
   // render the ONE canonical shape.
@@ -245,7 +291,7 @@ export function RichText({ content, components, labels }: RichTextProps) {
       case 'p':
         return (
           <p key={key} data-block-id={id} style={withIndent(proseStyle(block))}>
-            {renderInline(block.children)}
+            {renderInline(block.children, InlineEq)}
           </p>
         )
       case 'h2':
@@ -256,7 +302,7 @@ export function RichText({ content, components, labels }: RichTextProps) {
             data-block-id={id}
             style={withIndent(proseStyle(block))}
           >
-            {renderInline(block.children)}
+            {renderInline(block.children, InlineEq)}
           </h2>
         )
       case 'h3':
@@ -267,13 +313,13 @@ export function RichText({ content, components, labels }: RichTextProps) {
             data-block-id={id}
             style={withIndent(proseStyle(block))}
           >
-            {renderInline(block.children)}
+            {renderInline(block.children, InlineEq)}
           </h3>
         )
       case 'blockquote':
         return (
           <blockquote key={key} data-block-id={id} style={withIndent(proseStyle(block))}>
-            {renderInline(block.children)}
+            {renderInline(block.children, InlineEq)}
           </blockquote>
         )
       case 'ul':
@@ -281,14 +327,22 @@ export function RichText({ content, components, labels }: RichTextProps) {
         return (
           <Fragment key={key}>
             {indentStyle ? (
-              <div style={indentStyle}>{renderList(block as ListBlock, id)}</div>
+              <div style={indentStyle}>{renderList(block as ListBlock, InlineEq, id)}</div>
             ) : (
-              renderList(block as ListBlock, id)
+              renderList(block as ListBlock, InlineEq, id)
             )}
           </Fragment>
         )
       case 'hr':
         return <hr key={key} data-block-id={id} className="rt-hr" style={indentStyle} />
+      case 'equation':
+        // Display math — the wrapper owns the anchor id + overflow scroll;
+        // the injected component owns the KaTeX markup.
+        return (
+          <div key={key} data-block-id={id} className="rt-equation" style={indentStyle}>
+            <Equation block={block as EquationBlock} />
+          </div>
+        )
       case 'column_group':
         return (
           <div key={key} data-block-id={id} className="rt-columns" style={indentStyle}>
@@ -312,7 +366,7 @@ export function RichText({ content, components, labels }: RichTextProps) {
             style={indentStyle}
           >
             <p className="rt-callout__label">{calloutLabels[block.variant]}</p>
-            {renderNestedParagraphs(block.children)}
+            {renderNestedParagraphs(block.children, InlineEq)}
           </aside>
         )
       case 'table':
@@ -330,11 +384,11 @@ export function RichText({ content, components, labels }: RichTextProps) {
                           colSpan={cell.colSpan}
                           rowSpan={cell.rowSpan}
                         >
-                          {renderNestedParagraphs(cell.children)}
+                          {renderNestedParagraphs(cell.children, InlineEq)}
                         </th>
                       ) : (
                         <td key={colIndex} colSpan={cell.colSpan} rowSpan={cell.rowSpan}>
-                          {renderNestedParagraphs(cell.children)}
+                          {renderNestedParagraphs(cell.children, InlineEq)}
                         </td>
                       ),
                     )}
@@ -372,7 +426,7 @@ export function RichText({ content, components, labels }: RichTextProps) {
             <code>
               {block.children.map((line, lineIndex) => (
                 <span key={lineIndex} className="rt-code__line" data-line={lineIndex}>
-                  {renderInline(line.children)}
+                  {renderInline(line.children, InlineEq)}
                   {'\n'}
                 </span>
               ))}
@@ -382,7 +436,7 @@ export function RichText({ content, components, labels }: RichTextProps) {
       case 'toc':
         return (
           <Fragment key={key}>
-            {renderToc(upgraded, block as Block, labels?.toc ?? 'Contents')}
+            {renderToc(upgraded, block as Block, labels?.toc ?? 'Contents', InlineEq)}
           </Fragment>
         )
       case 'drug_card':
@@ -426,7 +480,7 @@ export function RichText({ content, components, labels }: RichTextProps) {
         className="rt-toggle"
         style={extraIndent > 0 ? { marginInlineStart: `${extraIndent * 1.5}rem` } : undefined}
       >
-        <summary>{renderInline(toggle.children)}</summary>
+        <summary>{renderInline(toggle.children, InlineEq)}</summary>
         <div className="rt-toggle__body">{renderUnits(unit.body, (toggle.indent ?? 0) + 1)}</div>
       </details>
     )

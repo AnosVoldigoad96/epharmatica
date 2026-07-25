@@ -231,6 +231,82 @@ describe('validateContent', () => {
     ).toBe(false)
   })
 
+  it('validates equations: bounded texExpression on block and inline voids', () => {
+    expect(
+      validateContent([
+        {
+          id: 'eq1',
+          type: 'equation',
+          texExpression: 'E = mc^2',
+          children: [{ text: '' }],
+        },
+        {
+          id: 'p1',
+          type: 'p',
+          children: [
+            { text: 'where ' },
+            { type: 'inline_equation', texExpression: 'c', children: [{ text: '' }] },
+          ],
+        },
+      ]).ok,
+    ).toBe(true)
+    // Empty TeX is a legal placeholder block.
+    expect(
+      validateContent([
+        { id: 'eq1', type: 'equation', texExpression: '', children: [{ text: '' }] },
+      ]).ok,
+    ).toBe(true)
+    // The 2000-char bound holds on both spellings.
+    const oversized = 'x'.repeat(2001)
+    expect(
+      validateContent([
+        { id: 'eq1', type: 'equation', texExpression: oversized, children: [{ text: '' }] },
+      ]).ok,
+    ).toBe(false)
+    expect(
+      validateContent([
+        {
+          id: 'p1',
+          type: 'p',
+          children: [
+            { type: 'inline_equation', texExpression: oversized, children: [{ text: '' }] },
+          ],
+        },
+      ]).ok,
+    ).toBe(false)
+    // texExpression is required; strictness rejects extra props.
+    expect(validateContent([{ id: 'eq1', type: 'equation', children: [{ text: '' }] }]).ok).toBe(
+      false,
+    )
+    expect(
+      validateContent([
+        {
+          id: 'eq1',
+          type: 'equation',
+          texExpression: 'x',
+          displayMode: true,
+          children: [{ text: '' }],
+        },
+      ]).ok,
+    ).toBe(false)
+    // Top-level only — columns never host block equations.
+    expect(
+      validateContent([
+        {
+          id: 'c1',
+          type: 'column_group',
+          children: [
+            {
+              type: 'column',
+              children: [{ type: 'equation', texExpression: 'x', children: [{ text: '' }] }],
+            },
+            { type: 'column', children: [{ type: 'p', children: [{ text: 'b' }] }] },
+          ],
+        },
+      ]).ok,
+    ).toBe(false)
+  })
+
   it('validates table cell spans within bounds', () => {
     const table = (cell: Record<string, unknown>) => [
       {

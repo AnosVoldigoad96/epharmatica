@@ -152,6 +152,31 @@ describe('<RichText/> (rules.md §6.4 — full block schema)', () => {
     )
   })
 
+  it('renders equations as raw TeX by default (dependency-free fallback)', () => {
+    const html = render(FIXTURE_DOCUMENT)
+    expect(html).toContain('<div data-block-id="fx-equation-henderson" class="rt-equation">')
+    expect(html).toContain('<code>pH = pK_a + \\log_{10}\\frac{[A^-]}{[HA]}</code>')
+    expect(html).toContain(
+      '<span class="rt-inline-equation"><code>CL = k_e \\cdot V_d</code></span>',
+    )
+  })
+
+  it('uses injected equation components (the app passes KaTeX renderers)', () => {
+    const html = render(FIXTURE_DOCUMENT, {
+      components: {
+        equation: ({ block }) => <span className="katex-block" data-tex={block.texExpression} />,
+        inlineEquation: ({ node }) => (
+          <span className="katex-inline" data-tex={node.texExpression} />
+        ),
+      },
+    })
+    expect(html).toContain('katex-block')
+    expect(html).toContain('data-tex="CL = k_e \\cdot V_d"')
+    // The stable wrapper hooks stay in place around the injected markup.
+    expect(html).toContain('<div data-block-id="fx-equation-henderson" class="rt-equation">')
+    expect(html).toContain('<span class="rt-inline-equation"><span class="katex-inline"')
+  })
+
   it('uses the injected video component over the default placeholder', () => {
     const Facade = ({ block }: { block: VideoBlock }) => (
       <div className="lite-facade" data-url={block.url} />

@@ -5,7 +5,8 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./static": "./src/render/equation-static.tsx"
   },
   "scripts": {
     "lint": "eslint src",
@@ -30,9 +31,11 @@
     "@platejs/layout": "^53.0.0",
     "@platejs/link": "^53.3.1",
     "@platejs/list-classic": "^53.0.0",
+    "@platejs/math": "53.0.0",
     "@platejs/slash-command": "53.0.0",
     "@platejs/table": "^53.0.9",
     "@platejs/toggle": "^53.0.0",
+    "katex": "0.16.22",
     "lucide-react": "^1.25.0",
     "platejs": "^53.2.4",
     "react-dnd": "^16.0.1",

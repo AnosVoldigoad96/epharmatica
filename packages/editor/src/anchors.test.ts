@@ -27,6 +27,9 @@ describe('getAnchorKind (M1 §5.5)', () => {
     expect(getAnchorKind(fixtureBlock('fx-toc'))).toBeNull()
     expect(getAnchorKind(fixtureBlock('fx-hr'))).toBeNull()
     expect(getAnchorKind(fixtureBlock('fx-columns'))).toBeNull()
+    // ONE unit with a stable data-block-id, but no offset-addressable text
+    // (rendered KaTeX output is not highlightable).
+    expect(getAnchorKind(fixtureBlock('fx-equation-henderson'))).toBeNull()
   })
 })
 
@@ -109,9 +112,10 @@ describe('getTextRuns', () => {
     expect(getTextRuns(fixtureBlock('fx-img-structure'), ['alt'])).toBeNull()
   })
 
-  it('toc/hr/column_group: have no text runs', () => {
+  it('toc/hr/equation/column_group: have no text runs', () => {
     expect(getTextRuns(fixtureBlock('fx-toc'), [])).toBeNull()
     expect(getTextRuns(fixtureBlock('fx-hr'), [])).toBeNull()
+    expect(getTextRuns(fixtureBlock('fx-equation-henderson'), [])).toBeNull()
     expect(getTextRuns(fixtureBlock('fx-columns'), [])).toBeNull()
     expect(getTextRuns(fixtureBlock('fx-columns'), [0, 0])).toBeNull()
   })
