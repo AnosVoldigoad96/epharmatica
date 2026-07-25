@@ -51,6 +51,11 @@ async function learnRoutes(): Promise<string[]> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date()
 
+  // Pre-launch reader lock (see proxy.ts): while /learn is super_admin-only,
+  // its URLs stay out of the sitemap so crawlers never learn them. Flips
+  // open with the same READER_PUBLIC=true launch env.
+  const readerRoutes = process.env.READER_PUBLIC === 'true' ? await learnRoutes() : []
+
   return [
     ...ROUTES.map((route): MetadataRoute.Sitemap[number] => ({
       url: new URL(route, SITE_URL).toString(),
@@ -58,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: route === '/' ? 'weekly' : 'monthly',
       priority: route === '/' ? 1 : 0.4,
     })),
-    ...(await learnRoutes()).map((route): MetadataRoute.Sitemap[number] => ({
+    ...readerRoutes.map((route): MetadataRoute.Sitemap[number] => ({
       url: new URL(route, SITE_URL).toString(),
       lastModified,
       changeFrequency: 'weekly',
