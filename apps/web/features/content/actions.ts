@@ -13,12 +13,28 @@ import { getAdminProfile } from '@/features/admin/queries'
 import type { AdminProfile } from '@/features/admin/queries'
 import { AUDIT_ACTIONS, withAudit } from '@/lib/observability/audit'
 import { createClient } from '@/lib/supabase/server'
-import { AUTHORING_ROLES, DbActionError, MANAGER_ROLES, failureFrom, requireRoles } from './gate'
+import {
+  AUTHORING_ROLES,
+  DELETING_ROLES,
+  DbActionError,
+  MANAGER_ROLES,
+  failureFrom,
+  requireRoles,
+} from './gate'
 import type { DbErrorShape } from './gate'
 import { enqueueReanchor, revalidateContentTags } from './cache'
 import { fireTagsForNode, fireTagsForParent } from './tags'
 import { getContentTree } from './queries'
-import { findChapter, findSubject, findSubtopic, findTopic, publishedSubtopicIds } from './tree'
+import {
+  chapterRollup,
+  findChapter,
+  findSubject,
+  findSubtopic,
+  findTopic,
+  publishedSubtopicIds,
+  subjectRollup,
+  topicRollup,
+} from './tree'
 import type { ContentTree } from './tree'
 
 /*
@@ -484,6 +500,68 @@ export async function moveNode(
 }
 
 // ---------------------------------------------------------------------------
+// Delete… (admin+, migration 023) — typed-name confirmation; the SECURITY
+// DEFINER RPC cascades the whole subtree + every dependent (revisions,
+// review events, study data, discussions, preview links, media refs) and
+// sweeps slug_history. Direct table deletes are RLS-blocked for every role
+// — the RPC is the single path.
+// ---------------------------------------------------------------------------
+
+export async function deleteNode(
+  level: ContentLevel,
+  id: string,
+  typedName: string,
+): Promise<ActionResult> {
+  const t = await getTranslations('admin.content.errors')
+  const gate = await requireRoles(DELETING_ROLES)
+  if (!gate.ok) return gate
+
+  // PRE-delete tree lookup (the moveNode old-location precedent): the
+  // typed-name check, the audit meta, and the cache tags all need the node
+  // while it still exists.
+  const tree = await getContentTree()
+  const target = deleteTarget(tree, level, id)
+  if (!target) return { ok: false, error: t('notFound') }
+
+  // Exact name, trimmed, case-sensitive — the dialog mirrors this client-side.
+  if (typedName.trim() !== target.name) {
+    return { ok: false, error: t('typeNameToConfirm') }
+  }
+
+  const supabase = await createClient()
+  try {
+    await withAudit(
+      {
+        action: AUDIT_ACTIONS.node_deleted,
+        actorId: gate.profile.id,
+        entity: 'content',
+        entityId: id,
+        meta: {
+          level,
+          name: target.name,
+          slug: target.slug,
+          ...target.counts,
+          published: target.affectedIds.length,
+        },
+      },
+      async () => {
+        const { error } = await supabase.rpc('delete_content_node', {
+          p_level: level,
+          p_entity_id: id,
+        })
+        if (error) throw new DbActionError(error)
+      },
+    )
+    // OLD-location tags off the pre-delete tree: the node's own tag, every
+    // ancestor list, and the sitemap (fireTagsForNode covers all three).
+    fireTagsForNode(tree, level, id, target.affectedIds)
+  } catch (err) {
+    return failureFrom(err)
+  }
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
 // Reorder (author+): full ordered id list for one parent (up/down + drag).
 // ---------------------------------------------------------------------------
 
@@ -593,6 +671,61 @@ function affectedPublishedIds(tree: ContentTree, level: ContentLevel, id: string
   const found = findSubtopic(tree, id)
   if (!found) return null
   return found.subtopic.status === 'published' ? [found.subtopic.id] : []
+}
+
+type DeleteTarget = {
+  /** Exact display name (subjects/chapters/topics) or title (subtopics). */
+  name: string
+  slug: string
+  /** Published subtopic ids beneath (self for subtopics) — the tag payload. */
+  affectedIds: string[]
+  /** Descendant counts for the audit row (pages = content pages, self incl.). */
+  counts: { chapters?: number; topics?: number; pages: number }
+}
+
+function deleteTarget(tree: ContentTree, level: ContentLevel, id: string): DeleteTarget | null {
+  if (level === 'subject') {
+    const subject = findSubject(tree, id)
+    if (!subject) return null
+    return {
+      name: subject.name,
+      slug: subject.slug,
+      affectedIds: publishedSubtopicIds(subject),
+      counts: {
+        chapters: subject.chapters.length,
+        topics: subject.chapters.reduce((acc, chapter) => acc + chapter.topics.length, 0),
+        pages: subjectRollup(subject).total,
+      },
+    }
+  }
+  if (level === 'chapter') {
+    const found = findChapter(tree, id)
+    if (!found) return null
+    return {
+      name: found.chapter.name,
+      slug: found.chapter.slug,
+      affectedIds: publishedSubtopicIds(found.chapter),
+      counts: { topics: found.chapter.topics.length, pages: chapterRollup(found.chapter).total },
+    }
+  }
+  if (level === 'topic') {
+    const found = findTopic(tree, id)
+    if (!found) return null
+    return {
+      name: found.topic.name,
+      slug: found.topic.slug,
+      affectedIds: publishedSubtopicIds(found.topic),
+      counts: { pages: topicRollup(found.topic).total },
+    }
+  }
+  const found = findSubtopic(tree, id)
+  if (!found) return null
+  return {
+    name: found.subtopic.title,
+    slug: found.subtopic.slug,
+    affectedIds: found.subtopic.status === 'published' ? [found.subtopic.id] : [],
+    counts: { pages: 1 },
+  }
 }
 
 function siblingIds(

@@ -19,6 +19,11 @@ function canManage(role: StaffRole): boolean {
   return role === 'content_manager' || role === 'admin' || role === 'super_admin'
 }
 
+/** Delete… is admin+ only (founder directive; DELETING_ROLES server-side). */
+function canDelete(role: StaffRole): boolean {
+  return role === 'admin' || role === 'super_admin'
+}
+
 /**
  * Move destinations for a content page (flexible leaves, 020): every
  * CHAPTER (page becomes a direct leaf — parentLevel 'chapter', the move
@@ -92,7 +97,14 @@ export function subjectListData(tree: ContentTree, role: StaffRole): ListEditorD
     }
   })
   // Subjects have no parent — no Move… targets (M4 §5.3).
-  return { level: 'subject', parentId: null, rows, moveTargets: [], canManage: canManage(role) }
+  return {
+    level: 'subject',
+    parentId: null,
+    rows,
+    moveTargets: [],
+    canManage: canManage(role),
+    canDelete: canDelete(role),
+  }
 }
 
 export function chapterListData(
@@ -133,6 +145,7 @@ export function chapterListData(
     rows,
     moveTargets,
     canManage: canManage(role),
+    canDelete: canDelete(role),
   }
 }
 
@@ -182,6 +195,7 @@ export function topicListData(
     rows,
     moveTargets,
     canManage: canManage(role),
+    canDelete: canDelete(role),
     // Flexible leaves (020): the chapter's direct content pages, a second
     // grouped section (own sort space) in the same table.
     pages: {
@@ -211,5 +225,6 @@ export function subtopicListData(
     // Pages can now also move DIRECTLY under a chapter (020).
     moveTargets: pageMoveTargets(tree, topicId),
     canManage: canManage(role),
+    canDelete: canDelete(role),
   }
 }

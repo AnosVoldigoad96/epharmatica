@@ -1298,6 +1298,13 @@ export type Database = {
         Args: { p_subtopic_ids: string[] }
         Returns: number
       }
+      delete_content_node: {
+        Args: {
+          p_entity_id: string
+          p_level: Database['public']['Enums']['content_level']
+        }
+        Returns: undefined
+      }
       has_role: { Args: { required_roles: string[] }; Returns: boolean }
       move_content_node: {
         Args: {

@@ -116,7 +116,9 @@ The RLS/security suite runs in CI against a migrated shadow DB. A feature is inc
 - Audit retention: `prune_audit_log` execute denied to anon/authenticated (append-only stands for interactive roles); service_role-only; refuses ranges inside the 12-month hot window (probe 14)
 - Review discussions: staff-only read/insert, creator-stamped, no delete path for API roles (editorial record); suggestion kind requires text; authors may resolve reviewers' discussions (probe 15)
 - Published snapshot (1.C model): anon has NO column access to live draft columns (content/plain_text/headings_text — column grants); published pages and FTS run over published_* columns written only by the publish RPC; draft edits never move the published surface (probe 16)
-- Flexible leaves: content pages carry exactly one parent (topic XOR chapter, CHECK); a chapter's page slugs and topic slugs share one namespace (cross-table triggers, both directions); topic↔chapter moves and chapter-page renames write correct 2-segment history paths (probe 17)
+- Flexible leaves: content pages carry exactly one parent (topic XOR chapter, CHECK); a chapter's page slugs and topic slugs share one namespace (cross-table triggers, both directions); topic↔chapter moves and chapter-page renames write correct 2-segment history paths; anon reads the structure columns (topic_id + chapter_id — 021 grant) (probe 17)
+- Public search: `search_published` runs over the publish snapshot only — draft-only text invisible to anon; snippets carry non-HTML sentinel markers; empty/garbage queries return empty, never error (probe 18)
+- Content deletion (023): the 004 staff FOR ALL write policies are split into insert/update — DELETE has NO policy on subjects/chapters/topics/subtopics, so direct API deletes fail for every role incl. admin; `delete_content_node` is the single deletion path, admin/super_admin only (content_manager refused), cascades the whole subtree + dependents and sweeps slug_history; missing node raises (probe 19)
 - Yearly audit-export cron produces a valid R2 object from a seeded aged year
 
 **M5 (five non-negotiables + extras)**

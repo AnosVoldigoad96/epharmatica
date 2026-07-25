@@ -520,7 +520,8 @@
       "actions": {
         "edit": "Edit",
         "move": "Move…",
-        "open": "Open ›"
+        "open": "Open ›",
+        "delete": "Delete…"
       },
       "reorder": {
         "moveUp": "Move {name} up",
@@ -566,12 +567,28 @@
         "cacheLineMove": "Cache tags fire for the {levelName}, both parents, and the sitemap.",
         "cacheLineRename": "Cache tags fire for the {levelName}, every path beneath it, and the sitemap."
       },
+      "delete": {
+        "title": "Delete “{name}” — {levelName}",
+        "heading": "Cannot be undone — read before confirming",
+        "nodeLine": "The {levelName} “{name}” and everything beneath it will be permanently deleted.",
+        "countLine": "{total, plural, =0 {No content pages beneath} one {# content page beneath} other {# content pages beneath}} · {published, plural, =0 {none published} one {# published} other {# published}}",
+        "publishedPage": "This page is published — it disappears from /learn immediately.",
+        "dependentsLine": "Revisions, review history, discussions, preview links and media references go with it.",
+        "studentDataLine": "Student highlights, notes and reading progress on those pages are removed.",
+        "cacheLine": "Cache tags fire for the {levelName}, its parents, and the sitemap.",
+        "typeToConfirm": "Type the exact name to confirm",
+        "confirm": "Delete {levelName}",
+        "zoneHeading": "Danger zone",
+        "zoneBody": "Deleting removes this page with its revisions, review history, discussions, preview links and media references — and students' highlights, notes and progress on it.",
+        "zoneButton": "Delete {levelName}…"
+      },
       "toasts": {
         "created": "Created.",
         "saved": "Saved.",
         "renamed": "Renamed.",
         "moved": "Moved.",
-        "reordered": "Order saved."
+        "reordered": "Order saved.",
+        "deleted": "Deleted."
       },
       "errors": {
         "forbidden": "Your role can't do that.",
@@ -581,6 +598,7 @@
         "notFound": "That item no longer exists.",
         "confirmationRequired": "Review the consequences and confirm first.",
         "typeMoveToConfirm": "Type move to confirm.",
+        "typeNameToConfirm": "Type the exact name to confirm.",
         "reorderStale": "The list changed under you — refresh and try again.",
         "commentRequired": "A comment is required to request changes.",
         "alreadyClaimed": "Someone claimed this while you were looking.",
