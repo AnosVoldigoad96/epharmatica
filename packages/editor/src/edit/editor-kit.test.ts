@@ -31,6 +31,112 @@ describe('editorKit (plugin resolution)', () => {
     expect(editor.plugins.epharm_markdown).toBeDefined()
     expect(editor.meta.inputRules.insertText.all.length).toBeGreaterThan(0)
   })
+
+  it('resolves the schema v2 plugin roster (lists/toggle/columns/date/emoji/styles)', () => {
+    const editor = makeEditor([p('a', '')])
+    for (const key of [
+      'listClassic',
+      'ul',
+      'ol',
+      'li',
+      'lic',
+      'toggle',
+      'column',
+      'column_group',
+      'date',
+      'emoji',
+      'hr',
+      'highlight',
+      'kbd',
+      'textAlign',
+      'lineHeight',
+      'indent',
+      'color',
+      'backgroundColor',
+      'fontSize',
+    ]) {
+      expect(editor.plugins[key], `plugin missing: ${key}`).toBeDefined()
+    }
+    // Task lists deliberately stay OUT of the kit — no checkbox state in
+    // the storage schema. (The classic ListPlugin registers taskList as a
+    // child plugin; it resolves but has no component/insert surface.)
+  })
+
+  it('table merging is enabled (schema v2 stores colSpan/rowSpan)', () => {
+    const editor = makeEditor([p('a', '')])
+    const table = editor.plugins.table as { options?: { disableMerge?: boolean } }
+    expect(table.options?.disableMerge).not.toBe(true)
+  })
+})
+
+describe('classic list behavior (the founder fix)', () => {
+  const listValue: Content = [
+    {
+      id: 'l1',
+      type: 'ul',
+      children: [{ type: 'li', children: [{ type: 'lic', children: [{ text: 'first' }] }] }],
+    },
+  ]
+
+  it('Enter inside an li adds the next li INSIDE the same ul container', () => {
+    const editor = makeEditor(listValue)
+    editor.tf.select({ path: [0, 0, 0, 0], offset: 5 })
+    editor.tf.insertBreak()
+    editor.tf.insertText('second')
+    expect(editor.children).toHaveLength(2) // list + trailing paragraph
+    expect(editor.children[0]?.type).toBe('ul')
+    expect(editor.children[0]?.children).toHaveLength(2)
+    const result = fromEditorValue(editor.children)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content[0]).toMatchObject({
+        type: 'ul',
+        children: [
+          { type: 'li', children: [{ type: 'lic', children: [{ text: 'first' }] }] },
+          { type: 'li', children: [{ type: 'lic', children: [{ text: 'second' }] }] },
+        ],
+      })
+    }
+  })
+
+  it('Enter on an empty trailing li exits the list (unwraps to a paragraph)', () => {
+    const editor = makeEditor(listValue)
+    editor.tf.select({ path: [0, 0, 0, 0], offset: 5 })
+    editor.tf.insertBreak() // second (empty) li
+    editor.tf.insertBreak() // empty li exits the list
+    expect(editor.children[0]?.type).toBe('ul')
+    expect(editor.children[0]?.children).toHaveLength(1)
+    expect(editor.children[1]?.type).toBe('p')
+  })
+
+  it('Tab nests the second li under the first (tf.tab override)', () => {
+    const editor = makeEditor(listValue)
+    editor.tf.select({ path: [0, 0, 0, 0], offset: 5 })
+    editor.tf.insertBreak()
+    editor.tf.insertText('child')
+    editor.tf.tab({})
+    const result = fromEditorValue(editor.children)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content[0]).toMatchObject({
+        type: 'ul',
+        children: [
+          {
+            type: 'li',
+            children: [
+              { type: 'lic', children: [{ text: 'first' }] },
+              {
+                type: 'ul',
+                children: [
+                  { type: 'li', children: [{ type: 'lic', children: [{ text: 'child' }] }] },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+    }
+  })
 })
 
 describe('markdown autoformat (input rules)', () => {
@@ -66,16 +172,25 @@ describe('markdown autoformat (input rules)', () => {
     }
   })
 
-  it('turns "- " and "1. " into flat list paragraphs', () => {
+  it('turns "- " and "1. " into CLASSIC container lists (ul/ol > li > lic)', () => {
     const bullets = makeEditor([p('a', '')])
     typeAtStart(bullets, '- ')
-    expect(bullets.children[0]?.type).toBe('p')
-    expect((bullets.children[0] as { listStyleType?: string }).listStyleType).toBe('disc')
+    expect(bullets.children[0]?.type).toBe('ul')
+    expect((bullets.children[0]?.children[0] as { type?: string }).type).toBe('li')
 
     const numbers = makeEditor([p('a', '')])
     typeAtStart(numbers, '1. ')
-    expect(numbers.children[0]?.type).toBe('p')
-    expect((numbers.children[0] as { listStyleType?: string }).listStyleType).toBe('decimal')
+    expect(numbers.children[0]?.type).toBe('ol')
+    const li = numbers.children[0]?.children[0] as { type?: string; children?: { type?: string }[] }
+    expect(li.type).toBe('li')
+    expect(li.children?.[0]?.type).toBe('lic')
+  })
+
+  it('turns "---" into a horizontal rule followed by an empty paragraph', () => {
+    const editor = makeEditor([p('a', '')])
+    typeAtStart(editor, '---')
+    expect(editor.children[0]?.type).toBe('hr')
+    expect(editor.children[1]?.type).toBe('p')
   })
 
   it('turns ``` into a code block', () => {

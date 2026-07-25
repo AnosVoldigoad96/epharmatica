@@ -1,7 +1,7 @@
 'use client'
 
 import { DndPlugin, useDraggable, useDropLine } from '@platejs/dnd'
-import { expandListItemsWithChildren } from '@platejs/list'
+import { TogglePlugin } from '@platejs/toggle/react'
 import { GripVertical } from 'lucide-react'
 import type { NodeEntry, TElement } from 'platejs'
 import type { PlateEditor, PlateElementProps, RenderNodeWrapper } from 'platejs/react'
@@ -159,7 +159,14 @@ const DragHandle = React.memo(function DragHandle({
   const element = useElement()
   const labels = useEditorLabels()
 
-  /** The hovered block — expanded with its flat-list children. */
+  /**
+   * The hovered block — expanded with its toggle contents. Classic lists
+   * are single container blocks (one handle, whole list drags at once), so
+   * the flat-model `expandListItemsWithChildren` is gone; toggles keep the
+   * multi-block behavior: dragging a toggle brings every top-level block it
+   * encloses (TogglePlugin's toggleIndex maps block id → enclosing toggle
+   * ids), so closed contents never orphan.
+   */
   const dragBlocks = (): NodeEntry<TElement>[] => {
     let selectionNodes = editor.api.blocks({ mode: 'highest' })
 
@@ -170,7 +177,26 @@ const DragHandle = React.memo(function DragHandle({
       selectionNodes = [[element, path]]
     }
 
-    return expandListItemsWithChildren(editor, selectionNodes)
+    const toggleIds = new Set(
+      selectionNodes.filter(([node]) => node.type === 'toggle').map(([node]) => node.id as string),
+    )
+    if (toggleIds.size === 0) return selectionNodes
+
+    const toggleIndex = editor.getOption(TogglePlugin, 'toggleIndex')
+    const seen = new Set(selectionNodes.map(([node]) => node.id as string))
+    const expanded = [...selectionNodes]
+    ;(editor.children as TElement[]).forEach((node, index) => {
+      const id = node.id as string
+      if (seen.has(id)) return
+      const enclosing: string[] = toggleIndex?.get(id) ?? []
+      if (enclosing.some((toggleId) => toggleIds.has(toggleId))) {
+        seen.add(id)
+        expanded.push([node, [index]])
+      }
+    })
+    // Keep document order so the preview stack matches the drag set.
+    expanded.sort((a, b) => (a[1][0] as number) - (b[1][0] as number))
+    return expanded
   }
 
   return (

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { FIXTURE_DOCUMENT } from '../fixtures'
-import type { Content, ParagraphBlock } from '../schema/types'
+import { FIXTURE_DOCUMENT, LEGACY_FLAT_LIST_DOCUMENT } from '../fixtures'
+import type { ListBlock, TableBlock, TableCell } from '../schema/types'
 import { fromEditorValue, toEditorValue } from './serialize'
 
 describe('fromEditorValue (the single save path)', () => {
@@ -66,12 +66,13 @@ describe('fromEditorValue (the single save path)', () => {
     }
   })
 
-  it('strips editor-only table and list props (colSpan/rowSpan/colSizes/listStart)', () => {
+  it('strips editor-only table sizing props but KEEPS merge spans (schema v2)', () => {
     const value = [
       {
         id: 'tbl',
         type: 'table',
         colSizes: [120, 120],
+        marginLeft: 12,
         children: [
           {
             type: 'tr',
@@ -79,55 +80,86 @@ describe('fromEditorValue (the single save path)', () => {
               {
                 type: 'th',
                 colSpan: 2,
-                rowSpan: 1,
+                rowSpan: 3,
                 children: [{ type: 'p', children: [{ text: 'h' }] }],
+              },
+              {
+                type: 'td',
+                colSpan: 1,
+                rowSpan: 1,
+                children: [{ type: 'p', children: [{ text: 'c' }] }],
               },
             ],
           },
         ],
       },
-      {
-        id: 'li-1',
-        type: 'p',
-        listStyleType: 'decimal',
-        listStart: 2,
-        indent: 1,
-        children: [{ text: 'step' }],
-      },
     ]
     const result = fromEditorValue(value)
     expect(result.ok).toBe(true)
     if (result.ok) {
+      // Spans >= 2 persist; span 1 is the implicit default and drops.
       expect(result.content[0]).toEqual({
         id: 'tbl',
         type: 'table',
         children: [
           {
             type: 'tr',
-            children: [{ type: 'th', children: [{ type: 'p', children: [{ text: 'h' }] }] }],
+            children: [
+              {
+                type: 'th',
+                colSpan: 2,
+                rowSpan: 3,
+                children: [{ type: 'p', children: [{ text: 'h' }] }],
+              },
+              { type: 'td', children: [{ type: 'p', children: [{ text: 'c' }] }] },
+            ],
           },
         ],
-      })
-      // indent 1 is the canonical omitted level; listStart never persists.
-      expect(result.content[1]).toEqual({
-        id: 'li-1',
-        type: 'p',
-        listStyleType: 'decimal',
-        children: [{ text: 'step' }],
       })
     }
   })
 
-  it('keeps indent >= 2 on list items, drops indent without listStyleType', () => {
+  it('SINGLE-WRITE: v1 flat list items reaching the save path emit containers', () => {
     const value = [
-      { id: 'a', type: 'p', listStyleType: 'disc', indent: 2, children: [{ text: 'deep' }] },
-      { id: 'b', type: 'p', indent: 3, children: [{ text: 'plain' }] },
+      {
+        id: 'a',
+        type: 'p',
+        listStyleType: 'disc',
+        listStart: 2,
+        indent: 1,
+        children: [{ text: 'one' }],
+      },
+      { id: 'b', type: 'p', listStyleType: 'disc', indent: 2, children: [{ text: 'deep' }] },
+      { id: 'c', type: 'p', indent: 3, children: [{ text: 'plain indented' }] },
     ]
     const result = fromEditorValue(value)
     expect(result.ok).toBe(true)
     if (result.ok) {
-      expect((result.content[0] as ParagraphBlock).indent).toBe(2)
-      expect(result.content[1]).toEqual({ id: 'b', type: 'p', children: [{ text: 'plain' }] })
+      expect(result.content[0]).toEqual({
+        id: 'a',
+        type: 'ul',
+        children: [
+          {
+            type: 'li',
+            children: [
+              { type: 'lic', children: [{ text: 'one' }] },
+              {
+                type: 'ul',
+                children: [
+                  { type: 'li', children: [{ type: 'lic', children: [{ text: 'deep' }] }] },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+      // Generic block indent (no listStyleType) is a REAL v2 prop now.
+      expect(result.content[1]).toEqual({
+        id: 'c',
+        type: 'p',
+        indent: 3,
+        children: [{ text: 'plain indented' }],
+      })
     }
   })
 
@@ -353,7 +385,12 @@ describe('fromEditorValue — editor-v2 artifacts (slash / dnd / selection)', ()
     if (result.ok) {
       expect(result.content).toEqual([
         { id: 'p1', type: 'p', children: [{ text: 'stable' }] },
-        { id: 'li-1', type: 'p', listStyleType: 'decimal', children: [{ text: 'step' }] },
+        // v1 flat item -> v2 container (listStart/listRestartPolite dropped).
+        {
+          id: 'li-1',
+          type: 'ol',
+          children: [{ type: 'li', children: [{ type: 'lic', children: [{ text: 'step' }] }] }],
+        },
       ])
     }
   })
@@ -409,24 +446,323 @@ describe('fromEditorValue — editor-v2 artifacts (slash / dnd / selection)', ()
   })
 })
 
-describe('toEditorValue (mount-time deserialization)', () => {
-  it('seeds indent: 1 on flat list items so the list plugin keeps them', () => {
-    const content: Content = [
-      { id: 'li', type: 'p', listStyleType: 'disc', children: [{ text: 'item' }] },
-      { id: 'li2', type: 'p', listStyleType: 'disc', indent: 2, children: [{ text: 'deep' }] },
-      { id: 'p', type: 'p', children: [{ text: 'plain' }] },
-    ]
-    const value = toEditorValue(content) as ParagraphBlock[]
-    expect(value[0]?.indent).toBe(1)
-    expect(value[1]?.indent).toBe(2)
-    expect(value[2]?.indent).toBeUndefined()
+describe('toEditorValue (mount-time deserialization, DUAL-READ)', () => {
+  it('upgrades v1 flat lists to containers, tagging lis with their v1 ids', () => {
+    const value = toEditorValue(LEGACY_FLAT_LIST_DOCUMENT)
+    expect(value.map((block) => block.type)).toEqual(['h2', 'ul', 'ol', 'p'])
+    const ul = value[1] as ListBlock
+    expect(ul.id).toBe('lg-li-absorption')
+    expect(ul.children.map((item) => item.id)).toEqual(['lg-li-absorption', 'lg-li-distribution'])
+    // The indent-2 item nests inside the second li, keeping its v1 id.
+    const nested = ul.children[1]?.children[1]
+    expect(nested?.type).toBe('ul')
+    expect(nested?.children[0]?.id).toBe('lg-li-distribution-detail')
     // Source content is never mutated.
-    expect((content[0] as ParagraphBlock).indent).toBeUndefined()
+    expect(LEGACY_FLAT_LIST_DOCUMENT[1]?.type).toBe('p')
   })
 
-  it('round-trips back through fromEditorValue to the identical document', () => {
+  it('passes v2 container lists through unchanged', () => {
+    expect(toEditorValue(FIXTURE_DOCUMENT)).toEqual(FIXTURE_DOCUMENT)
+  })
+
+  it('round-trips the v2 fixture back through fromEditorValue identically', () => {
     const result = fromEditorValue(toEditorValue(FIXTURE_DOCUMENT))
     expect(result.ok).toBe(true)
     if (result.ok) expect(result.content).toEqual(FIXTURE_DOCUMENT)
+  })
+
+  it('LEGACY UPGRADE round-trip: flat in -> container out (li ids stripped)', () => {
+    const result = fromEditorValue(toEditorValue(LEGACY_FLAT_LIST_DOCUMENT))
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        { id: 'lg-h2', type: 'h2', children: [{ text: 'Pharmacokinetics' }] },
+        {
+          id: 'lg-li-absorption',
+          type: 'ul',
+          children: [
+            {
+              type: 'li',
+              children: [{ type: 'lic', children: [{ text: 'Rapid gastric absorption' }] }],
+            },
+            {
+              type: 'li',
+              children: [
+                {
+                  type: 'lic',
+                  children: [
+                    { text: 'Wide distribution, ' },
+                    { text: 'protein-bound', bold: true },
+                  ],
+                },
+                {
+                  type: 'ul',
+                  children: [
+                    {
+                      type: 'li',
+                      children: [{ type: 'lic', children: [{ text: 'Albumin binding ~90%' }] }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'lg-ol-step-1',
+          type: 'ol',
+          children: [
+            {
+              type: 'li',
+              children: [{ type: 'lic', children: [{ text: 'Hydrolysis to salicylate' }] }],
+            },
+            {
+              type: 'li',
+              children: [{ type: 'lic', children: [{ text: 'Hepatic conjugation' }] }],
+            },
+          ],
+        },
+        { id: 'lg-p-outro', type: 'p', children: [{ text: 'Plain closing paragraph.' }] },
+      ])
+    }
+  })
+})
+
+describe('fromEditorValue — schema v2 blocks', () => {
+  it('strips nested ids and editor junk from container lists', () => {
+    const value = [
+      {
+        id: 'list',
+        type: 'ul',
+        __dragging: true,
+        children: [
+          {
+            id: 'li-junk',
+            type: 'li',
+            selected: true,
+            children: [
+              { id: 'lic-junk', type: 'lic', children: [{ text: 'item' }] },
+              {
+                id: 'nested-junk',
+                type: 'ol',
+                children: [
+                  { type: 'li', children: [{ type: 'lic', children: [{ text: 'sub' }] }] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        {
+          id: 'list',
+          type: 'ul',
+          children: [
+            {
+              type: 'li',
+              children: [
+                { type: 'lic', children: [{ text: 'item' }] },
+                {
+                  type: 'ol',
+                  children: [
+                    { type: 'li', children: [{ type: 'lic', children: [{ text: 'sub' }] }] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    }
+  })
+
+  it('keeps toggle summaries + top-level indent; strips toggle editor state', () => {
+    const value = [
+      { id: 't', type: 'toggle', __open: true, children: [{ text: 'More' }] },
+      { id: 'body', type: 'p', indent: 1, children: [{ text: 'Inside' }] },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        { id: 't', type: 'toggle', children: [{ text: 'More' }] },
+        { id: 'body', type: 'p', indent: 1, children: [{ text: 'Inside' }] },
+      ])
+    }
+  })
+
+  it('keeps hr as a void block', () => {
+    const result = fromEditorValue([
+      { id: 'rule', type: 'hr', children: [{ text: 'junk', bold: true }] },
+    ])
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([{ id: 'rule', type: 'hr', children: [{ text: '' }] }])
+    }
+  })
+
+  it('whitelists align/lineHeight and drops unknown styling values', () => {
+    const value = [
+      { id: 'a', type: 'p', align: 'center', lineHeight: 2, children: [{ text: 'ok' }] },
+      { id: 'b', type: 'h2', align: 'weird', lineHeight: 99, children: [{ text: 'clamped' }] },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content[0]).toEqual({
+        id: 'a',
+        type: 'p',
+        align: 'center',
+        lineHeight: 2,
+        children: [{ text: 'ok' }],
+      })
+      expect(result.content[1]).toEqual({ id: 'b', type: 'h2', children: [{ text: 'clamped' }] })
+    }
+  })
+
+  it('whitelists color/backgroundColor/fontSize marks and drops malformed CSS', () => {
+    const value = [
+      {
+        id: 'p1',
+        type: 'p',
+        children: [
+          {
+            text: 'ok',
+            color: '#b91c1c',
+            backgroundColor: 'rgb(254, 240, 138)',
+            fontSize: '20px',
+          },
+          {
+            text: 'bad',
+            color: 'url(evil)',
+            backgroundColor: 'expression(x)',
+            fontSize: 'calc(1px)',
+          },
+          { text: 'hl', highlight: true, kbd: true },
+        ],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content[0]?.children).toEqual([
+        { text: 'ok', color: '#b91c1c', backgroundColor: 'rgb(254, 240, 138)', fontSize: '20px' },
+        { text: 'bad' },
+        { text: 'hl', highlight: true, kbd: true },
+      ])
+    }
+  })
+
+  it('keeps valid inline dates and drops unset ones', () => {
+    const value = [
+      {
+        id: 'p1',
+        type: 'p',
+        children: [
+          { text: 'Reviewed ' },
+          { type: 'date', date: '2026-07-24', extra: true, children: [{ text: '' }] },
+          { type: 'date', date: 'not-a-date', children: [{ text: '' }] },
+          { text: '.' },
+        ],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content[0]?.children).toEqual([
+        { text: 'Reviewed ' },
+        { type: 'date', date: '2026-07-24', children: [{ text: '' }] },
+        { text: '.' },
+      ])
+    }
+  })
+
+  it('column groups: strips nested ids, keeps widths, drops editor sizing junk', () => {
+    const value = [
+      {
+        id: 'cols',
+        type: 'column_group',
+        layout: [50, 50],
+        children: [
+          {
+            id: 'col-junk',
+            type: 'column',
+            width: '50%',
+            children: [{ id: 'p-junk', type: 'p', children: [{ text: 'left' }] }],
+          },
+          {
+            type: 'column',
+            width: 'bogus',
+            children: [{ type: 'p', children: [{ text: 'right' }] }],
+          },
+        ],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        {
+          id: 'cols',
+          type: 'column_group',
+          children: [
+            {
+              type: 'column',
+              width: '50%',
+              children: [{ type: 'p', children: [{ text: 'left' }] }],
+            },
+            { type: 'column', children: [{ type: 'p', children: [{ text: 'right' }] }] },
+          ],
+        },
+      ])
+    }
+  })
+
+  it('rejects headings/toggles/toc inside columns instead of dropping them', () => {
+    const result = fromEditorValue([
+      {
+        id: 'cols',
+        type: 'column_group',
+        children: [
+          { type: 'column', children: [{ type: 'h2', children: [{ text: 'nope' }] }] },
+          { type: 'column', children: [{ type: 'p', children: [{ text: 'fine' }] }] },
+        ],
+      },
+    ])
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errors.join(' ')).toContain('not allowed inside a column')
+    }
+  })
+
+  it('drops an open emoji_input element like any editor-time inline wrapper', () => {
+    const value = [
+      {
+        id: 'p1',
+        type: 'p',
+        children: [{ text: 'mood ' }, { type: 'emoji_input', children: [{ text: 'smile' }] }],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        { id: 'p1', type: 'p', children: [{ text: 'mood ' }, { text: 'smile' }] },
+      ])
+    }
+  })
+
+  it('merged-cell round-trip: fixture table keeps its spans', () => {
+    const result = fromEditorValue(FIXTURE_DOCUMENT)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      const table = result.content.find((block) => block.id === 'fx-table-doses') as TableBlock
+      const merged = table.children[2]?.children[0] as TableCell
+      expect(merged.colSpan).toBe(2)
+    }
   })
 })

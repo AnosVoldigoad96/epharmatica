@@ -1,11 +1,18 @@
 'use client'
 
-import { toggleList } from '@platejs/list'
+import { insertDate } from '@platejs/date'
+import { insertColumnGroup } from '@platejs/layout'
+import { someList, toggleList, unwrapList } from '@platejs/list-classic'
+import { openNextToggles } from '@platejs/toggle/react'
 import type { LucideIcon } from 'lucide-react'
 import {
   BookOpen,
   Brain,
+  CalendarDays,
+  ChevronRight,
   Code2,
+  Columns2,
+  Columns3,
   Film,
   GraduationCap,
   Heading2,
@@ -14,6 +21,7 @@ import {
   Lightbulb,
   List,
   ListOrdered,
+  Minus,
   Pilcrow,
   Pill,
   Quote,
@@ -39,7 +47,7 @@ import type { SubtopicEditorLabels } from './labels'
  * never localized, never stored); actions run against the live editor.
  */
 
-export type InsertItemGroup = 'blocks' | 'callouts' | 'media'
+export type InsertItemGroup = 'blocks' | 'layout' | 'callouts' | 'media'
 
 export type InsertItem = {
   key: string
@@ -70,9 +78,9 @@ const CALLOUT_ICONS: Record<CalloutVariant, LucideIcon> = {
   warning: TriangleAlert,
 }
 
-/** True for an empty, non-list paragraph — the block slash replaces. */
+/** True for an empty top-level paragraph — the block slash replaces. */
 const isEmptyParagraph = (block: TElement): boolean =>
-  block.type === 'p' && block.listStyleType === undefined && NodeApi.string(block) === ''
+  block.type === 'p' && NodeApi.string(block) === ''
 
 /**
  * Notion-style insert: replace the current block when it is an empty
@@ -95,13 +103,22 @@ export function insertBlockNode(editor: PlateEditor, node: TElement): void {
   }
 }
 
-/** Turn the current block into `type`, clearing flat-list leftovers. */
-export function setTextBlockType(editor: PlateEditor, type: 'p' | 'h2' | 'h3' | 'blockquote') {
-  const entry = editor.api.block({ highest: true })
-  if (entry && (entry[0].listStyleType !== undefined || entry[0].indent !== undefined)) {
-    editor.tf.unsetNodes(['listStyleType', 'indent', 'listStart'], { at: entry[1] })
+export type TextBlockType = 'p' | 'h2' | 'h3' | 'blockquote' | 'toggle'
+
+/** Turn the current block into `type`, unwrapping a classic list first. */
+export function setTextBlockType(editor: PlateEditor, type: TextBlockType) {
+  if (someList(editor, 'ul') || someList(editor, 'ol')) {
+    unwrapList(editor)
+  }
+  if (type === 'toggle') {
+    openNextToggles(editor)
   }
   editor.tf.toggleBlock(type)
+}
+
+/** Toggle the selection into/out of a classic container list. */
+export function setListType(editor: PlateEditor, type: 'ul' | 'ol') {
+  toggleList(editor, { type })
 }
 
 const emptyParagraph = (): TElement => ({ type: 'p', children: [{ text: '' }] })
@@ -169,7 +186,7 @@ export function buildInsertItems(
       label: labels.listBulleted,
       icon: List,
       keywords: ['unordered', 'ul', '-'],
-      run: focusAfter((editor) => toggleList(editor, { listStyleType: 'disc' })),
+      run: focusAfter((editor) => setListType(editor, 'ul')),
     },
     {
       key: 'numbered-list',
@@ -177,7 +194,15 @@ export function buildInsertItems(
       label: labels.listNumbered,
       icon: ListOrdered,
       keywords: ['ordered', 'ol', '1'],
-      run: focusAfter((editor) => toggleList(editor, { listStyleType: 'decimal' })),
+      run: focusAfter((editor) => setListType(editor, 'ol')),
+    },
+    {
+      key: 'toggle',
+      group: 'blocks',
+      label: labels.blockToggle,
+      icon: ChevronRight,
+      keywords: ['toggle', 'collapse', 'collapsible', 'details'],
+      run: focusAfter((editor) => setTextBlockType(editor, 'toggle')),
     },
     {
       key: 'table',
@@ -201,6 +226,24 @@ export function buildInsertItems(
       ),
     },
     {
+      key: 'divider',
+      group: 'blocks',
+      label: labels.insertDivider,
+      icon: Minus,
+      keywords: ['hr', 'divider', 'rule', 'separator', '---'],
+      run: focusAfter((editor) =>
+        insertBlockNode(editor, { type: 'hr', children: [{ text: '' }] }),
+      ),
+    },
+    {
+      key: 'date',
+      group: 'blocks',
+      label: labels.insertDate,
+      icon: CalendarDays,
+      keywords: ['date', 'time', 'calendar', 'today'],
+      run: focusAfter((editor) => insertDate(editor)),
+    },
+    {
       key: 'toc',
       group: 'blocks',
       label: labels.insertToc,
@@ -222,6 +265,22 @@ export function buildInsertItems(
           fields: { generic_name: '' },
           children: [{ text: '' }],
         }),
+    },
+    {
+      key: 'columns-2',
+      group: 'layout',
+      label: labels.insertColumns2,
+      icon: Columns2,
+      keywords: ['columns', 'layout', 'two', 'side'],
+      run: focusAfter((editor) => insertColumnGroup(editor, { columns: 2, select: true })),
+    },
+    {
+      key: 'columns-3',
+      group: 'layout',
+      label: labels.insertColumns3,
+      icon: Columns3,
+      keywords: ['columns', 'layout', 'three'],
+      run: focusAfter((editor) => insertColumnGroup(editor, { columns: 3, select: true })),
     },
     ...CALLOUT_VARIANTS.map((variant): InsertItem => ({
       key: `callout-${variant}`,
@@ -284,6 +343,7 @@ export function insertItemGroups(
 ): Array<{ group: InsertItemGroup; label: string }> {
   return [
     { group: 'blocks', label: labels.slashGroupBlocks },
+    { group: 'layout', label: labels.slashGroupLayout },
     { group: 'callouts', label: labels.slashGroupCallouts },
     { group: 'media', label: labels.slashGroupMedia },
   ]

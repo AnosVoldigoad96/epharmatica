@@ -9,6 +9,7 @@
  */
 
 export type {
+  Alignment,
   Block,
   BlockType,
   BlockquoteBlock,
@@ -16,15 +17,24 @@ export type {
   CalloutVariant,
   CodeBlock,
   CodeLine,
+  ColumnChildBlock,
+  ColumnGroupBlock,
+  ColumnNode,
   Content,
+  DateNode,
   DrugCardBlock,
   DrugCardFieldKey,
   DrugCardFields,
   HeadingBlock,
+  HrBlock,
   ImageBlock,
   InlineNode,
   LinkNode,
+  ListBlock,
+  ListItemContentNode,
+  ListItemNode,
   ListStyleType,
+  NestedListNode,
   NestedParagraph,
   ParagraphBlock,
   TableBlock,
@@ -32,10 +42,20 @@ export type {
   TableRow,
   TextNode,
   TocBlock,
+  ToggleBlock,
   VideoBlock,
   VoidChildren,
 } from './schema/types'
-export { CALLOUT_VARIANTS, DRUG_CARD_FIELD_KEYS, isTextNode } from './schema/types'
+export {
+  CALLOUT_VARIANTS,
+  CONTENT_SCHEMA_VERSION,
+  DRUG_CARD_FIELD_KEYS,
+  isDateNode,
+  isTextNode,
+} from './schema/types'
+
+export { upgradeLegacyLists } from './schema/legacy-lists'
+export { formatDateDisplay } from './schema/date'
 
 export { CALLOUT_LABELS, DRUG_CARD_FIELD_LABELS } from './schema/labels'
 
@@ -53,6 +73,7 @@ export {
   getHeadingsText,
   getPlainText,
   inlineText,
+  listItemsText,
   paragraphsText,
 } from './serializers'
 
@@ -62,7 +83,7 @@ export type { AnchorKind, AnchorPath } from './anchors'
 export { RichText } from './render/rich-text'
 export type { RichTextComponents, RichTextLabels, RichTextProps } from './render/rich-text'
 
-export { FIXTURE_DOCUMENT } from './fixtures'
+export { FIXTURE_DOCUMENT, LEGACY_FLAT_LIST_DOCUMENT } from './fixtures'
 
 /*
  * Editing surface (admin-only). Exported from the main index on purpose:

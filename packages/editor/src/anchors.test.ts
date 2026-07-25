@@ -21,7 +21,12 @@ describe('getAnchorKind (M1 §5.5)', () => {
     expect(getAnchorKind(fixtureBlock('fx-code-calc'))).toBe('code')
     expect(getAnchorKind(fixtureBlock('fx-img-structure'))).toBe('caption')
     expect(getAnchorKind(fixtureBlock('fx-video-mechanism'))).toBe('caption')
+    expect(getAnchorKind(fixtureBlock('fx-ul-absorption'))).toBe('list')
+    expect(getAnchorKind(fixtureBlock('fx-ol-steps'))).toBe('list')
+    expect(getAnchorKind(fixtureBlock('fx-toggle-details'))).toBe('prose')
     expect(getAnchorKind(fixtureBlock('fx-toc'))).toBeNull()
+    expect(getAnchorKind(fixtureBlock('fx-hr'))).toBeNull()
+    expect(getAnchorKind(fixtureBlock('fx-columns'))).toBeNull()
   })
 })
 
@@ -33,10 +38,24 @@ describe('getTextRuns', () => {
     )
   })
 
-  it('prose: flat list items are ordinary prose runs', () => {
-    expect(getTextRuns(fixtureBlock('fx-li-distribution'), [])).toBe(
-      'Wide distribution, protein-bound',
-    )
+  it('prose: a toggle anchors on its summary line', () => {
+    expect(getTextRuns(fixtureBlock('fx-toggle-details'), [])).toBe('Advanced: salicylate kinetics')
+  })
+
+  it('list: locates li lines by nesting chain (schema v2)', () => {
+    const list = fixtureBlock('fx-ul-absorption')
+    expect(getTextRuns(list, [0])).toBe('Rapid gastric absorption')
+    expect(getTextRuns(list, [1])).toBe('Wide distribution, protein-bound')
+    // Nested item: second li -> its nested list -> first li.
+    expect(getTextRuns(list, [1, 0])).toBe('Albumin binding ~90%')
+  })
+
+  it('list: out-of-range, malformed, and empty paths return null', () => {
+    const list = fixtureBlock('fx-ul-absorption')
+    expect(getTextRuns(list, [])).toBeNull()
+    expect(getTextRuns(list, [9])).toBeNull()
+    expect(getTextRuns(list, [0, 0])).toBeNull()
+    expect(getTextRuns(list, ['0'])).toBeNull()
   })
 
   it('callout: concatenates paragraphs with newline (one anchor block)', () => {
@@ -49,10 +68,10 @@ describe('getTextRuns', () => {
     expect(getTextRuns(fixtureBlock('fx-p-intro'), [0])).toBeNull()
   })
 
-  it('table: locates cells by [row, col]', () => {
+  it('table: locates cells by [row, col] — merged cells included', () => {
     const table = fixtureBlock('fx-table-doses')
     expect(getTextRuns(table, [0, 1])).toBe('Dose')
-    expect(getTextRuns(table, [2, 0])).toBe('Analgesic')
+    expect(getTextRuns(table, [2, 0])).toBe('Analgesic: 300–900 mg q4–6h')
   })
 
   it('table: out-of-range and malformed paths return null', () => {
@@ -90,7 +109,10 @@ describe('getTextRuns', () => {
     expect(getTextRuns(fixtureBlock('fx-img-structure'), ['alt'])).toBeNull()
   })
 
-  it('toc: has no text runs', () => {
+  it('toc/hr/column_group: have no text runs', () => {
     expect(getTextRuns(fixtureBlock('fx-toc'), [])).toBeNull()
+    expect(getTextRuns(fixtureBlock('fx-hr'), [])).toBeNull()
+    expect(getTextRuns(fixtureBlock('fx-columns'), [])).toBeNull()
+    expect(getTextRuns(fixtureBlock('fx-columns'), [0, 0])).toBeNull()
   })
 })

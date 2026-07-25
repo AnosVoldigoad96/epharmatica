@@ -36,10 +36,224 @@ describe('validateContent', () => {
   })
 
   it('rejects unknown props on text nodes (strict schema)', () => {
-    const result = validateContent([
-      { id: 'b1', type: 'p', children: [{ text: 'x', highlight: true }] },
-    ])
+    const result = validateContent([{ id: 'b1', type: 'p', children: [{ text: 'x', glow: true }] }])
     expect(result.ok).toBe(false)
+  })
+
+  it('accepts the v1 legacy flat-list spelling (stored rows must load)', () => {
+    const result = validateContent([
+      { id: 'li', type: 'p', listStyleType: 'disc', indent: 2, children: [{ text: 'item' }] },
+    ])
+    expect(result.ok).toBe(true)
+  })
+
+  it('accepts v2 marks and bounded CSS values; rejects unbounded ones', () => {
+    const good = validateContent([
+      {
+        id: 'b1',
+        type: 'p',
+        children: [
+          { text: 'x', highlight: true, kbd: true },
+          { text: 'y', color: '#b91c1c', backgroundColor: 'rgb(1, 2, 3)', fontSize: '18px' },
+        ],
+      },
+    ])
+    expect(good.ok).toBe(true)
+    expect(
+      validateContent([
+        { id: 'b1', type: 'p', children: [{ text: 'x', color: 'url(javascript:alert(1))' }] },
+      ]).ok,
+    ).toBe(false)
+    expect(
+      validateContent([{ id: 'b1', type: 'p', children: [{ text: 'x', fontSize: '10vw' }] }]).ok,
+    ).toBe(false)
+  })
+
+  it('accepts align/lineHeight/indent within bounds; rejects out-of-range', () => {
+    expect(
+      validateContent([
+        {
+          id: 'b1',
+          type: 'p',
+          align: 'justify',
+          lineHeight: 1.2,
+          indent: 3,
+          children: [{ text: 'x' }],
+        },
+      ]).ok,
+    ).toBe(true)
+    expect(
+      validateContent([{ id: 'b1', type: 'p', align: 'start', children: [{ text: 'x' }] }]).ok,
+    ).toBe(false)
+    expect(
+      validateContent([{ id: 'b1', type: 'p', lineHeight: 9, children: [{ text: 'x' }] }]).ok,
+    ).toBe(false)
+    expect(
+      validateContent([{ id: 'b1', type: 'p', indent: 0, children: [{ text: 'x' }] }]).ok,
+    ).toBe(false)
+  })
+
+  it('validates container lists strictly: li = one lic + optional nested list, no li ids', () => {
+    const good = validateContent([
+      {
+        id: 'l1',
+        type: 'ul',
+        children: [
+          {
+            type: 'li',
+            children: [
+              { type: 'lic', children: [{ text: 'a' }] },
+              {
+                type: 'ol',
+                children: [{ type: 'li', children: [{ type: 'lic', children: [{ text: 'b' }] }] }],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(good.ok).toBe(true)
+    // li ids never store.
+    expect(
+      validateContent([
+        {
+          id: 'l1',
+          type: 'ul',
+          children: [
+            { id: 'sneaky', type: 'li', children: [{ type: 'lic', children: [{ text: 'a' }] }] },
+          ],
+        },
+      ]).ok,
+    ).toBe(false)
+    // li must start with a lic.
+    expect(
+      validateContent([
+        {
+          id: 'l1',
+          type: 'ul',
+          children: [
+            {
+              type: 'li',
+              children: [
+                {
+                  type: 'ul',
+                  children: [
+                    { type: 'li', children: [{ type: 'lic', children: [{ text: 'a' }] }] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]).ok,
+    ).toBe(false)
+  })
+
+  it('validates toggles, hr, and inline dates', () => {
+    expect(
+      validateContent([
+        { id: 't1', type: 'toggle', children: [{ text: 'More' }] },
+        { id: 'h1', type: 'hr', children: [{ text: '' }] },
+        {
+          id: 'p1',
+          type: 'p',
+          children: [{ type: 'date', date: '2026-07-24', children: [{ text: '' }] }],
+        },
+      ]).ok,
+    ).toBe(true)
+    expect(
+      validateContent([
+        {
+          id: 'p1',
+          type: 'p',
+          children: [{ type: 'date', date: '24/07/2026', children: [{ text: '' }] }],
+        },
+      ]).ok,
+    ).toBe(false)
+  })
+
+  it('validates column groups: 2-4 columns, % widths, no headings/ids inside', () => {
+    const column = (text: string) => ({
+      type: 'column',
+      width: '50%',
+      children: [{ type: 'p', children: [{ text }] }],
+    })
+    expect(
+      validateContent([{ id: 'c1', type: 'column_group', children: [column('a'), column('b')] }])
+        .ok,
+    ).toBe(true)
+    // One column is not a group.
+    expect(validateContent([{ id: 'c1', type: 'column_group', children: [column('a')] }]).ok).toBe(
+      false,
+    )
+    // Widths must be percentages.
+    expect(
+      validateContent([
+        {
+          id: 'c1',
+          type: 'column_group',
+          children: [
+            {
+              type: 'column',
+              width: '300px',
+              children: [{ type: 'p', children: [{ text: 'a' }] }],
+            },
+            column('b'),
+          ],
+        },
+      ]).ok,
+    ).toBe(false)
+    // Headings never nest in columns.
+    expect(
+      validateContent([
+        {
+          id: 'c1',
+          type: 'column_group',
+          children: [
+            { type: 'column', children: [{ type: 'h2', children: [{ text: 'a' }] }] },
+            column('b'),
+          ],
+        },
+      ]).ok,
+    ).toBe(false)
+    // Nested blocks never carry ids.
+    expect(
+      validateContent([
+        {
+          id: 'c1',
+          type: 'column_group',
+          children: [
+            { type: 'column', children: [{ id: 'x', type: 'p', children: [{ text: 'a' }] }] },
+            column('b'),
+          ],
+        },
+      ]).ok,
+    ).toBe(false)
+  })
+
+  it('validates table cell spans within bounds', () => {
+    const table = (cell: Record<string, unknown>) => [
+      {
+        id: 't1',
+        type: 'table',
+        children: [{ type: 'tr', children: [cell] }],
+      },
+    ]
+    expect(
+      validateContent(
+        table({
+          type: 'td',
+          colSpan: 2,
+          rowSpan: 2,
+          children: [{ type: 'p', children: [{ text: 'x' }] }],
+        }),
+      ).ok,
+    ).toBe(true)
+    expect(
+      validateContent(
+        table({ type: 'td', colSpan: 999, children: [{ type: 'p', children: [{ text: 'x' }] }] }),
+      ).ok,
+    ).toBe(false)
   })
 
   it('rejects h1 — reserved for the page title', () => {

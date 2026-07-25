@@ -2,7 +2,7 @@
 
 import { flip, offset, shift, useFloatingToolbar, useFloatingToolbarState } from '@platejs/floating'
 import { unwrapLink, upsertLink } from '@platejs/link'
-import { indentList, outdentList, someList } from '@platejs/list'
+import type { Value } from 'platejs'
 import { nanoid } from 'platejs'
 import {
   Plate,
@@ -24,20 +24,38 @@ import { EditorLabelsProvider, editorComponents } from './components'
 import type { EditorBridges, PickedImage } from './context'
 import { EditorBridgesProvider } from './context'
 import { editorKit } from './editor-kit'
-import type { InsertItem } from './insert-items'
-import { buildInsertItems, insertBlockNode, insertItemGroups } from './insert-items'
+import type { InsertItem, TextBlockType } from './insert-items'
+import {
+  buildInsertItems,
+  insertBlockNode,
+  insertItemGroups,
+  setListType,
+  setTextBlockType,
+} from './insert-items'
 import type { SubtopicEditorLabels } from './labels'
 import { DEFAULT_EDITOR_LABELS } from './labels'
 import { fromEditorValue, toEditorValue } from './serialize'
+import {
+  AlignMenu,
+  ColorMenu,
+  ColumnLayoutMenu,
+  FontSizeMenu,
+  IndentButtons,
+  LineHeightMenu,
+  TableMenu,
+} from './toolbar-menus'
 
 /**
  * <SubtopicEditor/> — the admin editing surface (M4), Notion-grade:
  *
  *  - "/" slash commands over the full insert roster (insert-items.ts);
- *  - drag & reorder of top-level blocks (six-dot gutter handle, drop line);
- *  - a floating selection toolbar for marks + link;
- *  - markdown autoformat (editor-kit input rules);
- *  - a slim fixed toolbar: block type · insert · undo/redo · status pill.
+ *  - drag & reorder of top-level blocks (six-dot gutter handle, drop line;
+ *    a classic list drags as ONE block, a toggle brings its contents);
+ *  - a floating selection toolbar: marks (incl. highlight/kbd), font size,
+ *    text/background color, alignment, link;
+ *  - markdown autoformat (editor-kit + classic-list input rules);
+ *  - a fixed toolbar: block type · insert · align · line height · indent ·
+ *    contextual table/column menus · undo/redo · status pill.
  *
  * Autosaves every `autosaveMs` (default 30s, M4 §5.4) and on editor blur;
  * every save goes through fromEditorValue → validateContent, so unvalidated
@@ -114,7 +132,17 @@ function BlockTypeSelect({ labels }: { labels: SubtopicEditorLabels }) {
   const editor = useEditorRef()
   const value = useEditorSelector((ed) => {
     const type = ed.api.block({ highest: true })?.[0]?.type
-    return type === 'h2' || type === 'h3' || type === 'blockquote' ? type : 'p'
+    if (
+      type === 'h2' ||
+      type === 'h3' ||
+      type === 'blockquote' ||
+      type === 'toggle' ||
+      type === 'ul' ||
+      type === 'ol'
+    ) {
+      return type
+    }
+    return 'p'
   }, [])
   return (
     <select
@@ -122,11 +150,11 @@ function BlockTypeSelect({ labels }: { labels: SubtopicEditorLabels }) {
       value={value}
       onChange={(event) => {
         const next = event.target.value
-        const entry = editor.api.block({ highest: true })
-        if (entry && (entry[0].listStyleType !== undefined || entry[0].indent !== undefined)) {
-          editor.tf.unsetNodes(['listStyleType', 'indent', 'listStart'], { at: entry[1] })
+        if (next === 'ul' || next === 'ol') {
+          setListType(editor, next)
+        } else {
+          setTextBlockType(editor, next as TextBlockType)
         }
-        editor.tf.toggleBlock(next)
         editor.tf.focus()
       }}
       className={controlClass}
@@ -135,6 +163,9 @@ function BlockTypeSelect({ labels }: { labels: SubtopicEditorLabels }) {
       <option value="h2">{labels.blockHeading2}</option>
       <option value="h3">{labels.blockHeading3}</option>
       <option value="blockquote">{labels.blockQuote}</option>
+      <option value="ul">{labels.listBulleted}</option>
+      <option value="ol">{labels.listNumbered}</option>
+      <option value="toggle">{labels.blockToggle}</option>
     </select>
   )
 }
@@ -340,6 +371,16 @@ function FloatingToolbar({
         <MarkButton mark="sup" clears="sub" label={labels.markSuperscript}>
           x²
         </MarkButton>
+        <MarkButton mark="highlight" label={labels.markHighlight}>
+          <span className="bg-primary-tint px-0.5">H</span>
+        </MarkButton>
+        <MarkButton mark="kbd" label={labels.markKbd}>
+          <span className="border border-line px-0.5 font-mono text-[10px]">K</span>
+        </MarkButton>
+        <ColorMenu labels={labels} markKey="color" />
+        <ColorMenu labels={labels} markKey="backgroundColor" />
+        <FontSizeMenu labels={labels} />
+        <AlignMenu labels={labels} />
         <ToolbarButton label={labels.linkAdd} onClick={onOpenLinkPanel}>
           ⌁
         </ToolbarButton>
@@ -474,6 +515,22 @@ function VideoRow({ labels, onClose }: { labels: SubtopicEditorLabels; onClose: 
   )
 }
 
+/** Table / column-layout menus appear only while the selection is inside
+ * the matching structure (official contextual-toolbar behavior). */
+function ContextualMenus({ labels }: { labels: SubtopicEditorLabels }) {
+  const inTable = useEditorSelector((ed) => !!ed.api.some({ match: { type: 'table' } }), [])
+  const inColumns = useEditorSelector(
+    (ed) => !!ed.api.some({ match: { type: 'column_group' } }),
+    [],
+  )
+  return (
+    <>
+      {inTable ? <TableMenu labels={labels} /> : null}
+      {inColumns ? <ColumnLayoutMenu labels={labels} /> : null}
+    </>
+  )
+}
+
 const STATUS_TONE: Record<EditorStatus, string> = {
   clean: 'text-ink-2',
   dirty: 'text-ink-2',
@@ -510,6 +567,10 @@ function Toolbar({
       <div className="flex flex-wrap items-center gap-1 px-2 py-1">
         <BlockTypeSelect labels={labels} />
         <InsertMenu labels={labels} bridges={bridges} />
+        <AlignMenu labels={labels} />
+        <LineHeightMenu labels={labels} />
+        <IndentButtons labels={labels} />
+        <ContextualMenus labels={labels} />
         <UndoRedoButtons labels={labels} />
         <span
           className={`ml-auto select-none font-mono text-[10px] uppercase tracking-widest ${STATUS_TONE[status]}`}
@@ -547,7 +608,9 @@ export function SubtopicEditor({
   const editor = usePlateEditor({
     plugins: editorKit,
     components: editorComponents,
-    value: initialValue,
+    // Widened: inferring V from our recursive schema union (nested lists,
+    // column children) blows TypeScript's instantiation depth.
+    value: initialValue as unknown as Value,
   })
 
   const [status, setStatusState] = useState<EditorStatus>('clean')
@@ -670,19 +733,6 @@ export function SubtopicEditor({
                 // hover without any layout shift (zero CLS).
                 className="min-h-[320px] w-full max-w-none bg-surface p-5 ps-12 text-ink focus:outline-none"
                 onBlur={() => void saveRef.current()}
-                onKeyDown={(event) => {
-                  // Tab / Shift+Tab indent flat list items (Notion-style);
-                  // everything else keeps native tab order.
-                  if (
-                    event.key === 'Tab' &&
-                    !event.defaultPrevented &&
-                    (someList(editor, 'disc') || someList(editor, 'decimal'))
-                  ) {
-                    event.preventDefault()
-                    if (event.shiftKey) outdentList(editor)
-                    else indentList(editor)
-                  }
-                }}
               />
             </div>
           </Plate>

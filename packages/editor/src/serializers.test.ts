@@ -54,6 +54,32 @@ describe('getPlainText', () => {
   it('excludes callout eyebrow labels (chrome, not content)', () => {
     expect(plain).not.toContain('Clinical Pearl')
   })
+
+  it('includes container list items, nested ones too (schema v2)', () => {
+    expect(plain).toContain('Rapid gastric absorption')
+    expect(plain).toContain('Albumin binding ~90%')
+    expect(plain).toContain('Hepatic conjugation')
+  })
+
+  it('includes toggle summaries AND their (top-level) contents', () => {
+    expect(plain).toContain('Advanced: salicylate kinetics')
+    expect(plain).toContain('Zero-order elimination emerges at toxic concentrations.')
+    expect(plain).toContain('Half-life extends 20h+')
+  })
+
+  it('includes text inside columns — every nested block', () => {
+    expect(plain).toContain('COX-1: constitutive, gastric protection.')
+    expect(plain).toContain('COX-2: inducible, inflammation.')
+    expect(plain).toContain('Selective NSAIDs')
+  })
+
+  it('includes inline dates as their deterministic display text', () => {
+    expect(plain).toContain('Jul 24, 2026')
+  })
+
+  it('includes merged table cell text', () => {
+    expect(plain).toContain('Analgesic: 300–900 mg q4–6h')
+  })
 })
 
 describe('getHeadingsText', () => {
