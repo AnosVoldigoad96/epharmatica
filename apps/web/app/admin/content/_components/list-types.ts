@@ -57,6 +57,8 @@ export type ListEditorData = {
   moveTargets: MoveTarget[]
   /** Role is content_manager+ — shows Move… and the rename ceremony. */
   canManage: boolean
+  /** Role is admin+ — shows Delete… (founder directive, migration 023). */
+  canDelete: boolean
   /**
    * Chapter list only (flexible leaves, 020): content pages attached
    * directly to the chapter, rendered as a second group AFTER the topics —

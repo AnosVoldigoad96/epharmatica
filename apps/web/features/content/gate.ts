@@ -27,6 +27,8 @@ export type StaffCheck = { ok: true; profile: AdminProfile } | { ok: false; erro
 export const AUTHORING_ROLES = ['author', 'content_manager', 'admin', 'super_admin'] as const
 export const REVIEWING_ROLES = ['reviewer', 'content_manager', 'admin', 'super_admin'] as const
 export const MANAGER_ROLES = ['content_manager', 'admin', 'super_admin'] as const
+/** Deletion is admin+ only (founder directive; the 023 RPC enforces it again). */
+export const DELETING_ROLES = ['admin', 'super_admin'] as const
 /** All five content roles — discussions (1.B-3c) are open to every one of them. */
 export const CONTENT_ROLES = [
   'author',

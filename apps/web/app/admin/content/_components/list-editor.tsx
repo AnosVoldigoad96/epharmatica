@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import type { ContentLevel } from '@epharmatica/database'
 import { Button, MonographLabel, useToast } from '@epharmatica/ui'
 import { reorderNodes } from '@/features/content/actions'
+import { DeleteDialog } from './delete-dialog'
 import { MoveSheet } from './move-sheet'
 import { NodeSheet } from './node-sheet'
 import type { ListEditorData, ListRow, RowStatus } from './list-types'
@@ -94,6 +95,7 @@ export function ListEditor({ data, heading }: { data: ListEditorData; heading: s
   const [createOpen, setCreateOpen] = useState<RowGroup | null>(null)
   const [editRow, setEditRow] = useState<{ row: ListRow; group: RowGroup } | null>(null)
   const [moveRow, setMoveRow] = useState<{ row: ListRow; group: RowGroup } | null>(null)
+  const [deleteRow, setDeleteRow] = useState<{ row: ListRow; group: RowGroup } | null>(null)
 
   const level = data.level
   const levelName = t(`levelNames.${level}`)
@@ -244,6 +246,15 @@ export function ListEditor({ data, heading }: { data: ListEditorData; heading: s
               {t('actions.open')}
             </Link>
           ) : null}
+          {data.canDelete ? (
+            <button
+              type="button"
+              className="text-danger underline-offset-2 hover:underline"
+              onClick={() => setDeleteRow({ row, group })}
+            >
+              {t('actions.delete')}
+            </button>
+          ) : null}
         </span>
       </li>
     ))
@@ -344,6 +355,16 @@ export function ListEditor({ data, heading }: { data: ListEditorData; heading: s
           }))}
           open
           onClose={() => setMoveRow(null)}
+        />
+      ) : null}
+      {deleteRow ? (
+        <DeleteDialog
+          level={groupLevel(deleteRow.group)}
+          id={deleteRow.row.id}
+          name={deleteRow.row.name}
+          status={deleteRow.row.status}
+          open
+          onClose={() => setDeleteRow(null)}
         />
       ) : null}
     </div>

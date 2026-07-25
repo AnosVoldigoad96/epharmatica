@@ -4,8 +4,15 @@ import { getTranslations } from 'next-intl/server'
 import { RichText, validateContent } from '@epharmatica/editor'
 import { MonographLabel } from '@epharmatica/ui'
 import { requireSection } from '@/features/admin/queries'
-import { getDiscussions, getPreviewLinks, getSubtopicDetail } from '@/features/content/queries'
+import {
+  getContentTree,
+  getDiscussions,
+  getPreviewLinks,
+  getSubtopicDetail,
+} from '@/features/content/queries'
+import { findSubtopic } from '@/features/content/tree'
 import { Crumbs } from '../../_components/crumbs'
+import { DeleteZone } from '../../_components/delete-zone'
 import { DiscussionsWorkspace } from '../../_components/discussions-panel'
 import { EditorCanvas } from '../../_components/editor-canvas'
 import { PreviewLinksPanel } from '../../_components/preview-links-panel'
@@ -38,6 +45,13 @@ export default async function AdminSubtopicPage({ params }: { params: Promise<{ 
     ['author', 'content_manager', 'admin', 'super_admin'].includes(profile.role) &&
     detail.status !== 'archived'
   const editing = canEdit && validated.ok
+
+  // Delete… is admin+ only (founder directive, 023) — resolved server-side
+  // so the danger zone never renders for other staff. The react-cached tree
+  // (already fetched inside getSubtopicDetail) locates the parent list a
+  // successful delete navigates back to.
+  const canDelete = ['admin', 'super_admin'].includes(profile.role)
+  const located = canDelete ? findSubtopic(await getContentTree(), detail.id) : null
 
   return (
     <div className="max-w-5xl">
@@ -112,6 +126,19 @@ export default async function AdminSubtopicPage({ params }: { params: Promise<{ 
                   detail.status === 'changes_requested')
               }
             />
+            {located ? (
+              <DeleteZone
+                level="subtopic"
+                id={detail.id}
+                name={detail.title}
+                status={{ kind: 'own', status: located.subtopic.status }}
+                afterDeleteHref={
+                  located.topic
+                    ? `/admin/content/topic/${located.topic.id}`
+                    : `/admin/content/chapter/${located.chapter.id}`
+                }
+              />
+            ) : null}
           </>
         }
       />
