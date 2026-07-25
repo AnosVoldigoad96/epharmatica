@@ -63,6 +63,31 @@ export default async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Pre-launch reader lock (founder directive 2026-07-25): every public
+  // content surface — the /learn tree (subjects/chapters/topics/subtopics)
+  // and /search — is readable by super_admin ONLY until READER_PUBLIC=true
+  // is set in the app env at launch (env change on the box, no deploy).
+  // Enforced here, before anything is served, so locked content never
+  // reaches another visitor's browser; the static /learn shells themselves
+  // are untouched. The sitemap drops learn URLs under the same flag.
+  const readerPath =
+    request.nextUrl.pathname === '/learn' ||
+    request.nextUrl.pathname.startsWith('/learn/') ||
+    request.nextUrl.pathname === '/search'
+  if (readerPath && process.env.READER_PUBLIC !== 'true') {
+    if (!user) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (profile?.role !== 'super_admin') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
+
   // Layer 1 of the /admin gate: any non-staff request is turned away here.
   // Sections and page-level roles are the permission map's job (layer 2).
   if (request.nextUrl.pathname.startsWith('/admin')) {
