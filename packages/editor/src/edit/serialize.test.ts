@@ -722,20 +722,209 @@ describe('fromEditorValue — schema v2 blocks', () => {
     }
   })
 
-  it('rejects headings/toggles/toc inside columns instead of dropping them', () => {
+  it('columns admit img/video children with the exact top-level prop whitelist', () => {
+    const value = [
+      {
+        id: 'cols',
+        type: 'column_group',
+        children: [
+          {
+            id: 'col-junk',
+            type: 'column',
+            width: '50%',
+            children: [
+              {
+                id: 'img-junk',
+                type: 'img',
+                url: 'https://cdn.example.com/x.webp',
+                alt: 'Diagram',
+                asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+                width: 640,
+                height: 480,
+                caption: [{ text: 'FIG — diagram' }],
+                indent: 2, // top-level-only prop — must strip inside a column
+                zoomable: true, // unknown prop — must strip
+                children: [{ text: '' }],
+              },
+            ],
+          },
+          {
+            type: 'column',
+            width: '50%',
+            children: [
+              {
+                id: 'vid-junk',
+                type: 'video',
+                url: 'https://youtu.be/dQw4w9WgXcQ',
+                caption: [{ text: 'VIDEO — walkthrough' }],
+                playing: true, // unknown prop — must strip
+                children: [{ text: '' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        {
+          id: 'cols',
+          type: 'column_group',
+          children: [
+            {
+              type: 'column',
+              width: '50%',
+              children: [
+                {
+                  type: 'img',
+                  url: 'https://cdn.example.com/x.webp',
+                  alt: 'Diagram',
+                  asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+                  width: 640,
+                  height: 480,
+                  caption: [{ text: 'FIG — diagram' }],
+                  children: [{ text: '' }],
+                },
+              ],
+            },
+            {
+              type: 'column',
+              width: '50%',
+              children: [
+                {
+                  type: 'video',
+                  url: 'https://youtu.be/dQw4w9WgXcQ',
+                  caption: [{ text: 'VIDEO — walkthrough' }],
+                  children: [{ text: '' }],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    }
+  })
+
+  it('columns admit headings/equations/toc, ids stripped (2026-07-26 amendment)', () => {
     const result = fromEditorValue([
       {
         id: 'cols',
         type: 'column_group',
         children: [
-          { type: 'column', children: [{ type: 'h2', children: [{ text: 'nope' }] }] },
-          { type: 'column', children: [{ type: 'p', children: [{ text: 'fine' }] }] },
+          {
+            type: 'column',
+            children: [
+              { id: 'h-junk', type: 'h2', align: 'center', children: [{ text: 'Col heading' }] },
+              {
+                id: 'eq-junk',
+                type: 'equation',
+                texExpression: 'E = mc^2',
+                children: [{ text: '' }],
+              },
+            ],
+          },
+          {
+            type: 'column',
+            children: [{ id: 'toc-junk', type: 'toc', children: [{ text: '' }] }],
+          },
         ],
       },
     ])
-    expect(result.ok).toBe(false)
-    if (!result.ok) {
-      expect(result.errors.join(' ')).toContain('not allowed inside a column')
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        {
+          id: 'cols',
+          type: 'column_group',
+          children: [
+            {
+              type: 'column',
+              children: [
+                { type: 'h2', align: 'center', children: [{ text: 'Col heading' }] },
+                { type: 'equation', texExpression: 'E = mc^2', children: [{ text: '' }] },
+              ],
+            },
+            { type: 'column', children: [{ type: 'toc', children: [{ text: '' }] }] },
+          ],
+        },
+      ])
+    }
+  })
+
+  it('stored media-in-columns round-trips toEditorValue → fromEditorValue unchanged', () => {
+    const stored = [
+      {
+        id: 'cols',
+        type: 'column_group' as const,
+        children: [
+          {
+            type: 'column' as const,
+            width: '50%',
+            children: [
+              {
+                type: 'img' as const,
+                url: 'https://cdn.example.com/x.webp',
+                alt: 'Diagram',
+                asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+                width: 640,
+                height: 480,
+                caption: [{ text: 'FIG — diagram' }],
+                children: [{ text: '' }] as [{ text: '' }],
+              },
+            ],
+          },
+          {
+            type: 'column' as const,
+            width: '50%',
+            children: [
+              {
+                type: 'video' as const,
+                url: 'https://youtu.be/dQw4w9WgXcQ',
+                caption: [{ text: 'VIDEO — walkthrough' }],
+                children: [{ text: '' }] as [{ text: '' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const result = fromEditorValue(toEditorValue(stored))
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual(stored)
+    }
+  })
+
+  it('rejects toggle and nested column groups inside columns instead of dropping them', () => {
+    const groupWith = (child: Record<string, unknown>) => [
+      {
+        id: 'cols',
+        type: 'column_group',
+        children: [
+          { type: 'column', children: [child] },
+          { type: 'column', children: [{ type: 'p', children: [{ text: 'fine' }] }] },
+        ],
+      },
+    ]
+    const toggled = fromEditorValue(groupWith({ type: 'toggle', children: [{ text: 'nope' }] }))
+    expect(toggled.ok).toBe(false)
+    if (!toggled.ok) {
+      expect(toggled.errors.join(' ')).toContain('not allowed inside a column')
+    }
+    const nested = fromEditorValue(
+      groupWith({
+        type: 'column_group',
+        children: [
+          { type: 'column', children: [{ type: 'p', children: [{ text: 'a' }] }] },
+          { type: 'column', children: [{ type: 'p', children: [{ text: 'b' }] }] },
+        ],
+      }),
+    )
+    expect(nested.ok).toBe(false)
+    if (!nested.ok) {
+      expect(nested.errors.join(' ')).toContain('not allowed inside a column')
     }
   })
 

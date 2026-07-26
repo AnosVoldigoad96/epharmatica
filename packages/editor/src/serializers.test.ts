@@ -73,6 +73,53 @@ describe('getPlainText', () => {
     expect(plain).toContain('Selective NSAIDs')
   })
 
+  it('includes column-hosted media alt/captions and heading text (2026-07-26 amendment)', () => {
+    const doc: Content = [
+      {
+        id: 'cols',
+        type: 'column_group',
+        children: [
+          {
+            type: 'column',
+            children: [
+              { type: 'h2', children: [{ text: 'Column heading' }] },
+              {
+                type: 'img',
+                url: 'https://cdn.example.com/x.webp',
+                alt: 'Skeletal diagram',
+                asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+                width: 640,
+                height: 480,
+                caption: [{ text: 'FIG — in-column diagram' }],
+                children: [{ text: '' }],
+              },
+            ],
+          },
+          {
+            type: 'column',
+            children: [
+              {
+                type: 'video',
+                url: 'https://youtu.be/dQw4w9WgXcQ',
+                caption: [{ text: 'VIDEO — in-column walkthrough' }],
+                children: [{ text: '' }],
+              },
+              { type: 'equation', texExpression: 'E = mc^2', children: [{ text: '' }] },
+            ],
+          },
+        ],
+      },
+    ]
+    const text = getPlainText(doc)
+    expect(text).toContain('Column heading')
+    expect(text).toContain('Skeletal diagram')
+    expect(text).toContain('FIG — in-column diagram')
+    expect(text).toContain('VIDEO — in-column walkthrough')
+    expect(text).toContain('E = mc^2')
+    // Column-hosted headings stay OUT of the outline weight (no id, no TOC).
+    expect(getHeadingsText(doc)).toBe('')
+  })
+
   it('includes inline dates as their deterministic display text', () => {
     expect(plain).toContain('Jul 24, 2026')
   })
@@ -119,6 +166,38 @@ describe('derivePrimaryVideoUrl', () => {
 
   it('returns null when the document has no video', () => {
     expect(derivePrimaryVideoUrl([paragraph('p1', 'no video here')])).toBeNull()
+  })
+
+  it('finds a video living inside a column group (document order)', () => {
+    const columnVideo: Content = [
+      paragraph('p1', 'intro'),
+      {
+        id: 'cols',
+        type: 'column_group',
+        children: [
+          { type: 'column', children: [{ type: 'p', children: [{ text: 'left' }] }] },
+          {
+            type: 'column',
+            children: [
+              {
+                type: 'video',
+                url: 'https://youtu.be/aaaaaaaaaaa',
+                caption: [{ text: 'VIDEO — in-column' }],
+                children: [{ text: '' }],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'v-late',
+        type: 'video',
+        url: 'https://youtu.be/bbbbbbbbbbb',
+        caption: [{ text: 'VIDEO — later, top level' }],
+        children: [{ text: '' }],
+      },
+    ]
+    expect(derivePrimaryVideoUrl(columnVideo)).toBe('https://youtu.be/aaaaaaaaaaa')
   })
 })
 

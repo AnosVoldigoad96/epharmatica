@@ -122,10 +122,9 @@ const paragraphBlockSchema = (mode: IdMode) =>
     listStyleType: z.enum(['disc', 'decimal']).optional(),
   })
 
-const headingBlockSchema = (level: 'h2' | 'h3') =>
+const headingBlockSchema = (level: 'h2' | 'h3', mode: IdMode) =>
   z.strictObject({
-    id: blockId,
-    indent: indentProp,
+    ...topLevelProps(mode),
     type: z.literal(level),
     children: inlineChildren,
     align: alignProp,
@@ -215,12 +214,12 @@ const codeBlockSchema = (mode: IdMode) =>
     children: z.array(codeLineSchema).min(1),
   })
 
-const tocBlockSchema = z.strictObject({
-  id: blockId,
-  indent: indentProp,
-  type: z.literal('toc'),
-  children: voidChildren,
-})
+const tocBlockSchema = (mode: IdMode) =>
+  z.strictObject({
+    ...topLevelProps(mode),
+    type: z.literal('toc'),
+    children: voidChildren,
+  })
 
 const hrBlockSchema = (mode: IdMode) =>
   z.strictObject({
@@ -229,14 +228,14 @@ const hrBlockSchema = (mode: IdMode) =>
     children: voidChildren,
   })
 
-/** Block equation — top-level only (columns never host it). */
-const equationBlockSchema = z.strictObject({
-  id: blockId,
-  indent: indentProp,
-  type: z.literal('equation'),
-  texExpression: texExpressionSchema,
-  children: voidChildren,
-})
+/** Block equation (display math) — also legal as an id-less column child. */
+const equationBlockSchema = (mode: IdMode) =>
+  z.strictObject({
+    ...topLevelProps(mode),
+    type: z.literal('equation'),
+    texExpression: texExpressionSchema,
+    children: voidChildren,
+  })
 
 /* ------------------------------------------------------------------ lists */
 
@@ -317,17 +316,28 @@ function drugCardBlockSchemaOf(mode: IdMode) {
 
 /* ---------------------------------------------------------------- columns */
 
+/**
+ * Column children (founder amendment, 2026-07-26): every block type EXCEPT
+ * toggle (top-level indent containment) and column_group (no recursion) —
+ * keep in lockstep with COLUMN_CHILD_TYPES (types.ts). All id-less: the
+ * group is the one anchor unit, so column-hosted headings/toc/equations
+ * never join the outline/TOC/anchor machinery.
+ */
 const columnChildSchema = z.union([
   paragraphBlockSchema({ withId: false }),
+  headingBlockSchema('h2', { withId: false }),
+  headingBlockSchema('h3', { withId: false }),
   blockquoteBlockSchema({ withId: false }),
   calloutBlockSchema({ withId: false }),
   tableBlockSchema({ withId: false }),
   imageBlockSchema({ withId: false }),
   videoBlockSchema({ withId: false }),
   codeBlockSchema({ withId: false }),
+  tocBlockSchema({ withId: false }),
   drugCardBlockSchemaOf({ withId: false }),
   listBlockSchema({ withId: false }),
   hrBlockSchema({ withId: false }),
+  equationBlockSchema({ withId: false }),
 ])
 
 const columnSchema = z.strictObject({
@@ -347,20 +357,20 @@ const columnGroupBlockSchema = z.strictObject({
 
 export const blockSchema = z.discriminatedUnion('type', [
   paragraphBlockSchema({ withId: true }),
-  headingBlockSchema('h2'),
-  headingBlockSchema('h3'),
+  headingBlockSchema('h2', { withId: true }),
+  headingBlockSchema('h3', { withId: true }),
   blockquoteBlockSchema({ withId: true }),
   calloutBlockSchema({ withId: true }),
   tableBlockSchema({ withId: true }),
   imageBlockSchema({ withId: true }),
   videoBlockSchema({ withId: true }),
   codeBlockSchema({ withId: true }),
-  tocBlockSchema,
+  tocBlockSchema({ withId: true }),
   drugCardBlockSchemaOf({ withId: true }),
   listBlockSchema({ withId: true }),
   toggleBlockSchema,
   hrBlockSchema({ withId: true }),
-  equationBlockSchema,
+  equationBlockSchema({ withId: true }),
   columnGroupBlockSchema,
 ])
 

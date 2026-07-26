@@ -71,9 +71,11 @@ import { BlockDraggable } from './draggable'
  *    (the serializer + Zod validate them).
  *  - Toggle uses the official indent model: contents are following blocks
  *    with deeper indent; open state lives in plugin options, never on nodes.
- *  - Columns: column_group/column containers (no headings/toc/toggles
- *    inside — the serializer rejects them; the insert roster and turn-into
- *    UI never offer them there).
+ *  - Columns: column_group/column containers. Columns host EVERY block
+ *    type except toggle and column_group (founder amendment, 2026-07-26 —
+ *    the serializer rejects those two; setTextBlockType no-ops toggle
+ *    there and insertColumns escapes to the top level). insertBlockNode
+ *    targets the column-child level while the caret is inside a column.
  *  - Table → table/tr/td/th with paragraph cell children; cell merging is
  *    ENABLED (schema v2): colSpan/rowSpan ≥ 2 persist, editor-only sizing
  *    props (colSizes/marginLeft) are stripped at save.

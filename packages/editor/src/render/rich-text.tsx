@@ -209,15 +209,18 @@ function renderList(
   )
 }
 
+/** TOC lists TOP-LEVEL headings only — column-hosted headings are id-less
+ * (no anchor target), so they never join the outline. `id` is undefined
+ * for a toc block rendered inside a column. */
 function renderToc(
   content: Content,
-  block: Block,
+  id: string | undefined,
   tocLabel: string,
   InlineEquation: InlineEquationComponent,
 ): ReactNode {
   const headings = content.filter((candidate) => candidate.type === 'h2' || candidate.type === 'h3')
   return (
-    <nav key={block.id} data-block-id={block.id} className="rt-toc" aria-label={tocLabel}>
+    <nav data-block-id={id} className="rt-toc" aria-label={tocLabel}>
       <ol>
         {headings.map((heading) =>
           heading.type === 'h2' || heading.type === 'h3' ? (
@@ -436,7 +439,7 @@ export function RichText({ content, components, labels }: RichTextProps) {
       case 'toc':
         return (
           <Fragment key={key}>
-            {renderToc(upgraded, block as Block, labels?.toc ?? 'Contents', InlineEq)}
+            {renderToc(upgraded, id, labels?.toc ?? 'Contents', InlineEq)}
           </Fragment>
         )
       case 'drug_card':
