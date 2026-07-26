@@ -21,13 +21,39 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 try {
-  main()
+  await main()
 } catch {
   // Never block a tool call or session close over logging.
 }
 process.exit(0)
 
-function main() {
+/**
+ * Windows stdin can fail to deliver EOF to a synchronous read, hanging the
+ * hook until the harness kills it at the timeout — which surfaces as a
+ * "Stop hook error" even though nothing is wrong. Async read with a hard
+ * deadline: whatever arrived by then is used; silence resolves to {}.
+ */
+function readStdin(deadlineMs) {
+  return new Promise((resolve) => {
+    let data = ''
+    const done = () => resolve(data)
+    const timer = setTimeout(done, deadlineMs)
+    process.stdin.setEncoding('utf8')
+    process.stdin.on('data', (chunk) => {
+      data += chunk
+    })
+    process.stdin.on('end', () => {
+      clearTimeout(timer)
+      done()
+    })
+    process.stdin.on('error', () => {
+      clearTimeout(timer)
+      done()
+    })
+  })
+}
+
+async function main() {
   const mode = process.argv[2] ?? 'log'
   const hooksDir = path.dirname(fileURLToPath(import.meta.url))
   const logsDir = process.env.CLAUDE_TASK_LOG_DIR || path.join(hooksDir, '..', 'logs', 'tasks')
@@ -42,7 +68,7 @@ function main() {
 
   let input = {}
   try {
-    input = JSON.parse(fs.readFileSync(0, 'utf8') || '{}')
+    input = JSON.parse((await readStdin(3000)) || '{}')
   } catch {}
 
   let state = {}
