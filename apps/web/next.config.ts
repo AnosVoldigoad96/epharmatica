@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
   // (force-static/revalidate) the static /learn shells depend on.
   experimental: {
     useCache: true,
+    serverActions: {
+      // Media uploads travel as server-action FormData; the default 1 MB
+      // body cap rejected any real image (prod-observed). 26 MB = the
+      // documented MAX_INPUT_BYTES pre-compression cap (media actions §8)
+      // plus form overhead — every action stays auth-gated + zod-validated,
+      // and Cloudflare fronts the outer rate limits.
+      bodySizeLimit: '26mb',
+    },
   },
   transpilePackages: [
     '@epharmatica/ui',
