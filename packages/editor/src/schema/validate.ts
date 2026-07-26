@@ -183,6 +183,28 @@ const imageBlockSchema = (mode: IdMode) =>
     children: voidChildren,
   })
 
+/** One carousel slide — a data object (not a child node), same media
+ * contract as the img block: library asset + snapshot + mandatory alt and
+ * dimensions. */
+const carouselImageSchema = z.strictObject({
+  asset_id: z.uuid(),
+  url: z.url(),
+  alt: z.string().trim().min(1),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  caption: z.array(textNodeSchema).optional(),
+})
+
+/** Image carousel void — an ordered strip of ≥ 1 media-library images
+ * (empty carousels never reach validation: the serializer drops them). */
+const carouselBlockSchema = (mode: IdMode) =>
+  z.strictObject({
+    ...topLevelProps(mode),
+    type: z.literal('carousel'),
+    images: z.array(carouselImageSchema).min(1),
+    children: voidChildren,
+  })
+
 const videoBlockSchema = (mode: IdMode) =>
   z.strictObject({
     ...topLevelProps(mode),
@@ -331,6 +353,7 @@ const columnChildSchema = z.union([
   calloutBlockSchema({ withId: false }),
   tableBlockSchema({ withId: false }),
   imageBlockSchema({ withId: false }),
+  carouselBlockSchema({ withId: false }),
   videoBlockSchema({ withId: false }),
   codeBlockSchema({ withId: false }),
   tocBlockSchema({ withId: false }),
@@ -363,6 +386,7 @@ export const blockSchema = z.discriminatedUnion('type', [
   calloutBlockSchema({ withId: true }),
   tableBlockSchema({ withId: true }),
   imageBlockSchema({ withId: true }),
+  carouselBlockSchema({ withId: true }),
   videoBlockSchema({ withId: true }),
   codeBlockSchema({ withId: true }),
   tocBlockSchema({ withId: true }),

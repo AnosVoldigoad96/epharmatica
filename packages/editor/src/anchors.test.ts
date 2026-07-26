@@ -27,6 +27,9 @@ describe('getAnchorKind (M1 §5.5)', () => {
     expect(getAnchorKind(fixtureBlock('fx-toc'))).toBeNull()
     expect(getAnchorKind(fixtureBlock('fx-hr'))).toBeNull()
     expect(getAnchorKind(fixtureBlock('fx-columns'))).toBeNull()
+    // Carousel v1: not a highlight target (like columns) — slide captions
+    // stay searchable but not offset-anchorable.
+    expect(getAnchorKind(fixtureBlock('fx-carousel-synthesis'))).toBeNull()
     // ONE unit with a stable data-block-id, but no offset-addressable text
     // (rendered KaTeX output is not highlightable).
     expect(getAnchorKind(fixtureBlock('fx-equation-henderson'))).toBeNull()
@@ -171,6 +174,8 @@ describe('getAllTextRuns (enumeration half of the run contract)', () => {
     expect(getAllTextRuns(fixtureBlock('fx-hr'))).toEqual([])
     expect(getAllTextRuns(fixtureBlock('fx-equation-henderson'))).toEqual([])
     expect(getAllTextRuns(fixtureBlock('fx-columns'))).toEqual([])
+    expect(getAllTextRuns(fixtureBlock('fx-carousel-synthesis'))).toEqual([])
+    expect(getTextRuns(fixtureBlock('fx-carousel-synthesis'), ['caption'])).toBeNull()
     const captionless: Block = {
       id: 'x-img',
       type: 'img',

@@ -195,6 +195,62 @@ describe('<RichText/> (rules.md §6.4 — full block schema)', () => {
     expect(html).toContain('<figcaption>FIG 1 — Acetylsalicylic acid</figcaption>')
   })
 
+  it('matches the 2-image carousel snapshot (CSS-first scroll-snap strip)', () => {
+    const carouselDoc: Content = [
+      {
+        id: 'car-2',
+        type: 'carousel',
+        images: [
+          {
+            asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+            url: 'https://cdn.example.com/slide-1.webp',
+            alt: 'First slide',
+            width: 1200,
+            height: 900,
+            caption: [{ text: 'FIG A — first' }],
+          },
+          {
+            asset_id: '9e5b0d12-6a3c-4f8e-b7d1-5c4a8e2f9b02',
+            url: 'https://cdn.example.com/slide-2.webp',
+            alt: 'Second slide',
+            width: 800,
+            height: 600,
+            caption: [{ text: 'FIG B — ' }, { text: 'second', bold: true }],
+          },
+        ],
+        children: [{ text: '' }],
+      },
+    ]
+    const html = render(carouselDoc)
+    expect(html).toMatchSnapshot()
+    // One block, one anchor id, generic strip markup.
+    expect(html).toContain('data-block-id="car-2"')
+    expect(html).toContain('class="rt-carousel"')
+    expect(html.match(/rt-carousel__slide/g)?.length).toBe(2)
+    // Server-rendered per-slide "i / N" chips — no JS anywhere.
+    expect(html).toContain('>1 / 2</span>')
+    expect(html).toContain('>2 / 2</span>')
+    // FIG-style captions under each image, marks intact.
+    expect(html).toContain('<figcaption>FIG A — first</figcaption>')
+    expect(html).toContain('<figcaption>FIG B — <strong>second</strong></figcaption>')
+    // First slide eager, the rest lazy; dimensions declared (zero CLS).
+    expect(html.match(/loading="lazy"/g)?.length).toBe(1)
+    expect(html.indexOf('slide-1.webp')).toBeLessThan(html.indexOf('loading="lazy"'))
+    expect(html).toContain('width="1200"')
+    expect(html).toContain('aspect-ratio:800 / 600')
+  })
+
+  it('renders the fixture carousel with all slides in order (caption-less ok)', () => {
+    const html = render(FIXTURE_DOCUMENT)
+    expect(html).toContain('data-block-id="fx-carousel-synthesis"')
+    expect(html.match(/rt-carousel__slide/g)?.length).toBe(3)
+    expect(html).toContain('>3 / 3</span>')
+    expect(html).toContain('<figcaption>STEP 1 — Phospholipase A2</figcaption>')
+    // The third slide has no caption — no empty figcaption renders for it.
+    expect(html.indexOf('prostaglandin-step-1')).toBeLessThan(html.indexOf('prostaglandin-step-2'))
+    expect(html.indexOf('prostaglandin-step-2')).toBeLessThan(html.indexOf('prostaglandin-step-3'))
+  })
+
   it('renders code lines individually with data-line markers', () => {
     const html = render(FIXTURE_DOCUMENT)
     expect(html).toContain('data-line="0"')

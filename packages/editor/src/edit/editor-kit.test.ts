@@ -4,8 +4,10 @@ import { createPlateEditor } from 'platejs/react'
 import { describe, expect, it } from 'vitest'
 
 import type { Content } from '../schema/types'
+import type { EditorBridges } from './context'
 import { editorKit } from './editor-kit'
-import { insertBlockNode, insertColumns, setTextBlockType } from './insert-items'
+import { buildInsertItems, insertBlockNode, insertColumns, setTextBlockType } from './insert-items'
+import { DEFAULT_EDITOR_LABELS } from './labels'
 import { fromEditorValue, toEditorValue } from './serialize'
 
 /**
@@ -395,6 +397,64 @@ describe('column-aware insert (founder amendment, 2026-07-26)', () => {
     expect(columnChildren(editor, 1).map((node) => node.type)).toEqual(['p'])
     const result = fromEditorValue(editor.children)
     expect(result.ok, JSON.stringify(!result.ok && result.errors)).toBe(true)
+  })
+})
+
+describe('carousel insert flow (the ONE-pick picker bridge)', () => {
+  const picked = {
+    asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+    url: 'https://cdn.example.com/x.webp',
+    alt: 'Diagram',
+    width: 640,
+    height: 480,
+  }
+
+  const carouselItem = (bridges: EditorBridges) => {
+    const item = buildInsertItems(DEFAULT_EDITOR_LABELS, bridges).find(
+      (candidate) => candidate.key === 'image-carousel',
+    )
+    if (!item) throw new Error('image-carousel insert item missing')
+    return item
+  }
+
+  const flushPick = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+  it('inserts an empty strip immediately, then fills slide one from the pick', async () => {
+    const editor = makeEditor([p('a', '')])
+    editor.tf.select({ path: [0, 0], offset: 0 })
+    const item = carouselItem({
+      openVideoForm: () => undefined,
+      pickImage: () => Promise.resolve(picked),
+    })
+    item.run(asPlateEditor(editor))
+    // Synchronously: the empty paragraph was replaced Notion-style.
+    expect(editor.children[0]?.type).toBe('carousel')
+    expect((editor.children[0] as TElement).images).toEqual([])
+    await flushPick()
+    expect((editor.children[0] as TElement).images).toEqual([picked])
+    const result = fromEditorValue(editor.children)
+    expect(result.ok, JSON.stringify(!result.ok && result.errors)).toBe(true)
+  })
+
+  it('a cancelled pick removes the empty husk again', async () => {
+    const editor = makeEditor([p('a', 'keep me')])
+    editor.tf.select({ path: [0, 0], offset: 7 })
+    const item = carouselItem({
+      openVideoForm: () => undefined,
+      pickImage: () => Promise.resolve(null),
+    })
+    item.run(asPlateEditor(editor))
+    expect(editor.children.some((block) => block.type === 'carousel')).toBe(true)
+    await flushPick()
+    expect(editor.children.some((block) => block.type === 'carousel')).toBe(false)
+    expect(editor.children[0]?.type).toBe('p')
+  })
+
+  it('renders disabled with the Image treatment when the bridge is absent', () => {
+    const item = carouselItem({ openVideoForm: () => undefined })
+    expect(item.disabled).toBe(true)
+    expect(item.disabledNote).toBe(DEFAULT_EDITOR_LABELS.imageDisabledNote)
+    expect(item.focusEditor).toBe(false)
   })
 })
 

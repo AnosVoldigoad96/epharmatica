@@ -18,7 +18,7 @@
  *    following TOP-LEVEL blocks whose `indent` is greater than the
  *    toggle's. Every enclosed block keeps its own id — so toggle contents
  *    stay ordinary anchor targets.
- *  - Void blocks (img, video, toc, drug_card, hr, equation) keep the
+ *  - Void blocks (img, carousel, video, toc, drug_card, hr, equation) keep the
  *    Slate-compatible `children: [{ text: '' }]` so the editing surface can
  *    host them unchanged; their real payload lives in props.
  */
@@ -208,6 +208,7 @@ export type ColumnChildBlock =
   | Omit<CalloutBlock, 'id'>
   | Omit<TableBlock, 'id'>
   | Omit<ImageBlock, 'id'>
+  | Omit<CarouselBlock, 'id'>
   | Omit<VideoBlock, 'id'>
   | Omit<CodeBlock, 'id'>
   | Omit<TocBlock, 'id'>
@@ -230,6 +231,7 @@ export const COLUMN_CHILD_TYPES: ReadonlySet<string> = new Set([
   'callout',
   'table',
   'img',
+  'carousel',
   'video',
   'code_block',
   'toc',
@@ -340,6 +342,35 @@ export type ImageBlock = {
 }
 
 /**
+ * One carousel slide — a DATA object, not a child node (the block is void
+ * editor-side, exactly like img). Same media-library contract as ImageBlock:
+ * asset_id ties the slide to media_assets, url/alt/dimensions are snapshots,
+ * width/height mandatory (zero-CLS budget), caption optional.
+ */
+export type CarouselImage = {
+  asset_id: string
+  url: string
+  alt: string
+  width: number
+  height: number
+  caption?: TextNode[]
+}
+
+/**
+ * Image carousel: an ordered strip of media-library images with captions.
+ * Render stays generic (a scroll-snap strip) — it doubles as the future
+ * slide-deck viewer surface. Slides live in `images` (payload props, like
+ * every void); min 1 — an empty carousel drops at save.
+ */
+export type CarouselBlock = {
+  id: string
+  type: 'carousel'
+  images: CarouselImage[]
+  children: VoidChildren
+  indent?: number
+}
+
+/**
  * YouTube embed, author-placed anywhere (M1-2). URL validated at save;
  * caption is MANDATORY (M1 §5.3 — a legal obligation, not just style).
  */
@@ -417,6 +448,7 @@ export type Block =
   | CalloutBlock
   | TableBlock
   | ImageBlock
+  | CarouselBlock
   | VideoBlock
   | CodeBlock
   | TocBlock

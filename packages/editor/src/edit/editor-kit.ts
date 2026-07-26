@@ -112,6 +112,13 @@ export const ImagePlugin = createPlatePlugin({
   node: { isElement: true, isVoid: true },
 })
 
+/** Image carousel void — payload is the ordered `images` array (data
+ * objects, not child nodes — exactly the img treatment, multiplied). */
+export const CarouselPlugin = createPlatePlugin({
+  key: 'carousel',
+  node: { isElement: true, isVoid: true },
+})
+
 /** YouTube video void — url + mandatory caption. */
 export const VideoPlugin = createPlatePlugin({
   key: 'video',
@@ -232,6 +239,7 @@ const INDENT_TARGETS = [
   'callout',
   'table',
   'img',
+  'carousel',
   'video',
   'code_block',
   'toc',
@@ -317,6 +325,7 @@ export const editorKit: AnyPluginConfig[] = [
   // Schema voids + callout.
   CalloutPlugin,
   ImagePlugin,
+  CarouselPlugin,
   VideoPlugin,
   TocPlugin,
   DrugCardPlugin,

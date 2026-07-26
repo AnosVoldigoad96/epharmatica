@@ -15,6 +15,7 @@ import {
   Columns2,
   Columns3,
   Film,
+  GalleryHorizontal,
   GraduationCap,
   Heading2,
   Heading3,
@@ -88,6 +89,7 @@ const isEmptyParagraph = (block: TElement): boolean =>
 /** Void block types of the insert roster — no text entry point of their own. */
 const VOID_BLOCK_TYPES: ReadonlySet<string> = new Set([
   'img',
+  'carousel',
   'video',
   'hr',
   'toc',
@@ -419,6 +421,57 @@ export function buildInsertItems(
             height: picked.height,
             children: [{ text: '' }],
           })
+          editor.tf.focus()
+        })
+      },
+    },
+    {
+      key: 'image-carousel',
+      group: 'media',
+      label: labels.insertCarousel,
+      icon: GalleryHorizontal,
+      keywords: ['carousel', 'gallery', 'slides', 'slideshow', 'images', 'strip'],
+      focusEditor: false,
+      disabled: !bridges.pickImage,
+      disabledNote: bridges.pickImage ? undefined : labels.imageDisabledNote,
+      run: (editor) => {
+        const pick = bridges.pickImage
+        if (!pick) return
+        // Insert the empty strip FIRST (so the author sees where it lands),
+        // then hand off to the picker for slide one. The bridge returns ONE
+        // PickedImage per invocation — further slides come from the block's
+        // own Add-image button. A cancelled pick removes the empty husk (an
+        // empty carousel would drop at save anyway).
+        insertBlockNode(editor, { type: 'carousel', images: [], children: [{ text: '' }] })
+        void pick().then((picked) => {
+          // Re-find the empty carousel at resolution time — the picker is
+          // async and paths may have shifted meanwhile.
+          const entry = editor.api.node<TElement>({
+            at: [],
+            match: (node) =>
+              (node as TElement).type === 'carousel' &&
+              Array.isArray((node as TElement).images) &&
+              ((node as TElement).images as unknown[]).length === 0,
+          })
+          if (!entry) return
+          if (!picked) {
+            editor.tf.removeNodes({ at: entry[1] })
+            return
+          }
+          editor.tf.setNodes(
+            {
+              images: [
+                {
+                  asset_id: picked.asset_id,
+                  url: picked.url,
+                  alt: picked.alt,
+                  width: picked.width,
+                  height: picked.height,
+                },
+              ],
+            },
+            { at: entry[1] },
+          )
           editor.tf.focus()
         })
       },

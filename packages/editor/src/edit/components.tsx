@@ -13,6 +13,7 @@ import { CALLOUT_LABELS, DRUG_CARD_FIELD_LABELS } from '../schema/labels'
 import type { CalloutVariant, DrugCardFieldKey } from '../schema/types'
 import { CALLOUT_VARIANTS, DRUG_CARD_FIELD_KEYS } from '../schema/types'
 import { parseYouTubeUrl, youTubeThumbnailUrl } from '../schema/youtube'
+import { CarouselElement } from './carousel-node'
 import { useEditorLabels } from './context'
 import { EmojiInputElement } from './emoji-input'
 import { EquationElement, InlineEquationElement } from './equation-node'
@@ -665,6 +666,7 @@ export const editorComponents = {
   code_line: CodeLineElement,
   code: CodeLeaf,
   img: ImageElement,
+  carousel: CarouselElement,
   video: VideoElement,
   toc: TocElement,
   drug_card: DrugCardElement,

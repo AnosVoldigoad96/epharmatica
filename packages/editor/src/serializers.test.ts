@@ -8,6 +8,7 @@ import {
   deriveReadingMinutes,
   derivePrimaryVideoUrl,
   getHeadingsText,
+  getImageAssetIds,
   getPlainText,
 } from './serializers'
 
@@ -120,6 +121,14 @@ describe('getPlainText', () => {
     expect(getHeadingsText(doc)).toBe('')
   })
 
+  it('includes every carousel slide alt AND caption (the strip is searchable)', () => {
+    expect(plain).toContain('Arachidonic acid release from membrane phospholipids')
+    expect(plain).toContain('STEP 1 — Phospholipase A2')
+    expect(plain).toContain('STEP 2 — COX catalysis')
+    // A caption-less slide still contributes its alt.
+    expect(plain).toContain('Tissue-specific synthases yield active prostanoids')
+  })
+
   it('includes inline dates as their deterministic display text', () => {
     expect(plain).toContain('Jul 24, 2026')
   })
@@ -137,6 +146,111 @@ describe('getPlainText', () => {
 describe('getHeadingsText', () => {
   it('collects h2 and h3 text only', () => {
     expect(getHeadingsText(FIXTURE_DOCUMENT)).toBe('Pharmacokinetics\nMonitoring')
+  })
+})
+
+describe('getImageAssetIds (the media usage scan, M4 §6)', () => {
+  const img = (id: string, asset: string): Content[number] => ({
+    id,
+    type: 'img',
+    url: 'https://cdn.example.com/x.webp',
+    alt: 'x',
+    asset_id: asset,
+    width: 10,
+    height: 10,
+    children: [{ text: '' }],
+  })
+
+  it('collects img blocks and every carousel slide, deduped, in document order', () => {
+    const doc: Content = [
+      img('i1', 'aaaaaaaa-0000-4000-8000-000000000001'),
+      {
+        id: 'car',
+        type: 'carousel',
+        images: [
+          {
+            asset_id: 'aaaaaaaa-0000-4000-8000-000000000002',
+            url: 'https://cdn.example.com/1.webp',
+            alt: 'One',
+            width: 10,
+            height: 10,
+          },
+          {
+            // Duplicate of the img block's asset — deduped.
+            asset_id: 'aaaaaaaa-0000-4000-8000-000000000001',
+            url: 'https://cdn.example.com/x.webp',
+            alt: 'Again',
+            width: 10,
+            height: 10,
+          },
+        ],
+        children: [{ text: '' }],
+      },
+    ]
+    expect(getImageAssetIds(doc)).toEqual([
+      'aaaaaaaa-0000-4000-8000-000000000001',
+      'aaaaaaaa-0000-4000-8000-000000000002',
+    ])
+  })
+
+  it('reaches img and carousel blocks INSIDE columns (id-less children)', () => {
+    const doc: Content = [
+      {
+        id: 'cols',
+        type: 'column_group',
+        children: [
+          {
+            type: 'column',
+            children: [
+              {
+                type: 'img',
+                url: 'https://cdn.example.com/x.webp',
+                alt: 'x',
+                asset_id: 'aaaaaaaa-0000-4000-8000-000000000003',
+                width: 10,
+                height: 10,
+                children: [{ text: '' }],
+              },
+            ],
+          },
+          {
+            type: 'column',
+            children: [
+              {
+                type: 'carousel',
+                images: [
+                  {
+                    asset_id: 'aaaaaaaa-0000-4000-8000-000000000004',
+                    url: 'https://cdn.example.com/y.webp',
+                    alt: 'y',
+                    width: 10,
+                    height: 10,
+                  },
+                ],
+                children: [{ text: '' }],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    expect(getImageAssetIds(doc)).toEqual([
+      'aaaaaaaa-0000-4000-8000-000000000003',
+      'aaaaaaaa-0000-4000-8000-000000000004',
+    ])
+  })
+
+  it('finds the fixture img + all three carousel slides (publish refs)', () => {
+    expect(getImageAssetIds(FIXTURE_DOCUMENT)).toEqual([
+      '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+      '7c1f3f7e-9d24-4c1a-8b60-2f9b2f6f1a01',
+      '9e5b0d12-6a3c-4f8e-b7d1-5c4a8e2f9b02',
+      '2a7d9c44-1b5e-4d2f-9e83-7f6b3d1c8e03',
+    ])
+  })
+
+  it('returns nothing for media-less documents', () => {
+    expect(getImageAssetIds([paragraph('p1', 'text only')])).toEqual([])
   })
 })
 

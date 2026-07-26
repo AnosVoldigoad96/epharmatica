@@ -76,6 +76,12 @@ export function blockPlainText(block: Block | ColumnChildBlock): string {
         .join('\n')
     case 'img':
       return [block.alt, captionText(block.caption)].filter(Boolean).join('\n')
+    case 'carousel':
+      // Every slide's alt + caption — the whole strip stays searchable.
+      return block.images
+        .map((image) => [image.alt, captionText(image.caption)].filter(Boolean).join('\n'))
+        .filter(Boolean)
+        .join('\n')
     case 'video':
       return captionText(block.caption)
     case 'code_block':
@@ -146,6 +152,31 @@ export function derivePrimaryVideoUrl(content: Content): string | null {
     }
   }
   return null
+}
+
+/**
+ * Media-library asset ids referenced by the document — img blocks and
+ * carousel slides, at the top level AND inside columns. The publish/draft
+ * usage scans (refresh_media_refs, M4 §6) run over this list, so every id
+ * returned here stays referenced and undeletable. Deduped, document order.
+ */
+export function getImageAssetIds(content: Content): string[] {
+  const ids = new Set<string>()
+  const visit = (block: Block | ColumnChildBlock): void => {
+    if (block.type === 'img' && block.asset_id) {
+      ids.add(block.asset_id)
+    } else if (block.type === 'carousel') {
+      for (const image of block.images) {
+        if (image.asset_id) ids.add(image.asset_id)
+      }
+    } else if (block.type === 'column_group') {
+      for (const column of block.children) {
+        column.children.forEach(visit)
+      }
+    }
+  }
+  content.forEach(visit)
+  return [...ids]
 }
 
 /**
