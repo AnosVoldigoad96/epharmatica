@@ -89,7 +89,16 @@ async function processImage(input: Uint8Array): Promise<Processed | 'invalid' | 
         .webp({ quality })
         .toBuffer({ resolveWithObject: true })
       if (info.size <= MAX_OUTPUT_BYTES) {
-        return { data, width: info.width, height: info.height, bytes: info.size }
+        // sharp's output Buffer can be backed by a SharedArrayBuffer, which
+        // Node's fetch refuses as a request body ("SharedArrayBuffer is not
+        // allowed" — prod-observed). Copy into a fresh plain ArrayBuffer
+        // before it reaches supabase-js.
+        return {
+          data: Buffer.from(new Uint8Array(data)),
+          width: info.width,
+          height: info.height,
+          bytes: info.size,
+        }
       }
     }
     return 'too-large'
