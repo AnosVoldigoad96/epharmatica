@@ -37,6 +37,24 @@ export function parseYouTubeUrl(url: string): string | null {
   return candidate && YOUTUBE_ID.test(candidate) ? candidate : null
 }
 
+/**
+ * Shorts are detected from the URL FORM the author pasted (/shorts/<id>) —
+ * deterministic, derivable at render time, no stored orientation prop
+ * (I9: the url stays the single source of truth). A short opened via a
+ * watch?v= link renders landscape; paste the /shorts/ link for vertical.
+ */
+export function isYouTubeShortsUrl(url: string): boolean {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    return false
+  }
+  const host = parsed.hostname.replace(/^www\.|^m\./, '')
+  if (host !== 'youtube.com' && host !== 'youtube-nocookie.com') return false
+  return parsed.pathname.split('/').filter(Boolean)[0] === 'shorts'
+}
+
 /** Privacy-domain embed URL for the lite facade's click-to-load iframe. */
 export function youTubeEmbedUrl(videoId: string): string {
   return `https://www.youtube-nocookie.com/embed/${videoId}`
@@ -45,4 +63,12 @@ export function youTubeEmbedUrl(videoId: string): string {
 /** Static thumbnail for the facade — the only asset fetched before click. */
 export function youTubeThumbnailUrl(videoId: string): string {
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+}
+
+/**
+ * Vertical (9:16) poster YouTube serves for Shorts. Not guaranteed for
+ * every video — consumers fall back to youTubeThumbnailUrl onError.
+ */
+export function youTubeShortsThumbnailUrl(videoId: string): string {
+  return `https://i.ytimg.com/vi/${videoId}/oardefault.jpg`
 }

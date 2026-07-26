@@ -271,6 +271,13 @@
     max-inline-size: 100%;
   }
 
+  /* Shorts (vertical 9:16) — the facade owns the ratio; the figure caps the
+     width so a portrait video never fills the reading column. */
+  .rt-video--vertical > :first-child {
+    margin-inline: auto;
+    max-inline-size: min(320px, 100%);
+  }
+
   .rt-figure figcaption,
   .rt-video figcaption,
   .rt-carousel figcaption {

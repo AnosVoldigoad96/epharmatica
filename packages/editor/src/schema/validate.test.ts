@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { FIXTURE_DOCUMENT } from '../fixtures'
 import { validateContent } from './validate'
+import { isYouTubeShortsUrl } from './youtube'
 
 const validParagraph = {
   id: 'b1',
@@ -443,6 +444,17 @@ describe('validateContent', () => {
       ])
       expect(result.ok, url).toBe(true)
     }
+  })
+
+  it('detects Shorts (vertical) from the URL form only', () => {
+    expect(isYouTubeShortsUrl('https://youtube.com/shorts/dQw4w9WgXcQ')).toBe(true)
+    expect(isYouTubeShortsUrl('https://www.youtube.com/shorts/dQw4w9WgXcQ?feature=share')).toBe(
+      true,
+    )
+    expect(isYouTubeShortsUrl('https://m.youtube.com/shorts/dQw4w9WgXcQ')).toBe(true)
+    expect(isYouTubeShortsUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(false)
+    expect(isYouTubeShortsUrl('https://youtu.be/dQw4w9WgXcQ')).toBe(false)
+    expect(isYouTubeShortsUrl('not a url')).toBe(false)
   })
 
   it('rejects images without alt text (a11y floor)', () => {
