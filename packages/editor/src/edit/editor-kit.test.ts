@@ -1,4 +1,5 @@
 import type { TElement } from 'platejs'
+import type { PlateEditor } from 'platejs/react'
 import { createPlateEditor } from 'platejs/react'
 import { describe, expect, it } from 'vitest'
 
@@ -22,6 +23,12 @@ const p = (id: string, text: string) => ({
 
 const makeEditor = (value: Content) =>
   createPlateEditor({ plugins: editorKit, value: toEditorValue(value) })
+
+// Checking the kit-specialized editor against the helpers' plain PlateEditor
+// parameter blows tsc's instantiation depth on a cold compile (TS2589 in
+// CI; local incremental caches mask it). The unknown hop severs the
+// structural check — runtime shape is identical.
+const asPlateEditor = (editor: unknown) => editor as PlateEditor
 
 describe('editorKit (plugin resolution)', () => {
   it('resolves slash, dnd, trailing-block, and markdown input rules', () => {
@@ -304,7 +311,7 @@ describe('column-aware insert (founder amendment, 2026-07-26)', () => {
   it('inserts an image INTO the column under the caret, with a paragraph exit after it', () => {
     const editor = makeEditor(columnsValue)
     editor.tf.select({ path: [0, 0, 0, 0], offset: 4 }) // inside "left"
-    insertBlockNode(editor, { ...imgNode })
+    insertBlockNode(asPlateEditor(editor), { ...imgNode } as TElement)
     const left = columnChildren(editor, 0)
     expect(left.map((node) => node.type)).toEqual(['p', 'img', 'p'])
     // The other column is untouched; nothing landed at the top level.
@@ -331,12 +338,12 @@ describe('column-aware insert (founder amendment, 2026-07-26)', () => {
     ]
     const editor = makeEditor(emptyLeft)
     editor.tf.select({ path: [0, 0, 0, 0], offset: 0 })
-    insertBlockNode(editor, {
+    insertBlockNode(asPlateEditor(editor), {
       type: 'video',
       url: 'https://youtu.be/dQw4w9WgXcQ',
       caption: [{ text: 'VIDEO — walkthrough' }],
       children: [{ text: '' }],
-    })
+    } as TElement)
     const left = columnChildren(editor, 0)
     // Empty paragraph replaced; the trailing in-column paragraph keeps a
     // caret exit after the void.
@@ -348,11 +355,11 @@ describe('column-aware insert (founder amendment, 2026-07-26)', () => {
   it('inserts an equation into the column (any legal roster block, not just media)', () => {
     const editor = makeEditor(columnsValue)
     editor.tf.select({ path: [0, 1, 0, 0], offset: 5 }) // inside "right"
-    insertBlockNode(editor, {
+    insertBlockNode(asPlateEditor(editor), {
       type: 'equation',
       texExpression: 'E = mc^2',
       children: [{ text: '' }],
-    })
+    } as TElement)
     const right = columnChildren(editor, 1)
     expect(right.map((node) => node.type)).toEqual(['p', 'equation', 'p'])
     expect(fromEditorValue(editor.children).ok).toBe(true)
@@ -361,7 +368,10 @@ describe('column-aware insert (founder amendment, 2026-07-26)', () => {
   it('keeps the top-level insert behavior unchanged outside columns', () => {
     const editor = makeEditor([p('a', 'hello')])
     editor.tf.select({ path: [0, 0], offset: 5 })
-    insertBlockNode(editor, { ...imgNode })
+    // The explicit TElement cast keeps tsc's inference shallow — spreading
+    // into the generic parameter blows the instantiation depth on a cold
+    // compile (TS2589 in CI; local incremental caches mask it).
+    insertBlockNode(asPlateEditor(editor), { ...imgNode } as TElement)
     expect(editor.children[0]?.type).toBe('p')
     expect(editor.children[1]?.type).toBe('img')
   })
@@ -369,7 +379,7 @@ describe('column-aware insert (founder amendment, 2026-07-26)', () => {
   it('toggle conversion is a no-op inside a column (top-level indent model)', () => {
     const editor = makeEditor(columnsValue)
     editor.tf.select({ path: [0, 0, 0, 0], offset: 0 })
-    setTextBlockType(editor, 'toggle')
+    setTextBlockType(asPlateEditor(editor), 'toggle')
     expect(columnChildren(editor, 0).map((node) => node.type)).toEqual(['p'])
     expect(fromEditorValue(editor.children).ok).toBe(true)
   })
@@ -377,7 +387,7 @@ describe('column-aware insert (founder amendment, 2026-07-26)', () => {
   it('inserting columns from inside a group lands a NEW group after it, never nested', () => {
     const editor = makeEditor(columnsValue)
     editor.tf.select({ path: [0, 0, 0, 0], offset: 4 })
-    insertColumns(editor, 2)
+    insertColumns(asPlateEditor(editor), 2)
     expect(editor.children[0]?.type).toBe('column_group')
     expect(editor.children[1]?.type).toBe('column_group')
     // The original group still holds exactly its two paragraph columns.
