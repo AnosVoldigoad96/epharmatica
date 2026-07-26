@@ -78,6 +78,7 @@ export type SubtopicEditorLabels = {
   insertDrugCard: string
   insertVideo: string
   insertImage: string
+  insertCarousel: string
   insertDivider: string
   insertDate: string
   insertEquation: string
@@ -151,6 +152,13 @@ export type SubtopicEditorLabels = {
   dateEditLabel: string
   datePlaceholder: string
   codeLangLabel: string
+
+  /** Carousel void chrome (thumbnail strip + per-slide controls). */
+  carouselAddImage: string
+  carouselMoveImageLeft: string
+  carouselMoveImageRight: string
+  carouselRemoveImage: string
+  carouselEmptyNote: string
 
   /** KaTeX equation voids (popover TeX editor + empty states). */
   equationInputLabel: string
@@ -230,6 +238,7 @@ export const DEFAULT_EDITOR_LABELS: SubtopicEditorLabels = {
   insertDrugCard: 'Drug Card',
   insertVideo: 'Video (YouTube)',
   insertImage: 'Image',
+  insertCarousel: 'Image carousel',
   insertDivider: 'Divider',
   insertDate: 'Date',
   insertEquation: 'Equation',
@@ -292,6 +301,12 @@ export const DEFAULT_EDITOR_LABELS: SubtopicEditorLabels = {
   dateEditLabel: 'Edit date',
   datePlaceholder: 'Pick a date',
   codeLangLabel: 'Language',
+
+  carouselAddImage: 'Add image',
+  carouselMoveImageLeft: 'Move image left',
+  carouselMoveImageRight: 'Move image right',
+  carouselRemoveImage: 'Remove image',
+  carouselEmptyNote: 'Empty carousel — add images from the media library',
 
   equationInputLabel: 'TeX expression',
   equationPlaceholder: 'f(x) = ax^2 + bx + c',

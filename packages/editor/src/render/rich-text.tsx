@@ -7,6 +7,7 @@ import { upgradeLegacyLists } from '../schema/legacy-lists'
 import type {
   Block,
   CalloutVariant,
+  CarouselBlock,
   ColumnChildBlock,
   Content,
   DrugCardFieldKey,
@@ -410,6 +411,40 @@ export function RichText({ content, components, labels }: RichTextProps) {
             ) : null}
           </figure>
         )
+      case 'carousel': {
+        // CSS-first scroll-snap strip — no client component, no JS: swipe/
+        // trackpad scrolling is native, the per-slide "i / N" chip and
+        // captions render server-side. Generic on purpose (an ordered strip
+        // of images with captions): the future slide-deck viewer reuses it.
+        const carousel = block as CarouselBlock
+        const total = carousel.images.length
+        return (
+          <figure key={key} data-block-id={id} className="rt-carousel" style={indentStyle}>
+            <div className="rt-carousel__track">
+              {carousel.images.map((image, slideIndex) => (
+                <figure key={slideIndex} className="rt-carousel__slide">
+                  <img
+                    src={image.url}
+                    alt={image.alt}
+                    width={image.width}
+                    height={image.height}
+                    // First slide is in the initial viewport — eager; the
+                    // rest lazy-load as the strip scrolls.
+                    loading={slideIndex === 0 ? undefined : 'lazy'}
+                    style={{ aspectRatio: `${image.width} / ${image.height}` }}
+                  />
+                  <span className="rt-carousel__index" aria-hidden>
+                    {`${slideIndex + 1} / ${total}`}
+                  </span>
+                  {image.caption && image.caption.length > 0 ? (
+                    <figcaption>{image.caption.map(renderTextNode)}</figcaption>
+                  ) : null}
+                </figure>
+              ))}
+            </div>
+          </figure>
+        )
+      }
       case 'video':
         return (
           <figure key={key} data-block-id={id} className="rt-video" style={indentStyle}>

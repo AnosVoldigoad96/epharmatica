@@ -52,6 +52,9 @@ export function getAnchorKind(block: Block): AnchorKind | null {
     case 'hr':
     case 'equation':
     case 'column_group':
+    // Carousel v1: not a highlight target (like columns) — slide captions
+    // are searchable via plain text but not offset-anchorable.
+    case 'carousel':
       return null
   }
 }
@@ -139,6 +142,7 @@ export function getTextRuns(block: Block, path: AnchorPath): string | null {
     case 'hr':
     case 'equation':
     case 'column_group':
+    case 'carousel':
       return null
   }
 }
@@ -186,6 +190,7 @@ function candidatePaths(block: Block): AnchorPath[] {
     case 'hr':
     case 'equation':
     case 'column_group':
+    case 'carousel':
       return []
   }
 }

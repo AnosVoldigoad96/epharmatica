@@ -5,6 +5,7 @@ import {
   deriveReadingMinutes,
   derivePrimaryVideoUrl,
   getHeadingsText,
+  getImageAssetIds,
   getPlainText,
   validateContent,
 } from '@epharmatica/editor'
@@ -39,17 +40,11 @@ import { fireTagsForSubtopic } from './tags'
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
 
-/** Asset ids referenced by img blocks — the media usage scan (M4 §6). */
-function imageAssetIds(content: Content): string[] {
-  return [
-    ...new Set(
-      content
-        .filter((block) => block.type === 'img')
-        .map((block) => (block.type === 'img' ? block.asset_id : ''))
-        .filter(Boolean),
-    ),
-  ]
-}
+/** Asset ids referenced by the document — img blocks AND carousel slides,
+ * inside columns too. The walk lives with the schema (I4): the editor's
+ * getImageAssetIds is the ONE scan, so refresh_media_refs keeps every
+ * referenced asset undeletable (M4 §6). */
+const imageAssetIds = (content: Content): string[] => getImageAssetIds(content)
 
 // ---------------------------------------------------------------------------
 // Draft saves (author+) — content + serializer-derived FTS columns.

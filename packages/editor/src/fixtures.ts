@@ -6,7 +6,8 @@ import type { Content } from './schema/types'
  * color/size), links, inline dates, container lists with nesting, a merged
  * table with a header row, toggles with indented contents, columns, hr,
  * block + inline KaTeX equations, alignment/line-height props, captions,
- * code lines, and a Drug Card.
+ * code lines, an image carousel (captioned + caption-less slides), and a
+ * Drug Card.
  * Renderer snapshots run over it (rules.md §6.4), and the M1 anchor fixture
  * suite (1.D) extends from it — keep block ids stable.
  */
@@ -232,6 +233,36 @@ export const FIXTURE_DOCUMENT: Content = [
     width: 1200,
     height: 800,
     caption: [{ text: 'FIG 1 — Acetylsalicylic acid' }],
+    children: [{ text: '' }],
+  },
+  {
+    id: 'fx-carousel-synthesis',
+    type: 'carousel',
+    images: [
+      {
+        asset_id: '7c1f3f7e-9d24-4c1a-8b60-2f9b2f6f1a01',
+        url: 'https://cdn.example.com/content-media/prostaglandin-step-1.webp',
+        alt: 'Arachidonic acid release from membrane phospholipids',
+        width: 1200,
+        height: 900,
+        caption: [{ text: 'STEP 1 — Phospholipase A2' }],
+      },
+      {
+        asset_id: '9e5b0d12-6a3c-4f8e-b7d1-5c4a8e2f9b02',
+        url: 'https://cdn.example.com/content-media/prostaglandin-step-2.webp',
+        alt: 'Cyclooxygenase converts arachidonic acid to PGH2',
+        width: 1200,
+        height: 900,
+        caption: [{ text: 'STEP 2 — COX catalysis' }],
+      },
+      {
+        asset_id: '2a7d9c44-1b5e-4d2f-9e83-7f6b3d1c8e03',
+        url: 'https://cdn.example.com/content-media/prostaglandin-step-3.webp',
+        alt: 'Tissue-specific synthases yield active prostanoids',
+        width: 1200,
+        height: 900,
+      },
+    ],
     children: [{ text: '' }],
   },
   {

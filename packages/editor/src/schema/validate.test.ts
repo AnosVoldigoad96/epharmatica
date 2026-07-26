@@ -475,6 +475,64 @@ describe('validateContent', () => {
     expect(result.ok).toBe(false)
   })
 
+  it('validates carousels: ≥ 1 slide data-objects on the img media contract', () => {
+    const slide = {
+      asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+      url: 'https://cdn.example.com/step-1.webp',
+      alt: 'Step one',
+      width: 640,
+      height: 480,
+      caption: [{ text: 'STEP 1' }],
+    }
+    const base = { id: 'car1', type: 'carousel', children: [{ text: '' }] }
+    expect(validateContent([{ ...base, images: [slide] }]).ok).toBe(true)
+    // A caption-less slide is fine (caption is optional, unlike video).
+    const { caption: _cap, ...bare } = slide
+    expect(validateContent([{ ...base, images: [bare] }]).ok).toBe(true)
+    // Empty strips never store — the serializer drops them before this.
+    expect(validateContent([{ ...base, images: [] }]).ok).toBe(false)
+    expect(validateContent([{ ...base }]).ok).toBe(false)
+    // The img floors hold per slide: alt (a11y), uuid asset, dimensions (CLS).
+    expect(validateContent([{ ...base, images: [{ ...slide, alt: '   ' }] }]).ok).toBe(false)
+    expect(validateContent([{ ...base, images: [{ ...slide, asset_id: 'not-a-uuid' }] }]).ok).toBe(
+      false,
+    )
+    expect(validateContent([{ ...base, images: [{ ...slide, url: 'not-a-url' }] }]).ok).toBe(false)
+    expect(validateContent([{ ...base, images: [{ ...slide, width: 0 }] }]).ok).toBe(false)
+    // Strictness reaches into slides — unknown props reject.
+    expect(validateContent([{ ...base, images: [{ ...slide, zoomable: true }] }]).ok).toBe(false)
+    // Slides are data, not child nodes — children stays the void tuple.
+    expect(validateContent([{ ...base, images: [slide], children: [{ text: 'stray' }] }]).ok).toBe(
+      false,
+    )
+  })
+
+  it('carousels are legal id-less column children (COLUMN_CHILD_TYPES)', () => {
+    const slide = {
+      asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+      url: 'https://cdn.example.com/step-1.webp',
+      alt: 'Step one',
+      width: 640,
+      height: 480,
+    }
+    const group = (carousel: Record<string, unknown>) => [
+      {
+        id: 'c1',
+        type: 'column_group',
+        children: [
+          { type: 'column', children: [carousel] },
+          { type: 'column', children: [{ type: 'p', children: [{ text: 'partner' }] }] },
+        ],
+      },
+    ]
+    const idless = { type: 'carousel', images: [slide], children: [{ text: '' }] }
+    expect(validateContent(group(idless)).ok).toBe(true)
+    // Ids never nest — the group is the one anchor unit.
+    expect(validateContent(group({ ...idless, id: 'sneaky' })).ok).toBe(false)
+    // Slide rules hold inside columns too.
+    expect(validateContent(group({ ...idless, images: [] })).ok).toBe(false)
+  })
+
   it('rejects callouts with unknown variants', () => {
     const result = validateContent([
       {

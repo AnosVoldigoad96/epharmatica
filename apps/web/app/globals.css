@@ -272,7 +272,8 @@
   }
 
   .rt-figure figcaption,
-  .rt-video figcaption {
+  .rt-video figcaption,
+  .rt-carousel figcaption {
     color: var(--color-ink-2);
     font-family: var(--font-mono);
     font-size: 10px;
@@ -428,6 +429,46 @@
     .rt-columns__col + .rt-columns__col {
       margin-block-start: 16px;
     }
+  }
+
+  /* Image carousel — CSS-only scroll-snap strip (no JS: touch swipe and
+     trackpad scroll are native). Each slide fills the container and snaps
+     to its start edge; the per-slide "i / N" chip is server-rendered.
+     Logical properties keep RTL order correct. */
+  .rt-carousel__track {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+  }
+
+  .rt-carousel__slide {
+    flex: 0 0 100%;
+    margin: 0;
+    position: relative;
+    scroll-snap-align: start;
+  }
+
+  .rt-carousel__slide img {
+    block-size: auto;
+    inline-size: 100%;
+    max-inline-size: 100%;
+  }
+
+  .rt-carousel__index {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    color: var(--color-ink-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    inset-block-start: 8px;
+    inset-inline-end: 8px;
+    letter-spacing: 0.12em;
+    padding-block: 2px;
+    padding-inline: 6px;
+    position: absolute;
   }
 
   /* ---- Study layer (1.D · M1 §5.5/§5.6) -------------------------------- */

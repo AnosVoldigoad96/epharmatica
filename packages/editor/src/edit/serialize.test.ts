@@ -395,6 +395,118 @@ describe('fromEditorValue — editor-v2 artifacts (slash / dnd / selection)', ()
     }
   })
 
+  it('carousel: whitelists slide props in order, drops empty strips silently', () => {
+    const value = [
+      {
+        id: 'car',
+        type: 'carousel',
+        // Editor-internal block prop — stripped.
+        selectedIndex: 1,
+        images: [
+          {
+            asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+            url: 'https://cdn.example.com/1.webp',
+            alt: 'One',
+            width: 640,
+            height: 480,
+            caption: [{ text: 'FIG A' }],
+            // Editor-internal slide prop — stripped.
+            zoomLevel: 3,
+          },
+          {
+            asset_id: '9e5b0d12-6a3c-4f8e-b7d1-5c4a8e2f9b02',
+            url: 'https://cdn.example.com/2.webp',
+            alt: 'Two',
+            width: 800,
+            height: 600,
+            // Empty caption carries no content — the prop drops.
+            caption: [],
+          },
+        ],
+        children: [{ text: '' }],
+      },
+      // An emptied/abandoned strip drops at save, never blocking it.
+      { id: 'empty', type: 'carousel', images: [], children: [{ text: '' }] },
+      { id: 'after', type: 'p', children: [{ text: 'after' }] },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.content).toEqual([
+        {
+          id: 'car',
+          type: 'carousel',
+          images: [
+            {
+              asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+              url: 'https://cdn.example.com/1.webp',
+              alt: 'One',
+              width: 640,
+              height: 480,
+              caption: [{ text: 'FIG A' }],
+            },
+            {
+              asset_id: '9e5b0d12-6a3c-4f8e-b7d1-5c4a8e2f9b02',
+              url: 'https://cdn.example.com/2.webp',
+              alt: 'Two',
+              width: 800,
+              height: 600,
+            },
+          ],
+          children: [{ text: '' }],
+        },
+        { id: 'after', type: 'p', children: [{ text: 'after' }] },
+      ])
+    }
+  })
+
+  it('carousel: serializes as an id-less column child (and drops empty in-column)', () => {
+    const slide = {
+      asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+      url: 'https://cdn.example.com/1.webp',
+      alt: 'One',
+      width: 640,
+      height: 480,
+    }
+    const value = [
+      {
+        id: 'cols',
+        type: 'column_group',
+        children: [
+          {
+            type: 'column',
+            width: '50%',
+            children: [
+              // NodeIdPlugin may stamp nested ids — stripped below top level.
+              { id: 'junk', type: 'carousel', images: [slide], children: [{ text: '' }] },
+              { type: 'carousel', images: [], children: [{ text: '' }] },
+            ],
+          },
+          {
+            type: 'column',
+            width: '50%',
+            children: [{ type: 'p', children: [{ text: 'partner' }] }],
+          },
+        ],
+      },
+    ]
+    const result = fromEditorValue(value)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      const group = result.content[0]
+      expect(group).toMatchObject({
+        id: 'cols',
+        type: 'column_group',
+      })
+      if (group?.type === 'column_group') {
+        // The empty strip dropped; the survivor is id-less.
+        expect(group.children[0]?.children).toEqual([
+          { type: 'carousel', images: [slide], children: [{ text: '' }] },
+        ])
+      }
+    }
+  })
+
   it('round-trips a full document containing every artifact at once', () => {
     const value = [
       {

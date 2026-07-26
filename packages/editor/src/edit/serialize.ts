@@ -3,6 +3,7 @@ import { upgradeLegacyLists } from '../schema/legacy-lists'
 import type {
   Alignment,
   Block,
+  CarouselImage,
   CodeBlock,
   CodeLine,
   ColumnChildBlock,
@@ -333,6 +334,38 @@ function toColumns(children: unknown, index: number | string, errors: string[]):
   return columns
 }
 
+/**
+ * Whitelist one carousel slide: schema-allowed props only (editor-internal
+ * leftovers drop), caption via the text-run whitelist. A slide missing its
+ * payload strings is not a slide — it drops (the block itself drops when no
+ * slides remain; validation still rejects malformed survivors).
+ */
+function toCarouselImages(images: unknown): CarouselImage[] {
+  const out: CarouselImage[] = []
+  if (!Array.isArray(images)) return out
+  for (const image of images) {
+    if (!isRecord(image)) continue
+    if (
+      typeof image.asset_id !== 'string' ||
+      typeof image.url !== 'string' ||
+      typeof image.alt !== 'string'
+    ) {
+      continue
+    }
+    const slide = {
+      asset_id: image.asset_id,
+      url: image.url,
+      alt: image.alt,
+      width: image.width,
+      height: image.height,
+    } as unknown as CarouselImage
+    const caption = collectTextNodes(image.caption)
+    if (caption.length > 0) slide.caption = caption
+    out.push(slide)
+  }
+  return out
+}
+
 const VOID_CHILDREN: [{ text: '' }] = [{ text: '' }]
 
 /** The id prop survives at the top level only. */
@@ -422,6 +455,14 @@ function toBlock(
       const caption = collectTextNodes(node.caption)
       if (caption.length > 0) block.caption = caption
       return block
+    }
+    case 'carousel': {
+      const images = toCarouselImages(node.images)
+      // An empty carousel carries no content (an abandoned insert or a
+      // strip the author emptied) — it drops at save rather than blocking
+      // it, like unset date chips and empty inline equations.
+      if (images.length === 0) return null
+      return { ...ids, ...top, type: 'carousel', images, children: VOID_CHILDREN } as Block
     }
     case 'video':
       return {
