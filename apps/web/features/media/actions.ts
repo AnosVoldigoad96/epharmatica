@@ -160,7 +160,12 @@ export async function uploadMediaAsset(formData: FormData): Promise<UploadMediaR
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)
     .upload(path, processed.data, { contentType: 'image/webp' })
-  if (uploadError) return { ok: false, error: t('uploadFailed') }
+  if (uploadError) {
+    // Ops visibility (docker logs): the user-facing copy is generic by
+    // design; the underlying storage error is the diagnosable part.
+    console.error('[media] upload failed', path, uploadError.message)
+    return { ok: false, error: t('uploadFailed') }
+  }
 
   try {
     const assetId = await withAudit<string>(
@@ -243,12 +248,18 @@ export async function replaceMediaAsset(
   // Retain the prior file FIRST — no copy, no replace (30-day window).
   const retiredPath = `library/retired/${assetId}-${Date.now()}.webp`
   const { error: copyError } = await supabase.storage.from(BUCKET).copy(row.path, retiredPath)
-  if (copyError) return { ok: false, error: t('uploadFailed') }
+  if (copyError) {
+    console.error('[media] retire-copy failed', row.path, copyError.message)
+    return { ok: false, error: t('uploadFailed') }
+  }
 
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)
     .upload(row.path, processed.data, { contentType: 'image/webp', upsert: true })
-  if (uploadError) return { ok: false, error: t('uploadFailed') }
+  if (uploadError) {
+    console.error('[media] replace-upload failed', row.path, uploadError.message)
+    return { ok: false, error: t('uploadFailed') }
+  }
 
   try {
     await withAudit(
