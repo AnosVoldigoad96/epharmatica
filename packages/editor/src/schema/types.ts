@@ -194,21 +194,51 @@ export type ToggleBlock = {
 /* ---------------------------------------------------------------- columns */
 
 /**
- * Blocks allowed inside a column: everything except headings (h2/h3 anchor
- * the document outline/TOC), toc, toggle (indent model is top-level-only),
- * and column_group (no nesting). Ids never nest — the group anchors.
+ * Blocks allowed inside a column (founder amendment, 2026-07-26): EVERY
+ * block type except `column_group` (no layout recursion) and `toggle` (the
+ * indent containment model addresses FOLLOWING TOP-LEVEL blocks, which
+ * cannot exist inside a column — a nested toggle would be an always-empty
+ * husk). Ids never nest — the group anchors, so column-hosted headings,
+ * toc, and equations stay OUT of the outline/TOC/anchor machinery.
  */
 export type ColumnChildBlock =
   | Omit<ParagraphBlock, 'id'>
+  | Omit<HeadingBlock, 'id'>
   | Omit<BlockquoteBlock, 'id'>
   | Omit<CalloutBlock, 'id'>
   | Omit<TableBlock, 'id'>
   | Omit<ImageBlock, 'id'>
   | Omit<VideoBlock, 'id'>
   | Omit<CodeBlock, 'id'>
+  | Omit<TocBlock, 'id'>
   | Omit<DrugCardBlock, 'id'>
   | Omit<ListBlock, 'id'>
   | Omit<HrBlock, 'id'>
+  | Omit<EquationBlock, 'id'>
+
+/**
+ * The column-child roster as data — the ONE list the validator, the
+ * serializer whitelist, and column-aware insertion all consult. Keep in
+ * lockstep with ColumnChildBlock (the `satisfies` clause enforces that
+ * every entry is a legal column-child type).
+ */
+export const COLUMN_CHILD_TYPES: ReadonlySet<string> = new Set([
+  'p',
+  'h2',
+  'h3',
+  'blockquote',
+  'callout',
+  'table',
+  'img',
+  'video',
+  'code_block',
+  'toc',
+  'drug_card',
+  'ul',
+  'ol',
+  'hr',
+  'equation',
+] satisfies ColumnChildBlock['type'][])
 
 export type ColumnNode = {
   type: 'column'

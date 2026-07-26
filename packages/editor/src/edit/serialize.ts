@@ -16,7 +16,7 @@ import type {
   TableRow,
   TextNode,
 } from '../schema/types'
-import { DRUG_CARD_FIELD_KEYS } from '../schema/types'
+import { COLUMN_CHILD_TYPES, DRUG_CARD_FIELD_KEYS } from '../schema/types'
 import { validateContent } from '../schema/validate'
 
 /**
@@ -305,20 +305,8 @@ function toListItems(children: unknown): ListItemNode[] {
 
 /* ---------------------------------------------------------------- columns */
 
-/** Block types allowed inside a column (no headings/toc/toggle/columns). */
-const COLUMN_CHILD_TYPES = new Set([
-  'p',
-  'blockquote',
-  'callout',
-  'table',
-  'img',
-  'video',
-  'code_block',
-  'drug_card',
-  'ul',
-  'ol',
-  'hr',
-])
+/* Column children admit every block type except toggle and column_group —
+ * COLUMN_CHILD_TYPES (schema/types.ts) is the shared roster. */
 
 function toColumns(children: unknown, index: number | string, errors: string[]): ColumnNode[] {
   const columns: ColumnNode[] = []

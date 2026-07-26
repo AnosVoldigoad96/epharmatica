@@ -1,8 +1,11 @@
+import type { TElement } from 'platejs'
+import type { PlateEditor } from 'platejs/react'
 import { createPlateEditor } from 'platejs/react'
 import { describe, expect, it } from 'vitest'
 
 import type { Content } from '../schema/types'
 import { editorKit } from './editor-kit'
+import { insertBlockNode, insertColumns, setTextBlockType } from './insert-items'
 import { fromEditorValue, toEditorValue } from './serialize'
 
 /**
@@ -20,6 +23,12 @@ const p = (id: string, text: string) => ({
 
 const makeEditor = (value: Content) =>
   createPlateEditor({ plugins: editorKit, value: toEditorValue(value) })
+
+// Checking the kit-specialized editor against the helpers' plain PlateEditor
+// parameter blows tsc's instantiation depth on a cold compile (TS2589 in
+// CI; local incremental caches mask it). The unknown hop severs the
+// structural check — runtime shape is identical.
+const asPlateEditor = (editor: unknown) => editor as PlateEditor
 
 describe('editorKit (plugin resolution)', () => {
   it('resolves slash, dnd, trailing-block, and markdown input rules', () => {
@@ -271,6 +280,121 @@ describe('slash command trigger', () => {
     if (result.ok) {
       expect(JSON.stringify(result.content)).not.toContain('slash_input')
     }
+  })
+})
+
+describe('column-aware insert (founder amendment, 2026-07-26)', () => {
+  const columnsValue: Content = [
+    {
+      id: 'cols',
+      type: 'column_group',
+      children: [
+        { type: 'column', width: '50%', children: [{ type: 'p', children: [{ text: 'left' }] }] },
+        { type: 'column', width: '50%', children: [{ type: 'p', children: [{ text: 'right' }] }] },
+      ],
+    },
+  ]
+
+  const imgNode: TElement = {
+    type: 'img',
+    url: 'https://cdn.example.com/x.webp',
+    alt: 'Diagram',
+    asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+    width: 640,
+    height: 480,
+    children: [{ text: '' }],
+  }
+
+  const columnChildren = (editor: ReturnType<typeof makeEditor>, columnIndex: number) =>
+    ((editor.children[0] as TElement).children[columnIndex] as TElement).children as TElement[]
+
+  it('inserts an image INTO the column under the caret, with a paragraph exit after it', () => {
+    const editor = makeEditor(columnsValue)
+    editor.tf.select({ path: [0, 0, 0, 0], offset: 4 }) // inside "left"
+    insertBlockNode(asPlateEditor(editor), { ...imgNode } as TElement)
+    const left = columnChildren(editor, 0)
+    expect(left.map((node) => node.type)).toEqual(['p', 'img', 'p'])
+    // The other column is untouched; nothing landed at the top level.
+    expect(columnChildren(editor, 1).map((node) => node.type)).toEqual(['p'])
+    expect(editor.children[0]?.type).toBe('column_group')
+    const result = fromEditorValue(editor.children)
+    expect(result.ok, JSON.stringify(!result.ok && result.errors)).toBe(true)
+  })
+
+  it('replaces an empty column paragraph Notion-style (video path)', () => {
+    const emptyLeft: Content = [
+      {
+        id: 'cols',
+        type: 'column_group',
+        children: [
+          { type: 'column', width: '50%', children: [{ type: 'p', children: [{ text: '' }] }] },
+          {
+            type: 'column',
+            width: '50%',
+            children: [{ type: 'p', children: [{ text: 'right' }] }],
+          },
+        ],
+      },
+    ]
+    const editor = makeEditor(emptyLeft)
+    editor.tf.select({ path: [0, 0, 0, 0], offset: 0 })
+    insertBlockNode(asPlateEditor(editor), {
+      type: 'video',
+      url: 'https://youtu.be/dQw4w9WgXcQ',
+      caption: [{ text: 'VIDEO — walkthrough' }],
+      children: [{ text: '' }],
+    } as TElement)
+    const left = columnChildren(editor, 0)
+    // Empty paragraph replaced; the trailing in-column paragraph keeps a
+    // caret exit after the void.
+    expect(left.map((node) => node.type)).toEqual(['video', 'p'])
+    const result = fromEditorValue(editor.children)
+    expect(result.ok, JSON.stringify(!result.ok && result.errors)).toBe(true)
+  })
+
+  it('inserts an equation into the column (any legal roster block, not just media)', () => {
+    const editor = makeEditor(columnsValue)
+    editor.tf.select({ path: [0, 1, 0, 0], offset: 5 }) // inside "right"
+    insertBlockNode(asPlateEditor(editor), {
+      type: 'equation',
+      texExpression: 'E = mc^2',
+      children: [{ text: '' }],
+    } as TElement)
+    const right = columnChildren(editor, 1)
+    expect(right.map((node) => node.type)).toEqual(['p', 'equation', 'p'])
+    expect(fromEditorValue(editor.children).ok).toBe(true)
+  })
+
+  it('keeps the top-level insert behavior unchanged outside columns', () => {
+    const editor = makeEditor([p('a', 'hello')])
+    editor.tf.select({ path: [0, 0], offset: 5 })
+    // The explicit TElement cast keeps tsc's inference shallow — spreading
+    // into the generic parameter blows the instantiation depth on a cold
+    // compile (TS2589 in CI; local incremental caches mask it).
+    insertBlockNode(asPlateEditor(editor), { ...imgNode } as TElement)
+    expect(editor.children[0]?.type).toBe('p')
+    expect(editor.children[1]?.type).toBe('img')
+  })
+
+  it('toggle conversion is a no-op inside a column (top-level indent model)', () => {
+    const editor = makeEditor(columnsValue)
+    editor.tf.select({ path: [0, 0, 0, 0], offset: 0 })
+    setTextBlockType(asPlateEditor(editor), 'toggle')
+    expect(columnChildren(editor, 0).map((node) => node.type)).toEqual(['p'])
+    expect(fromEditorValue(editor.children).ok).toBe(true)
+  })
+
+  it('inserting columns from inside a group lands a NEW group after it, never nested', () => {
+    const editor = makeEditor(columnsValue)
+    editor.tf.select({ path: [0, 0, 0, 0], offset: 4 })
+    insertColumns(asPlateEditor(editor), 2)
+    expect(editor.children[0]?.type).toBe('column_group')
+    expect(editor.children[1]?.type).toBe('column_group')
+    // The original group still holds exactly its two paragraph columns.
+    expect(columnChildren(editor, 0).map((node) => node.type)).toEqual(['p'])
+    expect(columnChildren(editor, 1).map((node) => node.type)).toEqual(['p'])
+    const result = fromEditorValue(editor.children)
+    expect(result.ok, JSON.stringify(!result.ok && result.errors)).toBe(true)
   })
 })
 

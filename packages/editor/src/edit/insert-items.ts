@@ -38,7 +38,7 @@ import type { PlateEditor } from 'platejs/react'
 
 import { CALLOUT_LABELS } from '../schema/labels'
 import type { CalloutVariant } from '../schema/types'
-import { CALLOUT_VARIANTS } from '../schema/types'
+import { CALLOUT_VARIANTS, COLUMN_CHILD_TYPES } from '../schema/types'
 import type { EditorBridges } from './context'
 import type { SubtopicEditorLabels } from './labels'
 
@@ -81,35 +81,87 @@ const CALLOUT_ICONS: Record<CalloutVariant, LucideIcon> = {
   warning: TriangleAlert,
 }
 
-/** True for an empty top-level paragraph — the block slash replaces. */
+/** True for an empty paragraph — the block the insert replaces. */
 const isEmptyParagraph = (block: TElement): boolean =>
   block.type === 'p' && NodeApi.string(block) === ''
 
+/** Void block types of the insert roster — no text entry point of their own. */
+const VOID_BLOCK_TYPES: ReadonlySet<string> = new Set([
+  'img',
+  'video',
+  'hr',
+  'toc',
+  'drug_card',
+  'equation',
+])
+
+/** The closest `column` entry enclosing the selection, if any. */
+const columnAbove = (editor: PlateEditor) =>
+  editor.api.above<TElement>({ match: { type: 'column' } })
+
+/**
+ * Where the insert lands: the COLUMN CHILD under the caret when the
+ * selection sits inside a column and `node` is legal there (founder
+ * amendment, 2026-07-26 — every block except toggle/column_group), else
+ * the highest (top-level) block. Anything not column-legal keeps the
+ * top-level path, so it can never nest illegally.
+ */
+function insertionTarget(
+  editor: PlateEditor,
+  node: TElement,
+): { block: TElement; path: number[]; inColumn: boolean } | null {
+  if (COLUMN_CHILD_TYPES.has(node.type)) {
+    const column = columnAbove(editor)
+    const anchor = editor.selection?.anchor.path
+    if (column && anchor && anchor.length > column[1].length) {
+      const childPath = anchor.slice(0, column[1].length + 1)
+      const child = editor.api.node<TElement>(childPath)
+      if (child) return { block: child[0], path: child[1], inColumn: true }
+    }
+  }
+  const entry = editor.api.block({ highest: true })
+  return entry ? { block: entry[0] as TElement, path: entry[1], inColumn: false } : null
+}
+
 /**
  * Notion-style insert: replace the current block when it is an empty
- * paragraph, otherwise insert below the current top-level block.
+ * paragraph, otherwise insert below it — at the column-child level when
+ * the caret is inside a column (insertionTarget), at the top level
+ * otherwise (unchanged behavior).
  */
 export function insertBlockNode(editor: PlateEditor, node: TElement): void {
-  const entry = editor.api.block({ highest: true })
-  if (!entry) {
+  const target = insertionTarget(editor, node)
+  if (!target) {
     editor.tf.insertNodes(node, { select: true })
     return
   }
-  const [block, path] = entry
-  if (isEmptyParagraph(block)) {
-    editor.tf.withoutNormalizing(() => {
-      editor.tf.removeNodes({ at: path })
-      editor.tf.insertNodes(node, { at: path, select: true })
-    })
-  } else {
-    editor.tf.insertNodes(node, { at: PathApi.next(path), select: true })
-  }
+  const { block, path, inColumn } = target
+  editor.tf.withoutNormalizing(() => {
+    const replacing = isEmptyParagraph(block)
+    const at = replacing ? path : PathApi.next(path)
+    if (replacing) editor.tf.removeNodes({ at: path })
+    editor.tf.insertNodes(node, { at, select: true })
+    // A void as the LAST column child would leave the column with no text
+    // entry point after it (TrailingBlockPlugin only guards the document
+    // tail) — keep an empty paragraph behind it inside the column.
+    if (inColumn && VOID_BLOCK_TYPES.has(node.type)) {
+      const parent = editor.api.parent(at)
+      const index = at[at.length - 1] as number
+      if (parent && index === (parent[0] as TElement).children.length - 1) {
+        editor.tf.insertNodes(emptyParagraph(), { at: PathApi.next(at) })
+      }
+    }
+  })
 }
 
 export type TextBlockType = 'p' | 'h2' | 'h3' | 'blockquote' | 'toggle'
 
-/** Turn the current block into `type`, unwrapping a classic list first. */
+/** Turn the current block into `type`, unwrapping a classic list first.
+ * Toggle is TOP-LEVEL-ONLY (its indent model addresses following top-level
+ * blocks) — inside a column the conversion is a no-op rather than
+ * producing schema-invalid nesting. */
 export function setTextBlockType(editor: PlateEditor, type: TextBlockType) {
+  if (type === 'toggle' && columnAbove(editor)) return
   if (someList(editor, 'ul') || someList(editor, 'ol')) {
     unwrapList(editor)
   }
@@ -125,6 +177,21 @@ export function setListType(editor: PlateEditor, type: 'ul' | 'ol') {
 }
 
 const emptyParagraph = (): TElement => ({ type: 'p', children: [{ text: '' }] })
+
+/**
+ * Insert a 2/3-column group. Layout never recurses (schema: column_group
+ * is not a legal column child): from inside an existing group the new one
+ * lands AFTER it at the TOP level; anywhere else, the official
+ * insertColumnGroup behavior is unchanged.
+ */
+export function insertColumns(editor: PlateEditor, columns: number): void {
+  const group = editor.api.above<TElement>({ match: { type: 'column_group' } })
+  if (!group) {
+    insertColumnGroup(editor, { columns, select: true })
+    return
+  }
+  insertColumnGroup(editor, { columns, select: true, at: PathApi.next(group[1].slice(0, 1)) })
+}
 
 const tableNode = (): TElement => ({
   type: 'table',
@@ -296,7 +363,7 @@ export function buildInsertItems(
       label: labels.insertColumns2,
       icon: Columns2,
       keywords: ['columns', 'layout', 'two', 'side'],
-      run: focusAfter((editor) => insertColumnGroup(editor, { columns: 2, select: true })),
+      run: focusAfter((editor) => insertColumns(editor, 2)),
     },
     {
       key: 'columns-3',
@@ -304,7 +371,7 @@ export function buildInsertItems(
       label: labels.insertColumns3,
       icon: Columns3,
       keywords: ['columns', 'layout', 'three'],
-      run: focusAfter((editor) => insertColumnGroup(editor, { columns: 3, select: true })),
+      run: focusAfter((editor) => insertColumns(editor, 3)),
     },
     ...CALLOUT_VARIANTS.map((variant): InsertItem => ({
       key: `callout-${variant}`,

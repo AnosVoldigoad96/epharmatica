@@ -172,7 +172,7 @@ describe('validateContent', () => {
     ).toBe(false)
   })
 
-  it('validates column groups: 2-4 columns, % widths, no headings/ids inside', () => {
+  it('validates column groups: 2-4 columns, % widths, id-less children', () => {
     const column = (text: string) => ({
       type: 'column',
       width: '50%',
@@ -203,19 +203,6 @@ describe('validateContent', () => {
         },
       ]).ok,
     ).toBe(false)
-    // Headings never nest in columns.
-    expect(
-      validateContent([
-        {
-          id: 'c1',
-          type: 'column_group',
-          children: [
-            { type: 'column', children: [{ type: 'h2', children: [{ text: 'a' }] }] },
-            column('b'),
-          ],
-        },
-      ]).ok,
-    ).toBe(false)
     // Nested blocks never carry ids.
     expect(
       validateContent([
@@ -228,6 +215,71 @@ describe('validateContent', () => {
           ],
         },
       ]).ok,
+    ).toBe(false)
+  })
+
+  it('columns admit every block type except toggle/column_group (2026-07-26 amendment)', () => {
+    const partner = {
+      type: 'column',
+      width: '50%',
+      children: [{ type: 'p', children: [{ text: 'partner' }] }],
+    }
+    const group = (children: unknown[]) => [
+      { id: 'c1', type: 'column_group', children: [{ type: 'column', children }, partner] },
+    ]
+    const img = {
+      type: 'img',
+      url: 'https://cdn.example.com/x.webp',
+      alt: 'Diagram',
+      asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+      width: 640,
+      height: 480,
+      caption: [{ text: 'FIG — diagram' }],
+      children: [{ text: '' }],
+    }
+    const video = {
+      type: 'video',
+      url: 'https://youtu.be/dQw4w9WgXcQ',
+      caption: [{ text: 'VIDEO — walkthrough' }],
+      children: [{ text: '' }],
+    }
+    // Media + outline-ish blocks, all id-less: legal column children now.
+    expect(validateContent(group([img, video])).ok).toBe(true)
+    expect(
+      validateContent(
+        group([
+          { type: 'h2', children: [{ text: 'Column heading' }] },
+          { type: 'h3', children: [{ text: 'Sub' }], align: 'center' },
+          { type: 'equation', texExpression: 'E = mc^2', children: [{ text: '' }] },
+          { type: 'toc', children: [{ text: '' }] },
+          { type: 'hr', children: [{ text: '' }] },
+          { type: 'drug_card', fields: { generic_name: 'Aspirin' }, children: [{ text: '' }] },
+        ]),
+      ).ok,
+    ).toBe(true)
+    // Column children stay id-less — an id on a nested img rejects.
+    expect(validateContent(group([{ ...img, id: 'sneaky' }])).ok).toBe(false)
+    // Strictness holds inside columns — unknown props reject.
+    expect(validateContent(group([{ ...img, zoomable: true }])).ok).toBe(false)
+    // Media rules hold inside columns — video caption stays mandatory.
+    expect(validateContent(group([{ ...video, caption: [{ text: '  ' }] }])).ok).toBe(false)
+    // Toggle is top-level-only (indent containment model).
+    expect(validateContent(group([{ type: 'toggle', children: [{ text: 'More' }] }])).ok).toBe(
+      false,
+    )
+    // Layout never recurses — no column_group inside a column.
+    expect(
+      validateContent(
+        group([
+          {
+            type: 'column_group',
+            children: [
+              { type: 'column', children: [{ type: 'p', children: [{ text: 'a' }] }] },
+              { type: 'column', children: [{ type: 'p', children: [{ text: 'b' }] }] },
+            ],
+          },
+        ]),
+      ).ok,
     ).toBe(false)
   })
 
@@ -289,7 +341,8 @@ describe('validateContent', () => {
         },
       ]).ok,
     ).toBe(false)
-    // Top-level only — columns never host block equations.
+    // Columns host id-less block equations (2026-07-26 amendment) — but
+    // ids still never nest.
     expect(
       validateContent([
         {
@@ -299,6 +352,23 @@ describe('validateContent', () => {
             {
               type: 'column',
               children: [{ type: 'equation', texExpression: 'x', children: [{ text: '' }] }],
+            },
+            { type: 'column', children: [{ type: 'p', children: [{ text: 'b' }] }] },
+          ],
+        },
+      ]).ok,
+    ).toBe(true)
+    expect(
+      validateContent([
+        {
+          id: 'c1',
+          type: 'column_group',
+          children: [
+            {
+              type: 'column',
+              children: [
+                { id: 'eq-x', type: 'equation', texExpression: 'x', children: [{ text: '' }] },
+              ],
             },
             { type: 'column', children: [{ type: 'p', children: [{ text: 'b' }] }] },
           ],

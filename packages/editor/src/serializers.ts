@@ -109,7 +109,10 @@ export function getPlainText(content: Content): string {
     .join('\n\n')
 }
 
-/** Heading text for FTS weight B — refreshed on every save. */
+/** Heading text for FTS weight B — refreshed on every save. TOP-LEVEL
+ * headings only: column-hosted h2/h3 are id-less body styling outside the
+ * outline (no TOC entry, no anchor), so their text stays at weight C via
+ * blockPlainText. */
 export function getHeadingsText(content: Content): string {
   return content
     .filter((block): block is HeadingBlock => block.type === 'h2' || block.type === 'h3')
@@ -127,12 +130,22 @@ export function deriveReadingMinutes(content: Content): number {
 }
 
 /**
- * First video block's URL — copied to subtopics.primary_video_url at
- * publish (M1-2); null when the document has no video, consumers degrade.
+ * First video block's URL in document order — copied to
+ * subtopics.primary_video_url at publish (M1-2); null when the document
+ * has no video, consumers degrade. Columns count: a video living inside a
+ * column group is still the document's video.
  */
 export function derivePrimaryVideoUrl(content: Content): string | null {
-  const video = content.find((block) => block.type === 'video')
-  return video ? video.url : null
+  for (const block of content) {
+    if (block.type === 'video') return block.url
+    if (block.type === 'column_group') {
+      for (const column of block.children) {
+        const video = column.children.find((child) => child.type === 'video')
+        if (video && video.type === 'video') return video.url
+      }
+    }
+  }
+  return null
 }
 
 /**

@@ -65,6 +65,66 @@ describe('<RichText/> (rules.md §6.4 — full block schema)', () => {
     expect(html).toContain('<p>COX-1: constitutive, gastric protection.</p>')
   })
 
+  it('renders images and videos inside columns via the shared figure path', () => {
+    const mediaColumns: Content = [
+      { id: 'h-top', type: 'h2', children: [{ text: 'Top heading' }] },
+      {
+        id: 'cols-media',
+        type: 'column_group',
+        children: [
+          {
+            type: 'column',
+            width: '50%',
+            children: [
+              {
+                type: 'img',
+                url: 'https://cdn.example.com/x.webp',
+                alt: 'Diagram',
+                asset_id: '4b825dc6-42b0-4a5e-a153-0aa891f5a2b3',
+                width: 640,
+                height: 480,
+                caption: [{ text: 'FIG — diagram' }],
+                children: [{ text: '' }],
+              },
+            ],
+          },
+          {
+            type: 'column',
+            width: '50%',
+            children: [
+              {
+                type: 'video',
+                url: 'https://youtu.be/dQw4w9WgXcQ',
+                caption: [{ text: 'VIDEO — walkthrough' }],
+                children: [{ text: '' }],
+              },
+              { type: 'h3', children: [{ text: 'Column heading' }] },
+              { type: 'equation', texExpression: 'E = mc^2', children: [{ text: '' }] },
+              { type: 'toc', children: [{ text: '' }] },
+            ],
+          },
+        ],
+      },
+    ]
+    const html = render(mediaColumns)
+    expect(html).toMatchSnapshot()
+    // Media renders through the same figure/caption path as top-level.
+    expect(html).toContain('alt="Diagram"')
+    expect(html).toContain('<figcaption>FIG — diagram</figcaption>')
+    expect(html).toContain('<figcaption>VIDEO — walkthrough</figcaption>')
+    // Column children carry no data-block-id (id-less by schema)…
+    expect(html).toContain('<figure class="rt-figure">')
+    expect(html).toContain('<figure class="rt-video">')
+    // …and a column heading gets no anchor id.
+    expect(html).toContain('<h3>Column heading</h3>')
+    // The in-column TOC tolerates id-less headings: it lists TOP-LEVEL
+    // headings only, and renders without a data-block-id of its own.
+    expect(html).toContain('<nav class="rt-toc"')
+    expect(html).toContain('href="#h-h-top"')
+    expect(html).not.toContain('#h-undefined')
+    expect(html).not.toContain('Column heading</a>')
+  })
+
   it('renders hr, alignment, line-height, and the new marks', () => {
     const html = render(FIXTURE_DOCUMENT)
     expect(html).toContain('<hr data-block-id="fx-hr" class="rt-hr"/>')
