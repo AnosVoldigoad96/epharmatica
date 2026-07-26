@@ -64,7 +64,13 @@ export { formatDateDisplay } from './schema/date'
 
 export { CALLOUT_LABELS, DRUG_CARD_FIELD_LABELS } from './schema/labels'
 
-export { parseYouTubeUrl, youTubeEmbedUrl, youTubeThumbnailUrl } from './schema/youtube'
+export {
+  isYouTubeShortsUrl,
+  parseYouTubeUrl,
+  youTubeEmbedUrl,
+  youTubeShortsThumbnailUrl,
+  youTubeThumbnailUrl,
+} from './schema/youtube'
 
 export { blockSchema, contentSchema, validateContent } from './schema/validate'
 export type { ValidateContentResult } from './schema/validate'

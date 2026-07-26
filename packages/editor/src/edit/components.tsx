@@ -12,7 +12,12 @@ import { formatDateDisplay } from '../schema/date'
 import { CALLOUT_LABELS, DRUG_CARD_FIELD_LABELS } from '../schema/labels'
 import type { CalloutVariant, DrugCardFieldKey } from '../schema/types'
 import { CALLOUT_VARIANTS, DRUG_CARD_FIELD_KEYS } from '../schema/types'
-import { parseYouTubeUrl, youTubeThumbnailUrl } from '../schema/youtube'
+import {
+  isYouTubeShortsUrl,
+  parseYouTubeUrl,
+  youTubeShortsThumbnailUrl,
+  youTubeThumbnailUrl,
+} from '../schema/youtube'
 import { CarouselElement } from './carousel-node'
 import { useEditorLabels } from './context'
 import { EmojiInputElement } from './emoji-input'
@@ -540,15 +545,26 @@ export function VideoElement(props: PlateElementProps) {
   const { element } = props
   const url = typeof element.url === 'string' ? element.url : ''
   const videoId = parseYouTubeUrl(url)
+  // Shorts links render vertical (9:16), width-capped — derived from the
+  // URL form; the vertical poster falls back to the landscape one when
+  // YouTube has no oardefault for the video.
+  const shorts = isYouTubeShortsUrl(url)
   return (
     <PlateElement {...props} as="figure" className="my-4">
       {/* No iframe in the editor — a static thumbnail facade only. */}
       <div contentEditable={false} className="border border-line bg-paper p-2">
         {videoId ? (
           <img
-            src={youTubeThumbnailUrl(videoId)}
+            src={shorts ? youTubeShortsThumbnailUrl(videoId) : youTubeThumbnailUrl(videoId)}
             alt=""
-            className="aspect-video w-full max-w-full border border-line object-cover"
+            onError={(event) => {
+              if (shorts) event.currentTarget.src = youTubeThumbnailUrl(videoId)
+            }}
+            className={
+              shorts
+                ? 'mx-auto aspect-[9/16] w-full max-w-60 border border-line object-cover'
+                : 'aspect-video w-full max-w-full border border-line object-cover'
+            }
           />
         ) : (
           <div className="flex aspect-video w-full items-center justify-center border border-line">

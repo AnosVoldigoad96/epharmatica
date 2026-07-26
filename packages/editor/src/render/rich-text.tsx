@@ -24,6 +24,7 @@ import type {
   VideoBlock,
 } from '../schema/types'
 import { DRUG_CARD_FIELD_KEYS, isTextNode } from '../schema/types'
+import { isYouTubeShortsUrl } from '../schema/youtube'
 
 /**
  * <RichText/> — the ONE read renderer (I4). Server-component-safe and
@@ -447,7 +448,14 @@ export function RichText({ content, components, labels }: RichTextProps) {
       }
       case 'video':
         return (
-          <figure key={key} data-block-id={id} className="rt-video" style={indentStyle}>
+          <figure
+            key={key}
+            data-block-id={id}
+            // Shorts links (/shorts/<id>) render vertical — derived from the
+            // URL form, no stored orientation prop.
+            className={isYouTubeShortsUrl(block.url) ? 'rt-video rt-video--vertical' : 'rt-video'}
+            style={indentStyle}
+          >
             <Video block={block as VideoBlock} />
             <figcaption>{block.caption.map(renderTextNode)}</figcaption>
           </figure>
