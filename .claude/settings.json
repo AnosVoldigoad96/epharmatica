@@ -1,5 +1,18 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [".claude/hooks/sync-repos.mjs"],
+            "timeout": 75,
+            "statusMessage": "Pulling project + memory repos"
+          }
+        ]
+      }
+    ],
     "TaskCreated": [
       {
         "hooks": [
