@@ -8,6 +8,15 @@
 
 ## 1. System Overview
 
+> ⚠️ **Deployment reality check — verified 2026-08-07.** The topology box below and
+> §8's CI/CD description are the _intended_ design and no longer match what is
+> running: there is **no Coolify**, no staging environment, no umami/uptime-kuma,
+> the host is a **shared 20-core bare-metal server** (not a 4 vCPU VPS) that also
+> runs an unrelated live CRM, and the **deploy pipeline is currently severed** by a
+> deliberate security change. See
+> [`runbooks/server-infrastructure.md`](./runbooks/server-infrastructure.md) for
+> what is actually deployed. Reconcile this section before launch.
+
 ePharmatica is a **single Next.js application** backed by a **self-hosted Supabase stack**, deployed as containers on **one Hetzner EU VPS** behind **Cloudflare**. One app serves four surfaces: the public marketing/learn pages, the authenticated learner app, the community, and the `/admin` CMS. There is no separate backend service — privileged logic lives in Next.js server code (route handlers / server actions) and in Postgres itself (RLS, triggers, functions).
 
 ```
